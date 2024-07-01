@@ -13,7 +13,7 @@ content-type: application/json
 }
 
 ### Get users
-GET http://localhost:9000/mediphix/patient
+GET http://localhost:9098/mediphix/patient
 
 ### Get a specific user
 GET http://localhost:9090/social-media/users/5
