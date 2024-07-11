@@ -1,6 +1,7 @@
 import ballerina/http;
 import ballerina/io;
 
+
 type Doctor record {
     string name;
     string hospital;
@@ -9,13 +10,13 @@ type Doctor record {
     decimal fee;
 };
 
-type Patient record {
-    string name;
-    string dob;
-    string address;
-    string phone;
-    string email;
-};
+// type Patient record {
+//     string name;
+//     string dob;
+//     string address;
+//     string phone;
+//     string email;
+// };
 
 type ReservationStatus record {
     int appointmentNo;
@@ -28,27 +29,44 @@ type ReservationStatus record {
     string status;
 };
 
-type Appointment record {
-    int appointmentNumber;
-    Doctor doctor;
-    Patient patient;
-    string hospital;
-    boolean paid;
-    string appointmentDate;
-};
+
+
+
 
 service / on new http:Listener(9090) {
 
     resource function get patient/appointments(string id) returns http:Response|error? {
         io:println("Hello this is patient appointments.");
-
+        // Patient patient = {
+        //     mobile_number: "0787654329",
+        //     first_name: "Kasun",
+        //     last_name: "Ranathunga",
+        //     nic: "987654321V",
+        //     birthday: "1999-05-15",
+        //     email: "kavindirana@gmail.com",
+        //     address: {
+        //         house_number: "56/7",
+        //         street: "Temple Road",
+        //         city: "Mount Lavinia",
+        //         province: "Western",
+        //         postal_code: "10370"
+        //     },
+        //     allergies: ["Pollen", "Dust"],
+        //     special_notes: ["Requires follow-up on previous condition", "Has a history of asthma"]
+        // };
         return;
     }
 
-    resource function post patient/registration(string id) returns http:Response|error? {
-        io:println("Hello this is patient registration.");
+    resource function post patient/registration(Patient patient) returns http:Response|error? {
+        error? savepatientResult = savepatient(patient);
+        if savepatientResult is error {
 
-        return;
+        }
+
+        http:Response response = new;
+        
+
+        return response;
     }
 
     resource function post [string hospital_id]/categorys/[string category]/reserve() returns Appointment|http:ClientError|error? {
