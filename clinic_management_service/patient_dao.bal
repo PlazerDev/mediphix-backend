@@ -14,6 +14,7 @@ mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${usernam
 mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
 mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
 
+
  // Patient patient = {
  //     mobile_number: "0787654321",
  //     first_name: "Kavindi",
