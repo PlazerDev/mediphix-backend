@@ -1,7 +1,6 @@
 import ballerina/http;
 import ballerina/io;
 
-
 type Doctor record {
     string name;
     string hospital;
@@ -29,9 +28,11 @@ type ReservationStatus record {
     string status;
 };
 
-
-
-
+function addCORSHeaders(http:Response response) {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
 
 service / on new http:Listener(9090) {
 
@@ -64,7 +65,6 @@ service / on new http:Listener(9090) {
         }
 
         http:Response response = new;
-        
 
         return response;
     }
@@ -82,6 +82,32 @@ service / on new http:Listener(9090) {
     resource function get [string hospital_id]/categories/appointments/[int appointmentNumber]/fee() returns ReservationStatus|http:ClientError|error? {
         io:println("Hello this fee section");
         return;
+    }
+
+    resource function options signup(http:Caller caller, http:Request req) returns error? {
+        // Handle preflight request
+        http:Response response = new;
+
+        addCORSHeaders(response);
+        check caller->respond(response);
+    }
+
+    //Registration Part
+    resource function post signup(PatientSignupData data) returns error? {
+
+        io:println("Hello this is signup");
+        io:println(data.fname);
+
+        var result = check patientRegistrationService(data);
+
+
+
+        http:Response response = new;
+        response.setJsonPayload({message: "Patient signed up!"});
+        addCORSHeaders(response);
+
+        // return  result;
+
     }
 
 }
