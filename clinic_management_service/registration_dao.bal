@@ -17,6 +17,11 @@ public function save(User user) returns error? {
     check patientCollection->insertOne(user);
 }
 
+public function patientRegistration(PatientSignupData data) returns error? {
+    
+
+}
+
 // service /testing on new http:Listener(9092) {
 
 //     resource function get user() returns User[]|error {

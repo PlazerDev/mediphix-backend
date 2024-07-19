@@ -4,8 +4,7 @@ public type User record {|
     string password;
 |};
 
-
-public type SignupData record {|
+public type PatientSignupData record {|
     string fname;
     string lname;
     string mobile;
@@ -14,18 +13,19 @@ public type SignupData record {|
     string nationality;
     string nic;
     string address;
-    string name;
-    string slmc;
-    string education;
-    string specialization;
-    string password;
-    string idfront;
-    string idback;
-    string district;
-    string licenefront;
-    string liceneback;
 |};
 
-
-
+public type DoctorSignupData record {|
+    string name;
+    string slmc;
+    string nic;
+    string education;
+    string mobile;
+    string specialization;
+    string email;
+    string password;
+    string confirmpass;
+    string idfront;
+    string idback;
+|};
 

@@ -1,7 +1,6 @@
 import ballerina/http;
 import ballerina/io;
 
-
 type Doctor record {
     string name;
     string hospital;
@@ -35,9 +34,6 @@ function addCORSHeaders(http:Response response) {
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-
-
-
 service / on new http:Listener(9090) {
 
     resource function get patient/appointments(string id) returns http:Response|error? {
@@ -61,7 +57,6 @@ service / on new http:Listener(9090) {
         // };
         return;
     }
-    
 
     resource function post patient/registration(Patient patient) returns http:Response|error? {
         error? savepatientResult = savepatient(patient);
@@ -70,7 +65,6 @@ service / on new http:Listener(9090) {
         }
 
         http:Response response = new;
-        
 
         return response;
     }
@@ -93,43 +87,28 @@ service / on new http:Listener(9090) {
     resource function options signup(http:Caller caller, http:Request req) returns error? {
         // Handle preflight request
         http:Response response = new;
-        
+
         addCORSHeaders(response);
         check caller->respond(response);
     }
 
     //Registration Part
-     resource function post signup(SignupData data) returns http:Response|SignupData|error?  {
-   
-        // SignupData data
-        // stream<User, error?>|error regResult = getUserService();
-        // return from User m in check regResult
-        //     select m;
-        // io:println(data);
+    resource function post signup(PatientSignupData data) returns error? {
+
         io:println("Hello this is signup");
         io:println(data.fname);
 
-// Process the incoming request (e.g., extract data, validate, etc.)
-        // json requestBody = check req.getJsonPayload();
-        // Your logic for handling the signup
+        var result = check patientRegistrationService(data);
 
-        // Create response
+
+
         http:Response response = new;
-        response.setJsonPayload({ message: "Patient signed up!" });
+        response.setJsonPayload({message: "Patient signed up!"});
         addCORSHeaders(response);
 
-        // Send response
-        // check caller->respond(response);
-
-
-        return response;
-
+        // return  result;
 
     }
 
-    
-
 }
-
-
 
