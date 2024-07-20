@@ -1,5 +1,6 @@
 import ballerina/http;
 import ballerina/io;
+import clinic_management_service.model;
 
 type Doctor record {
     string name;
@@ -93,7 +94,7 @@ service / on new http:Listener(9090) {
     }
 
     //Registration Part
-    resource function post signup(PatientSignupData data) returns error? {
+    resource function post signup(model:PatientSignupData data) returns error? {
 
         io:println("Hello this is signup");
         io:println(data.fname);
