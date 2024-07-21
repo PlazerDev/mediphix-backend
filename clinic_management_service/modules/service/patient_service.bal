@@ -6,7 +6,7 @@ function savepatientService(model:Patient patient) {
 
     error? savepatientResult = dao:savePatient(patient);
     if savepatientResult is error {
-
+        
     }
 
     // do {

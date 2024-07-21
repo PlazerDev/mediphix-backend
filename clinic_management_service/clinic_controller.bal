@@ -96,20 +96,28 @@ service / on new http:Listener(9090) {
     }
 
     //Registration Part
-    resource function post signup(model:PatientSignupData data) returns error? {
+    resource function post signup(model:PatientSignupData data) returns error|http:Response {
 
         io:println("Hello this is signup");
-        io:println(data.fname);
+        
 
-        var result = check 'service:patientRegistrationService(data);
+        error? result = check 'service:patientRegistrationService(data);
 
+        
 
-
+        
         http:Response response = new;
-        response.setJsonPayload({message: "Patient signed up!"});
+        if (result is error) {
+            response.statusCode = 500;
+            response.setJsonPayload({message: result.message()});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Patient Registered Successfully"});
+        }
+        
         addCORSHeaders(response);
 
-        // return  result;
+        return  response;
 
     }
 

@@ -20,7 +20,7 @@ public type Patient record {|
     string nic;
     string birthday;
     string email;
-    Address address;
+    string address;
     string[] allergies;
     string[] special_notes;
 |};

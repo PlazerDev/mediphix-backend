@@ -1,7 +1,9 @@
 // import ballerina/http;
+
+import clinic_management_service.model;
+
 import ballerina/io;
 import ballerinax/mongodb;
-import clinic_management_service.model;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
@@ -19,23 +21,40 @@ public function save(model:User user) returns error? {
 }
 
 public function patientRegistration(model:PatientSignupData data) returns error? {
-    
-
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
+    model:Patient patient = {
+        mobile_number: data.mobile,
+        first_name: data.fname,
+        last_name: data.lname,
+        birthday: data.dob,
+        email: data.email,
+        nic: data.nic,
+        address:data.address,
+        allergies: [],
+        special_notes: []
+        
+    // mobile_number: "0789123456",
+    // first_name: "Anushka",
+    // last_name: "Perera",
+    // nic: "987654321V",
+    // birthday: "1985-06-15",
+    // email: "anushka.perera@example.com",
+    // address: "",
+    // allergies: [
+    //     "Peanuts",
+    //     "Dust"
+    // ],
+    // special_notes: [
+    //     "Vegetarian diet",
+    //     "Regular exercise recommended"
+    // ]
+        
+    };
+    return check patientCollection->insertOne(patient);
 }
 
-// service /testing on new http:Listener(9092) {
 
-//     resource function get user() returns User[]|error {
-
-//         mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-//         mongodb:Collection patientCollection = check mediphixDb->getCollection("users");
-//         stream<User, error?> findResult = check patientCollection->find();
-//         return from User m in check findResult
-//             select m;
-
-//     }
-
-// }
 
 function saveOnAsgardio() {
     io:println("Save on Asgardio");
