@@ -1,8 +1,9 @@
-import ballerina/http;
-import ballerina/io;
-import clinic_management_service.model;
 import clinic_management_service.'service;
 import clinic_management_service.dao;
+import clinic_management_service.model;
+
+import ballerina/http;
+import ballerina/io;
 
 type Doctor record {
     string name;
@@ -96,28 +97,26 @@ service / on new http:Listener(9090) {
     }
 
     //Registration Part
-    resource function post signup(model:PatientSignupData data) returns error|http:Response {
+    resource function post signup(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is signup");
-        
 
-        error? result = check 'service:patientRegistrationService(data);
+        model:ReturnMsg | error? result =  check 'service:patientRegistrationService(data)  ;
 
-        
-
-        
         http:Response response = new;
         if (result is error) {
             response.statusCode = 500;
             response.setJsonPayload({message: result.message()});
+
         } else {
             response.statusCode = 200;
             response.setJsonPayload({message: "Patient Registered Successfully"});
-        }
-        
-        addCORSHeaders(response);
 
-        return  response;
+        }
+
+        addCORSHeaders(response);
+        io:println(result);
+        return response;
 
     }
 

@@ -30,31 +30,13 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         birthday: data.dob,
         email: data.email,
         nic: data.nic,
-        address:data.address,
+        address: data.address,
         allergies: [],
         special_notes: []
-        
-    // mobile_number: "0789123456",
-    // first_name: "Anushka",
-    // last_name: "Perera",
-    // nic: "987654321V",
-    // birthday: "1985-06-15",
-    // email: "anushka.perera@example.com",
-    // address: "",
-    // allergies: [
-    //     "Peanuts",
-    //     "Dust"
-    // ],
-    // special_notes: [
-    //     "Vegetarian diet",
-    //     "Regular exercise recommended"
-    // ]
-        
+
     };
     return check patientCollection->insertOne(patient);
 }
-
-
 
 function saveOnAsgardio() {
     io:println("Save on Asgardio");
