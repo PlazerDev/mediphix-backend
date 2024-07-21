@@ -1,14 +1,6 @@
-// type Patient record {
-//     string name;
-//     string dob;
-//     string address;
-//     string phone;
-//     string email;
-// };
 
 
-
-type PatientWithCardNo record {
+public type PatientWithCardNo record {
     *Patient;
     string cardNo;
 };
@@ -21,19 +13,20 @@ public type Address record {|
     string postal_code;
 |};
 
-type Patient record {|
+public type Patient record {|
     string mobile_number;
     string first_name;
     string last_name;
     string nic;
     string birthday;
     string email;
-    Address address;
+    string address;
+    string nationality;
     string[] allergies;
     string[] special_notes;
 |};
 
-type Appointment record {|
+public type Appointment record {|
     int appointmentNumber;
     Doctor doctor;
     Patient patient;
@@ -41,3 +34,11 @@ type Appointment record {|
     boolean paid;
     string appointmentDate;
 |};
+
+public type Doctor record {
+    string name;
+    string hospital;
+    string category;
+    string availability;
+    decimal fee;
+};

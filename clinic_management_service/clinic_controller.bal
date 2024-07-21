@@ -1,3 +1,7 @@
+import clinic_management_service.'service;
+import clinic_management_service.dao;
+import clinic_management_service.model;
+
 import ballerina/http;
 import ballerina/io;
 
@@ -58,8 +62,8 @@ service / on new http:Listener(9090) {
         return;
     }
 
-    resource function post patient/registration(Patient patient) returns http:Response|error? {
-        error? savepatientResult = savepatient(patient);
+    resource function post patient/registration(model:Patient patient) returns http:Response|error? {
+        error? savepatientResult = dao:savePatient(patient);
         if savepatientResult is error {
 
         }
@@ -69,7 +73,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function post [string hospital_id]/categorys/[string category]/reserve() returns Appointment|http:ClientError|error? {
+    resource function post [string hospital_id]/categorys/[string category]/reserve() returns model:Appointment|http:ClientError|error? {
         io:println("Hello this is reservation thing");
         return;
     }
@@ -93,20 +97,32 @@ service / on new http:Listener(9090) {
     }
 
     //Registration Part
-    resource function post signup(PatientSignupData data) returns error? {
+    resource function post signup(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is signup");
-        io:println(data.fname);
+        
 
-        var result = check patientRegistrationService(data);
-
-
+        error? result =  check 'service:patientRegistrationService(data)  ;
 
         http:Response response = new;
-        response.setJsonPayload({message: "Patient signed up!"});
-        addCORSHeaders(response);
+        model:ReturnMsg returnMsg={message: "", status: 0};
+        if (result is error) {
+            response.statusCode = 500;
+            response.setJsonPayload({message: result.message()});
+            returnMsg.message = result.message();
+            returnMsg.status = 500;
 
-        // return  result;
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Patient Registered Successfully"});
+            returnMsg.message = "Patient Registered Successfully";
+            returnMsg.status = 200;
+
+        }
+
+        addCORSHeaders(response);
+        io:println(result);
+        return (response);
 
     }
 

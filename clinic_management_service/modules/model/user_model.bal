@@ -29,3 +29,7 @@ public type DoctorSignupData record {|
     string idback;
 |};
 
+public type ReturnMsg record {|
+    string message;
+    int status;
+|};
