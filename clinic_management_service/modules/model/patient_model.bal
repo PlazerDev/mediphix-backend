@@ -21,6 +21,7 @@ public type Patient record {|
     string birthday;
     string email;
     string address;
+    string nationality;
     string[] allergies;
     string[] special_notes;
 |};

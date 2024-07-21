@@ -31,4 +31,5 @@ public type DoctorSignupData record {|
 
 public type ReturnMsg record {|
     string message;
+    int status;
 |};

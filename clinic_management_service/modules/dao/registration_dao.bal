@@ -31,6 +31,7 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         email: data.email,
         nic: data.nic,
         address: data.address,
+        nationality:data.nationality,
         allergies: [],
         special_notes: []
 
