@@ -1,11 +1,12 @@
 import ballerinax/mongodb;
+import clinic_management_service.model;
 
 configurable string username = ?;
 configurable string password = ?;
 configurable string database = ?;
 configurable string cluster = ?;
 
-function savepatient(Patient patient) returns error? {
+public function savePatient(model:Patient patient) returns error? {
 
 
 

@@ -1,9 +1,10 @@
+import clinic_management_service.dao;
+import clinic_management_service.model;
 
-
-function savepatientService(Patient patient) {
+function savepatientService(model:Patient patient) {
     
 
-    error? savepatientResult = savepatient(patient);
+    error? savepatientResult = dao:savePatient(patient);
     if savepatientResult is error {
 
     }

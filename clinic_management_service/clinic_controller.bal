@@ -1,6 +1,8 @@
 import ballerina/http;
 import ballerina/io;
 import clinic_management_service.model;
+import clinic_management_service.'service;
+import clinic_management_service.dao;
 
 type Doctor record {
     string name;
@@ -59,8 +61,8 @@ service / on new http:Listener(9090) {
         return;
     }
 
-    resource function post patient/registration(Patient patient) returns http:Response|error? {
-        error? savepatientResult = savepatient(patient);
+    resource function post patient/registration(model:Patient patient) returns http:Response|error? {
+        error? savepatientResult = dao:savePatient(patient);
         if savepatientResult is error {
 
         }
@@ -70,7 +72,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function post [string hospital_id]/categorys/[string category]/reserve() returns Appointment|http:ClientError|error? {
+    resource function post [string hospital_id]/categorys/[string category]/reserve() returns model:Appointment|http:ClientError|error? {
         io:println("Hello this is reservation thing");
         return;
     }
@@ -99,7 +101,7 @@ service / on new http:Listener(9090) {
         io:println("Hello this is signup");
         io:println(data.fname);
 
-        var result = check patientRegistrationService(data);
+        var result = check 'service:patientRegistrationService(data);
 
 
 
