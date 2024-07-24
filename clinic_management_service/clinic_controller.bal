@@ -38,6 +38,7 @@ function addCORSHeaders(http:Response response) {
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
+
 service / on new http:Listener(9090) {
 
     resource function get patient/appointments(string id) returns http:Response|error? {
@@ -102,24 +103,17 @@ service / on new http:Listener(9090) {
         io:println("Hello this is signup");
         
 
-        error? result =  check 'service:patientRegistrationService(data)  ;
+        model:ReturnMsg result =   'service:patientRegistrationService(data)  ;
 
         http:Response response = new;
-        model:ReturnMsg returnMsg={message: "", status: 0};
-        if (result is error) {
-            response.statusCode = 500;
-            response.setJsonPayload({message: result.message()});
-            returnMsg.message = result.message();
-            returnMsg.status = 500;
-
+        if(result.statusCode == 500 || result.statusCode == 400){
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
         } else {
             response.statusCode = 200;
             response.setJsonPayload({message: "Patient Registered Successfully"});
-            returnMsg.message = "Patient Registered Successfully";
-            returnMsg.status = 200;
-
         }
-
+    
         addCORSHeaders(response);
         io:println(result);
         return (response);

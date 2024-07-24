@@ -1,29 +1,47 @@
 import clinic_management_service.dao;
 import clinic_management_service.model;
 
-public function patientRegistrationService(model:PatientSignupData data) returns error? {
-
+public function patientRegistrationService(model:PatientSignupData data) returns model:ReturnMsg {
+    model:ReturnMsg addPatientReturnMsg = {message: "", statusCode: 0};
     if (data.fname.length() == 0) {
-        return error("First name cannot be empty");
+        addPatientReturnMsg.message = "First name cannot be empty";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
     }
     else if (data.lname.length() == 0) {
+        addPatientReturnMsg.message = "Last name cannot be empty";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
+    }
+    else if (data.dob.length() == 0) {
+        addPatientReturnMsg.message = "Date of Birth cannot be empty";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
+    }
+    else if (data.dob.length() == 0) {
+        addPatientReturnMsg.message = "Date of Birth cannot be empty";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
+    }
 
-        return error("Last name cannot be empty");
-    }
-    else if (data.dob.length() == 0) {
-        return error("Date of Birth cannot be empty");
-    }
-    else if (data.dob.length() == 0) {
-        return error("Date of Birth cannot be empty");
+    else if(dao:isPatientExist(data.mobile) === true){
+        addPatientReturnMsg.message="Mobile Number Already exist";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
     }
     else {
         error? addPatientRecord = dao:patientRegistration(data);
         if addPatientRecord is error {
-            return error("Error in adding patient record in regDAO");
+            addPatientReturnMsg.message = addPatientRecord.message();
+            addPatientReturnMsg.statusCode = 500;
+            return addPatientReturnMsg;
         }
         else {
-            return;
+            addPatientReturnMsg.message = "Patient Registered Successfully";
+            addPatientReturnMsg.statusCode = 200;
+            return addPatientReturnMsg;
         }
+        
         
     }
 

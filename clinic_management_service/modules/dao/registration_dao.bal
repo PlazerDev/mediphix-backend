@@ -31,12 +31,31 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         email: data.email,
         nic: data.nic,
         address: data.address,
-        nationality:data.nationality,
+        nationality: data.nationality,
         allergies: [],
         special_notes: []
 
     };
     return check patientCollection->insertOne(patient);
+}
+
+public function isPatientExist(string mobile) returns boolean|error? {
+ 
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
+
+    map<json> filter = {"mobile_number": mobile};
+
+ 
+    int|error? patientResult =  patientCollection->countDocuments(filter, {});
+
+
+    if (patientResult === 0) {
+        return false;
+    } 
+    else {
+        return true; 
+    }
 }
 
 function saveOnAsgardio() {
