@@ -22,8 +22,8 @@ public type Patient record {|
     string email;
     string address;
     string nationality;
-    string[] allergies;
-    string[] special_notes;
+    string[] allergies?;
+    string[] special_notes?;
 |};
 
 public type Appointment record {|
