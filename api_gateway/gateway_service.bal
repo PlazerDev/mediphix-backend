@@ -62,6 +62,13 @@ configurable string paymentManagementService = "http://localhost:9090/healthcare
 final http:Client appointmentServicesEndpoint = check new (appointmentManagementService);
 final http:Client paymentEndpoint = check new (paymentManagementService);
 
+
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
 service /mediphix on new http:Listener(9000) {
     resource function post categorys/[string category]/reserve(ReservationRequest payload) returns ReservationStatus|http:NotFound|http:InternalServerError {
         PatientWithCardNo patient = payload.patient;
