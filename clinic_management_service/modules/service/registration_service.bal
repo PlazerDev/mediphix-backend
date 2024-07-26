@@ -107,6 +107,112 @@ public function doctorRegistrationService(model:DoctorSignupData data) returns m
 
 }
 
+public function medicalCenterRegistrationService(model:otherSignupData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+    if (data.name.length() == 0) {
+        returnMsg.message = "Medical Center Name cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.district.length() == 0) {
+        returnMsg.message = "District cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.address.length() == 0) {
+        returnMsg.message = "Address cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.mobile.length() == 0) {
+        returnMsg.message = "mibile cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+     else if (data.password !== data.confirmpass) {
+        returnMsg.message = "Password and Confirm Password should be same";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+
+
+    else if(dao:isMedicalCenterExist(data.email) === true){
+        returnMsg.message="Email Already exist";
+        returnMsg.statusCode = 500;
+        return returnMsg;
+    }
+    else {
+        data.password = genarateHash(data.password);
+        error? addPatientRecord = dao:medicalCenterRegistration(data);
+        if addPatientRecord is error {
+            returnMsg.message = addPatientRecord.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+        
+    }
+
+}
+public function laborataryRegistrationService(model:otherSignupData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+    if (data.name.length() == 0) {
+        returnMsg.message = "Laboratary Name cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.district.length() == 0) {
+        returnMsg.message = "District cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.address.length() == 0) {
+        returnMsg.message = "Address cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+    else if (data.mobile.length() == 0) {
+        returnMsg.message = "mibile cannot be empty";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+     else if (data.password !== data.confirmpass) {
+        returnMsg.message = "Password and Confirm Password should be same";
+        returnMsg.statusCode = 400;
+        return returnMsg;
+    }
+
+   
+    else if(dao:isLaborataryExist(data.email) === true){
+        returnMsg.message="Email Already exist";
+        returnMsg.statusCode = 500;
+        return returnMsg;
+    }
+    else {
+        data.password = genarateHash(data.password);
+        error? addLabRecord = dao:laborataryRegistration(data);
+        if addLabRecord is error {
+            returnMsg.message = addLabRecord.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Laboratary Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+        
+    }
+
+}
+
+
 //this function can use for generate the hash value of the password and verify the password
 //function return a string value.
 //to verify the password, call function with enterd password and compare the return value with the stored password

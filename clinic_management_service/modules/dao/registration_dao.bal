@@ -71,6 +71,69 @@ public function doctorRegistration(model:DoctorSignupData data) returns error? {
     }
     
 }
+public function medicalCenterRegistration(model:otherSignupData data) returns error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+    mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
+    
+    model:MedicalCenter mc={
+        name: data.name,
+        address: data.address,
+        mobile: data.mobile,
+        email: data.email,
+        idfront: data.idfront,
+        idback: data.idback,
+        district: data.district,
+        verified: false,
+        fee: 0.0
+    };
+    model:User mcUser = {
+        email: data.email,
+        role: "medical center",
+        password: data.password
+    };
+    error? insertedUser =check userCollection->insertOne(mcUser);
+    if(insertedUser is error){
+        return insertedUser;
+    }
+    else{
+        return check medicalCenterCollection->insertOne(mc);
+    }
+    
+}
+public function laborataryRegistration(model:otherSignupData data) returns error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+    mongodb:Collection laborataryCollection = check mediphixDb->getCollection("laboratary");
+    
+   model:Laboratary lab={
+        name: data.name,
+        address: data.address,
+        mobile: data.mobile,
+        email: data.email,
+        idfront: data.idfront,
+        idback: data.idback,
+        district: data.district,
+        verified: false,
+        fee: 0.0
+    };
+    model:User mcUser = {
+        email: data.email,
+        role: "medical center",
+        password: data.password
+    };
+    error? insertedUser =check userCollection->insertOne(mcUser);
+    if(insertedUser is error){
+        return insertedUser;
+    }
+    else{
+        return check laborataryCollection->insertOne(lab);
+    }
+    
+}
+
+
+
 
 public function isPatientExist(string mobile) returns boolean|error? {
  
@@ -106,6 +169,46 @@ public function isDoctorExist(string email) returns boolean|error? {
 
 
     if (userResult === 0 && doctorResult === 0) {
+        return false;
+    } 
+    else {
+        return true; 
+    }
+}
+public function isMedicalCenterExist(string email) returns boolean|error? {
+ 
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection medicalCEnterCollection = check mediphixDb->getCollection("medical_center");
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+
+    map<json> filter = {"email": email};
+
+ 
+    int|error? userResult =  userCollection->countDocuments(filter, {});
+    int|error? medicalcenterResult =  medicalCEnterCollection->countDocuments(filter, {});
+
+
+    if (userResult === 0 && medicalcenterResult === 0) {
+        return false;
+    } 
+    else {
+        return true; 
+    }
+}
+public function isLaborataryExist(string email) returns boolean|error? {
+ 
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection laborataryCollection = check mediphixDb->getCollection("laboratary");
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+
+    map<json> filter = {"email": email};
+
+ 
+    int|error? userResult =  userCollection->countDocuments(filter, {});
+    int|error? labResult =  laborataryCollection->countDocuments(filter, {});
+
+
+    if (userResult === 0 && labResult === 0) {
         return false;
     } 
     else {
