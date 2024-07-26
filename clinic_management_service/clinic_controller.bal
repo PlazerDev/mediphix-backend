@@ -102,7 +102,7 @@ service / on new http:Listener(9090) {
         return (response);
 
     }
-    
+
     resource function post signup/medicalcenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
@@ -118,6 +118,30 @@ service / on new http:Listener(9090) {
         } else {
             response.statusCode = 200;
             response.setJsonPayload({message: "Medical Center Registered Successfully"});
+        }
+
+
+        io:println(result);
+        addCORSHeaders(response);
+        return (response);
+
+    }
+
+    resource function post signup/laboratary(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        io:println("Hello this is Laboratary");
+        
+
+        model:ReturnMsg result =   'service:laborataryRegistrationService(data) ;
+
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Laboratary Registered Successfully"});
         }
 
 

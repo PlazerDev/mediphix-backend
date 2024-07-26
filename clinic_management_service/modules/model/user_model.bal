@@ -39,12 +39,24 @@ public type MedicalCenter record {|
     string address;
     string mobile;
     string email;
-    string idfront;
-    string idback;
+    byte idfront;
+    byte idback;
     string district;
     boolean verified;
     decimal fee;
 
+|};
+
+public type Laboratary record {|
+    string name;
+    string address;
+    string mobile;
+    string email;
+    byte idfront;
+    byte idback;
+    string district;
+    boolean verified;
+    decimal fee;
 |};
 
 public type PatientSignupData record {|
@@ -68,8 +80,8 @@ public type DoctorSignupData record {|
     string email;
     string password;
     string confirmpass;
-    string idfront;
-    string idback;
+    byte idfront;
+    byte idback;
 |};
 
 //this is used for laboratory and medical centers
@@ -80,8 +92,8 @@ public type otherSignupData record {|
     string email;
     string password;
     string confirmpass;
-    string idfront;
-    string idback;
+    byte idfront;
+    byte idback;
     string district;
 |};
 
