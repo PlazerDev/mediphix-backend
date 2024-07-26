@@ -38,6 +38,40 @@ public function patientRegistration(model:PatientSignupData data) returns error?
     };
     return check patientCollection->insertOne(patient);
 }
+public function doctorRegistration(model:DoctorSignupData data) returns error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+    mongodb:Collection pendingApprovalCollection = check mediphixDb->getCollection("pending_approval");
+    model:PendingApprovals pendingApproval = {
+        role: "doctor",
+        doctor: {
+            name: data.name,
+            slmc: data.slmc,
+            nic: data.nic,
+            education: data.education,
+            mobile: data.mobile,
+            specialization: data.specialization,
+            email: data.email,
+            hospital:"",
+            category: "",
+            availability:"",
+            fee: 0.0
+        }
+    };
+    model:User doctorUser = {
+        email: data.email,
+        role: "doctor",
+        password: data.password
+    };
+    error? insertedUser =check userCollection->insertOne(doctorUser);
+    if(insertedUser is error){
+        return insertedUser;
+    }
+    else{
+        return check pendingApprovalCollection->insertOne(pendingApproval);
+    }
+    
+}
 
 public function isPatientExist(string mobile) returns boolean|error? {
  
@@ -51,6 +85,28 @@ public function isPatientExist(string mobile) returns boolean|error? {
 
 
     if (patientResult === 0) {
+        return false;
+    } 
+    else {
+        return true; 
+    }
+}
+
+//check whether the doctor is already exist in user collection or doctor collection
+public function isDoctorExist(string email) returns boolean|error? {
+ 
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+
+    map<json> filter = {"email": email};
+
+ 
+    int|error? userResult =  userCollection->countDocuments(filter, {});
+    int|error? doctorResult =  doctorCollection->countDocuments(filter, {});
+
+
+    if (userResult === 0 && doctorResult === 0) {
         return false;
     } 
     else {

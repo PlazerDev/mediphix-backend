@@ -35,10 +35,17 @@ public type Appointment record {|
     string appointmentDate;
 |};
 
-public type Doctor record {
+public type Doctor record {|
     string name;
+    string slmc;
+    string nic;
+    string education;
+    string mobile;
+    string[] specialization;
+    string email;
     string hospital;
     string category;
     string availability;
     decimal fee;
-};
+    
+|};
