@@ -47,5 +47,6 @@ public type Doctor record {|
     string category;
     string availability;
     decimal fee;
+    boolean verified;
     
 |};

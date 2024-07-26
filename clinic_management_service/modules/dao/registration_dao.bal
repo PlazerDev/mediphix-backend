@@ -41,22 +41,21 @@ public function patientRegistration(model:PatientSignupData data) returns error?
 public function doctorRegistration(model:DoctorSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
-    mongodb:Collection pendingApprovalCollection = check mediphixDb->getCollection("pending_approval");
-    model:PendingApprovals pendingApproval = {
-        role: "doctor",
-        doctor: {
-            name: data.name,
-            slmc: data.slmc,
-            nic: data.nic,
-            education: data.education,
-            mobile: data.mobile,
-            specialization: data.specialization,
-            email: data.email,
-            hospital:"",
-            category: "",
-            availability:"",
-            fee: 0.0
-        }
+    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+    
+    model:Doctor doctor = {
+        name: data.name,
+        slmc: data.slmc,
+        nic: data.nic,
+        education: data.education,
+        mobile: data.mobile,
+        specialization: data.specialization,
+        email: data.email,
+        hospital: "not assigned",
+        category: "not assigned",
+        availability: "not assigned",
+        fee: 0.0,
+        verified: false
     };
     model:User doctorUser = {
         email: data.email,
@@ -68,7 +67,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns error? {
         return insertedUser;
     }
     else{
-        return check pendingApprovalCollection->insertOne(pendingApproval);
+        return check doctorCollection->insertOne(doctor);
     }
     
 }
