@@ -38,6 +38,12 @@ function addCORSHeaders(http:Response response) {
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+
+    }
+}
 
 service / on new http:Listener(9090) {
 
@@ -98,12 +104,33 @@ service / on new http:Listener(9090) {
     }
 
     //Registration Part
-    resource function post signup(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/patient(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is signup");
+
+        model:ReturnMsg result = 'service:patientRegistrationService(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Patient Registered Successfully"});
+        }
+
+        addCORSHeaders(response);
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/doctor(model:DoctorSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        io:println("Hello this is doctor");
         
 
-        model:ReturnMsg result =   'service:patientRegistrationService(data)  ;
+        model:ReturnMsg result =   'service:doctorRegistrationService(data)  ;
 
         http:Response response = new;
         if(result.statusCode == 500 || result.statusCode == 400){
@@ -113,9 +140,9 @@ service / on new http:Listener(9090) {
             response.statusCode = 200;
             response.setJsonPayload({message: "Patient Registered Successfully"});
         }
-    
-        addCORSHeaders(response);
+
         io:println(result);
+        addCORSHeaders(response);
         return (response);
 
     }

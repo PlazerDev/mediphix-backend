@@ -1,5 +1,6 @@
+
 public type User record {|
-    string mobile_number;
+    string email;
     string role;
     string password;
 |};
@@ -21,7 +22,7 @@ public type DoctorSignupData record {|
     string nic;
     string education;
     string mobile;
-    string specialization;
+    string [] specialization ;
     string email;
     string password;
     string confirmpass;
@@ -29,7 +30,16 @@ public type DoctorSignupData record {|
     string idback;
 |};
 
+
+public type PendingApprovals record {|
+    string role;
+    Doctor doctor;
+    //add  othre officilas here
+|};
+
 public type ReturnMsg record {|
     string message;
     int statusCode;
 |};
+
+
