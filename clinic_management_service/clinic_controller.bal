@@ -132,9 +132,9 @@ service / on new http:Listener(9090) {
     // return initial informtion of a medical center staff member by userId
     resource function get mcsMember(string userId) returns http:Response|error? {
 
-        model:MCS|model:NotFoundError|model:InternalError result = 'service:getMCSMemberInformationService(userId.trim());
+        model:MCSwithMedicalCenter|model:NotFoundError|model:InternalError result = 'service:getMCSMemberInformationService(userId.trim());
         http:Response response = new;
-        if result is model:MCS {
+        if result is model:MCSwithMedicalCenter {
             response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if result is model:NotFoundError {
