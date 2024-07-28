@@ -4,7 +4,7 @@ import ballerina/io;
 import ballerina/crypto;
 
 
-public function patientRegistrationService(model:PatientSignupData data) returns model:ReturnMsg {
+public function registerPatient(model:PatientSignupData data) returns model:ReturnMsg {
     model:ReturnMsg addPatientReturnMsg = {message: "", statusCode: 0};
     if (data.fname.length() == 0) {
         addPatientReturnMsg.message = "First name cannot be empty";
@@ -49,7 +49,7 @@ public function patientRegistrationService(model:PatientSignupData data) returns
     }
 
 }
-public function doctorRegistrationService(model:DoctorSignupData data) returns model:ReturnMsg {
+public function registerDoctor(model:DoctorSignupData data) returns model:ReturnMsg {
     model:ReturnMsg addDoctorReturnMsg = {message: "", statusCode: 0};
     if (data.name.length() == 0) {
         addDoctorReturnMsg.message = "First name cannot be empty";
@@ -107,7 +107,7 @@ public function doctorRegistrationService(model:DoctorSignupData data) returns m
 
 }
 
-public function medicalCenterRegistrationService(model:otherSignupData data) returns model:ReturnMsg {
+public function registerMedicalCenter(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
     if (data.name.length() == 0) {
         returnMsg.message = "Medical Center Name cannot be empty";
@@ -159,7 +159,7 @@ public function medicalCenterRegistrationService(model:otherSignupData data) ret
     }
 
 }
-public function laborataryRegistrationService(model:otherSignupData data) returns model:ReturnMsg {
+public function registerLaboratary(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
     if (data.name.length() == 0) {
         returnMsg.message = "Laboratary Name cannot be empty";
