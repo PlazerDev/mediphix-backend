@@ -62,7 +62,7 @@ service / on new http:Listener(9090) {
 
         io:println("Hello this is signup");
 
-        model:ReturnMsg result = 'service:patientRegistrationService(data);
+        model:ReturnMsg result = 'service:registerPatient(data);
 
         http:Response response = new;
         if (result.statusCode == 500 || result.statusCode == 400) {
@@ -84,7 +84,7 @@ service / on new http:Listener(9090) {
         io:println("Hello this is doctor");
         
 
-        model:ReturnMsg result =   'service:doctorRegistrationService(data)  ;
+        model:ReturnMsg result =   'service:registerDoctor(data)  ;
 
 
         http:Response response = new;
@@ -108,7 +108,7 @@ service / on new http:Listener(9090) {
         io:println("Hello this is Medical Center");
         
 
-        model:ReturnMsg result =   'service:medicalCenterRegistrationService(data) ;
+        model:ReturnMsg result =   'service:registerMedicalCenter(data) ;
 
 
         http:Response response = new;
@@ -132,7 +132,7 @@ service / on new http:Listener(9090) {
         io:println("Hello this is Laboratary");
         
 
-        model:ReturnMsg result =   'service:laborataryRegistrationService(data) ;
+        model:ReturnMsg result =   'service:registerLaboratary(data) ;
 
 
         http:Response response = new;
