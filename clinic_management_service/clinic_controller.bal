@@ -111,7 +111,7 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: result.message()});
             returnMsg.message = result.message();
             returnMsg.status = 500;
-
+ 
         } else {
             response.statusCode = 200;
             response.setJsonPayload({message: "Patient Registered Successfully"});
@@ -122,9 +122,31 @@ service / on new http:Listener(9090) {
 
         addCORSHeaders(response);
         io:println(result);
-        return (response);
+        return (response);         
 
     }
 
+
+    // medical center staff controllers .......................................................................................
+
+    // return initial informtion of a medical center staff member by userId
+    resource function get mcsMember(string userId) returns http:Response|error? {
+
+        model:MCS|model:NotFoundError|model:InternalError result = 'service:getMCSMemberInformationService(userId.trim());
+        http:Response response = new;
+        if result is model:MCS {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if result is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        } else if result is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        }
+        addCORSHeaders(response);
+        return response;
+
+    }
 }
 
