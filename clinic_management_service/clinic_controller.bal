@@ -31,11 +31,6 @@ type ReservationStatus record {
     string status;
 };
 
-function addCORSHeaders(http:Response response) {
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
 
 
 @http:ServiceConfig {
@@ -44,18 +39,9 @@ function addCORSHeaders(http:Response response) {
 
     }
 }
-
-
 service / on new http:Listener(9090) {
 
     // patient
-
-    // Handle preflight request
-    resource function options signup(http:Caller caller, http:Request req) returns error? {
-        http:Response response = new;
-        addCORSHeaders(response);
-        check caller->respond(response);
-    }
 
     //Registration Part
     resource function post signup/patient(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
@@ -73,7 +59,6 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: "Patient Registered Successfully"});
         }
 
-        addCORSHeaders(response);
         io:println(result);
         return (response);
 
@@ -98,7 +83,6 @@ service / on new http:Listener(9090) {
 
 
         io:println(result);
-        addCORSHeaders(response);
         return (response);
 
     }
@@ -122,7 +106,6 @@ service / on new http:Listener(9090) {
 
 
         io:println(result);
-        addCORSHeaders(response);
         return (response);
 
     }
@@ -146,19 +129,10 @@ service / on new http:Listener(9090) {
 
 
         io:println(result);
-        addCORSHeaders(response);
         return (response);
 
     }
 
-
-
-    // Handle preflight request
-    resource function options patient(http:Caller caller, http:Request req) returns error? {
-        http:Response response = new;
-        addCORSHeaders(response);
-        check caller->respond(response);
-    }
 
     // Get patient with mobile number
     resource function get patient(string mobile) returns http:Response|error? {
@@ -178,10 +152,8 @@ service / on new http:Listener(9090) {
             response.statusCode = 500;
             response.setJsonPayload(patient.body.toJson());
         }
-        addCORSHeaders(response);
         return response;
     }
-
 
 }
 

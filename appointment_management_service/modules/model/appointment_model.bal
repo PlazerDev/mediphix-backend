@@ -1,4 +1,3 @@
-import ballerina/time;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -27,8 +26,6 @@ public type Appointment record {
     AppointmentStatus status;
     string appointmentDate;
     string appointmentTime;
-    time:Utc createdDate;
-    time:Utc lastModifiedDate;
 };
 
 public type AppointmentNumberCounter record {

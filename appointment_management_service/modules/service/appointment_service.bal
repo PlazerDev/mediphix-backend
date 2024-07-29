@@ -3,6 +3,7 @@ import appointment_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
+import ballerina/io;
 
 public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError {
     // Get the next appointment number
@@ -30,9 +31,7 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         paid: newAppointment.paid,
         status: "ACTIVE",
         appointmentDate: newAppointment.appointmentDate,
-        appointmentTime: newAppointment.appointmentTime,
-        createdDate: time:utcNow(),
-        lastModifiedDate: time:utcNow()
+        appointmentTime: newAppointment.appointmentTime
     };
 
     http:Created|error? appointmentResult = dao:createAppointment(appointment);
@@ -47,4 +46,36 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
+}
+
+public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError {
+    if (mobile.length() === 0 || mobile.length() !== 10) {
+        model:ErrorDetails errorDetails = {
+            message: "Please provide a valid mobile number",
+            details: string `appointment/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:ValueError valueError = {
+            body: errorDetails
+        };
+        return valueError;
+    }
+
+    model:Appointment[]|model:InternalError|model:UserNotFound|error? appointments = dao:getAppointmentsByMobile(mobile);
+    if appointments is model:Appointment[] {
+        return appointments;
+    } else if appointments is model:InternalError {
+        return appointments;
+    } else if appointments is model:UserNotFound {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `appointment/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
 }
