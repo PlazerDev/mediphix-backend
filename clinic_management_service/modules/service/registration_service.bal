@@ -33,7 +33,7 @@ public function registerPatient(model:PatientSignupData data) returns model:Retu
         return addPatientReturnMsg;
     }
     else {
-        error? addPatientRecord = dao:patientRegistration(data);
+        error?|json addPatientRecord = dao:patientRegistration(data);
         if addPatientRecord is error {
             addPatientReturnMsg.message = addPatientRecord.message();
             addPatientReturnMsg.statusCode = 500;
