@@ -3,7 +3,7 @@ import appointment_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
-import ballerina/io;
+
 
 public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError {
     // Get the next appointment number

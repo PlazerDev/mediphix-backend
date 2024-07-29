@@ -3,6 +3,11 @@ import appointment_management_service.model;
 
 import ballerina/http;
 
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
 service / on new http:Listener(9091) {
     resource function post appointment(model:NewAppointment newAppointment) returns http:Response|error {
         http:Created|model:InternalError appointmentCreationStatus = 'service:createAppointment(newAppointment);
@@ -20,7 +25,7 @@ service / on new http:Listener(9091) {
         return response;
     }
 
-    resource function get appointments(string mobile) returns http:Response|error {
+    resource function get appointments/[string mobile]() returns http:Response|error {
         model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError appointments = 'service:getAppointmentsByMobile(mobile);
 
         http:Response response = new;

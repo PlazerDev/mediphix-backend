@@ -57,53 +57,60 @@ type ReservationStatus record {
     string status;
 };
 
-configurable string appointmentManagementService = "http://localhost:9090";
-configurable string paymentManagementService = "http://localhost:9090/healthcare/payments";
-
-final http:Client appointmentServicesEndpoint = check new (appointmentManagementService);
-final http:Client paymentEndpoint = check new (paymentManagementService);
+final http:Client clinicServiceEP = check new ("http://localhost:9090",
+    retryConfig = {
+        interval: 3,
+        count: 3,
+        backOffFactor: 0.5
+    }
+);
+final http:Client appointmentServiceEP = check new ("http://localhost:9091",
+    retryConfig = {
+        interval: 3,
+        count: 3,
+        backOffFactor: 0.5
+    }
+);
 
 configurable string issuer = ?;
 configurable string audience = ?;
 configurable string jwksUrl = ?;
-
-http:Client appointmentEP = check new ("http://localhost:9091");
 
 listener http:Listener httpListener = check new (9000);
 
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["*"]
-    },
-    auth: [
-        {
-            jwtValidatorConfig: {
-                issuer: issuer,
-                audience: audience,
-                signatureConfig: {
-                    jwksConfig: {
-                        url: jwksUrl
-                    }
-                }
-            },
-            scopes: ["insert_appointment", "retrieve_own_patient_data"]
-        }
-    ]
+    }
+    // ,
+    // auth: [
+    //     {
+    //         jwtValidatorConfig: {
+    //             issuer: issuer,
+    //             audience: audience,
+    //             signatureConfig: {
+    //                 jwksConfig: {
+    //                     url: jwksUrl
+    //                 }
+    //             }
+    //         },
+    //         scopes: ["insert_appointment", "retrieve_own_patient_data"]
+    //     }
+    // ]
 }
 service /patient on httpListener {
 
-    @http:ResourceConfig {
-        // "insert_appointment" scope is required to invoke this resource
-        auth: {
-            scopes: ["insert_appointment"]
-        }
-    }
-    resource function get bymobile(string mobile) returns string|error? {
+    // @http:ResourceConfig {
+    //     // "insert_appointment" scope is required to invoke this resource
+    //     auth: {
+    //         scopes: ["insert_appointment"]
+    //     }
+    // }
+    resource function get bymobile(string mobile) returns http:Response|error? {
         io:println("Inside Appointment");
-        json|http:ClientError patient = request.getJsonPayload();
-        io:println("Patient: ", patient);
-
-        return "Appointment Reserved Successfully";
+        http:Response|error? appointments = check appointmentServiceEP->/appointments/[mobile];
+        io:println(appointments);
+        return appointments;
     }
 
 }
