@@ -82,30 +82,30 @@ listener http:Listener httpListener = check new (9000);
     cors: {
         allowOrigins: ["*"]
     }
-    // ,
-    // auth: [
-    //     {
-    //         jwtValidatorConfig: {
-    //             issuer: issuer,
-    //             audience: audience,
-    //             signatureConfig: {
-    //                 jwksConfig: {
-    //                     url: jwksUrl
-    //                 }
-    //             }
-    //         },
-    //         scopes: ["insert_appointment", "retrieve_own_patient_data"]
-    //     }
-    // ]
+    ,
+    auth: [
+        {
+            jwtValidatorConfig: {
+                issuer: issuer,
+                audience: audience,
+                signatureConfig: {
+                    jwksConfig: {
+                        url: jwksUrl
+                    }
+                }
+            },
+            scopes: ["insert_appointment", "retrieve_own_patient_data"]
+        }
+    ]
 }
 service /patient on httpListener {
 
-    // @http:ResourceConfig {
-    //     // "insert_appointment" scope is required to invoke this resource
-    //     auth: {
-    //         scopes: ["insert_appointment"]
-    //     }
-    // }
+    @http:ResourceConfig {
+        // "insert_appointment" scope is required to invoke this resource
+        auth: {
+            scopes: ["insert_appointment"]
+        }
+    }
     resource function get bymobile(string mobile) returns http:Response|error? {
         io:println("Inside Appointment");
         http:Response|error? appointments = check appointmentServiceEP->/appointments/[mobile];
