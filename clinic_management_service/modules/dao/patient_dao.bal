@@ -3,13 +3,8 @@ import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
 
-configurable string username = ?;
-configurable string password = ?;
-configurable string database = ?;
-configurable string cluster = ?;
 
 public function savePatient(model:Patient patient) returns error? {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
 
@@ -31,11 +26,12 @@ public function savePatient(model:Patient patient) returns error? {
     //     special_notes: ["Requires follow-up on previous condition", "Has a history of asthma"]
     // };
 
-    check patientCollection->insertOne(patient);
+    if (patientCollection is mongodb:Collection) {
+        check patientCollection->insertOne(patient);
+    }
 }
 
 public function getPatient(string mobile) returns model:Patient|model:UserNotFound|error? {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"mobile_number": mobile};

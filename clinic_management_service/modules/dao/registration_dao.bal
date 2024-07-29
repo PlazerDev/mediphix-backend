@@ -3,6 +3,17 @@ import ballerina/http;
 import ballerina/io;
 import ballerinax/mongodb;
 
+
+configurable string username = ?;
+configurable string password = ?;
+configurable string database = ?;
+configurable string cluster = ?;
+
+
+mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+
+
+
 # Description.
 #
 # + tokenEndpoint - endpoint to get the token  
@@ -45,7 +56,6 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
 }
 
 
-mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 
 
