@@ -62,3 +62,26 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
     }
 
 }
+
+public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:UserNotFound|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<json> filter = {"patientMobile": mobile};
+    stream<model:Appointment, error?> findResults = check appointmentCollection->find(filter, {}, (), model:Appointment);
+
+    model:Appointment[]|error appointments = from model:Appointment appointment in findResults
+        select appointment;
+    if appointments is model:Appointment[] {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find appointments for the given mobile number",
+            details: string `appointment/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:UserNotFound userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+
+}
