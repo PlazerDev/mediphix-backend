@@ -39,6 +39,7 @@ target/
 .settings
 .vscode
 
+
 */.idea
 */.code
 */.project
@@ -50,3 +51,6 @@ target/
 Ballerina.lock
 
 */Ballerina.lock
+
+# ingnore test directory
+test/
