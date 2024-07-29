@@ -5,7 +5,14 @@ import clinic_management_service.model;
 import ballerina/io;
 import ballerinax/mongodb;
 
+configurable string username = ?;
+configurable string password = ?;
+configurable string database = ?;
+configurable string cluster = ?;
+
+
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+
 
 public function reg() returns stream<model:User, error?>|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
