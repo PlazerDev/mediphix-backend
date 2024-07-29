@@ -9,6 +9,11 @@ configurable string password = ?;
 configurable string database = ?;
 configurable string cluster = ?;
 
+configurable string clientId = ?;
+configurable string clientSecret = ?;
+configurable string beareTokenEndpoint = ?;
+configurable string scimEndpoint = ?;
+
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
@@ -59,7 +64,7 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
 
 
 
-public function patientRegistration(model:PatientSignupData data) returns error? {
+public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     model:Patient patient = {
@@ -75,7 +80,31 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         special_notes: []
 
     };
-    return check patientCollection->insertOne(patient);
+    mongodb:Error? insertOne = patientCollection->insertOne(patient);
+    if insertOne is mongodb:DatabaseError {
+        return insertOne;
+    }
+    //asgardio integration part 
+    // else{
+    //     string bToken=check fetchBeareToken(beareTokenEndpoint,clientId,clientSecret);
+    //     json userData = {
+    //         schemas: [],
+    //         name: {
+    //             givenName: data.fname+data.lname,
+    //             familyName: ""
+    //         },
+    //         userName: string `DEFAULT/${data.mobile}`,
+    //         emails: [
+    //             {
+    //                 value: data.mobile,
+    //                 primary: true
+    //             }
+    //         ],
+    //         active: true
+    //     };
+    //     json|error? resp = addUser(scimEndpoint,bToken,userData);
+    //     return resp;
+    // }
 }
 public function doctorRegistration(model:DoctorSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
