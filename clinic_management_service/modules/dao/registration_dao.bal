@@ -1,9 +1,8 @@
-// import ballerina/http;
-
 import clinic_management_service.model;
-
+import ballerina/http;
 import ballerina/io;
 import ballerinax/mongodb;
+
 
 configurable string username = ?;
 configurable string password = ?;
@@ -14,18 +13,51 @@ configurable string cluster = ?;
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 
-public function reg() returns stream<model:User, error?>|error {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection patientCollection = check mediphixDb->getCollection("users");
-    stream<model:User, error?> findResult = check patientCollection->find();
-    return findResult;
+
+# Description.
+#
+# + tokenEndpoint - endpoint to get the token  
+# + clientId -   client id save in the config.TOML file
+# + clientSecret - client secret save in the config.TOML file
+# + return - return the access token
+public isolated function fetchBeareToken(string tokenEndpoint, string clientId, string clientSecret) returns string|error {
+    final http:Client clientEndpoint = check new (tokenEndpoint);
+    string authHeader = string `${clientId}:${clientSecret}`;
+    http:Request tokenRequest = new;
+    tokenRequest.setHeader("Authorization", "Basic " + authHeader.toBytes().toBase64());
+    tokenRequest.setHeader("Content-Type", "application/json");
+    tokenRequest.setPayload({
+        "grant_type": "client_credentials",
+        "scope": "internal_user_mgt_create"
+    });
+    json resp = check clientEndpoint->post("/oauth2/token", tokenRequest);
+    string accessToken = check resp.access_token;
+    return accessToken;
 }
 
-public function save(model:User user) returns error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection patientCollection = check mediphixDb->getCollection("users");
-    check patientCollection->insertOne(user);
+
+# Description.
+#
+# + tokenEndpoint -  asgardio SCIM API endpoint
+# + token -  the token return from the fetchBeareToken function
+# + payload - the user data to be added
+# + return - return the response from the asgardio
+public isolated function addUser(string tokenEndpoint, string token, json payload) returns json|error {
+    final http:Client clientEndpoint = check new (tokenEndpoint);
+    string authHeader = string `Bearer ${token}`;
+    http:Request tokenRequest = new;
+    tokenRequest.setHeader("Authorization", authHeader);
+    tokenRequest.setHeader("Content-Type", "application/scim+json");
+    tokenRequest.setHeader("Accept", "application/scim+json");
+    tokenRequest.setPayload(payload);
+    json resp = check clientEndpoint->post("/scim2/Users", tokenRequest);
+    
+    return resp;
 }
+
+
+
+
 
 public function patientRegistration(model:PatientSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
