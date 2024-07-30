@@ -3,6 +3,8 @@ import appointment_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
+// import ballerina/log;
+import ballerina/io;
 
 
 public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError {
@@ -27,11 +29,15 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         appointmentNumber: newAppointmentNumber,
         doctorEmail: newAppointment.doctorEmail,
         patientMobile: newAppointment.patientMobile,
+        doctorSessionId: newAppointment.doctorSessionId,
+        category: newAppointment.category,
         hospital: newAppointment.hospital,
         paid: newAppointment.paid,
         status: "ACTIVE",
         appointmentDate: newAppointment.appointmentDate,
-        appointmentTime: newAppointment.appointmentTime
+        appointmentTime: newAppointment.appointmentTime,
+        createdTime: time:utcToCivil(time:utcNow()),
+        lastModifiedTime: time:utcToCivil(time:utcNow())
     };
 
     http:Created|error? appointmentResult = dao:createAppointment(appointment);
@@ -48,7 +54,7 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
     }
 }
 
-public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError {
+public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError|error {
     if (mobile.length() === 0 || mobile.length() !== 10) {
         model:ErrorDetails errorDetails = {
             message: "Please provide a valid mobile number",
@@ -69,6 +75,7 @@ public function getAppointmentsByMobile(string mobile) returns model:Appointment
     } else if appointments is model:UserNotFound {
         return appointments;
     } else {
+        io:println(appointments);
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
             details: string `appointment/${mobile}`,
