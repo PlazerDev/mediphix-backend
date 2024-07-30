@@ -129,11 +129,9 @@ service / on new http:Listener(9090) {
 
 
         io:println(result);
-        return (response);
+        return (response);         
 
     }
-
-
     // Get patient with mobile number
     resource function get patient(string mobile) returns http:Response|error? {
         model:Patient|model:ValueError|model:UserNotFound|model:InternalError patient = 'service:getPatient(mobile.trim());
@@ -153,6 +151,27 @@ service / on new http:Listener(9090) {
             response.setJsonPayload(patient.body.toJson());
         }
         return response;
+    }
+
+    // medical center staff controllers .......................................................................................
+
+    // return initial informtion of a medical center staff member by userId
+    resource function get mcsMember(string userId) returns http:Response|error? {
+
+        model:MCSwithMedicalCenter|model:NotFoundError|model:InternalError result = 'service:getMCSMemberInformationService(userId.trim());
+        http:Response response = new;
+        if result is model:MCSwithMedicalCenter {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if result is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        } else if result is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        }
+        return response;
+
     }
 
 }

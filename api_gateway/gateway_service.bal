@@ -1,80 +1,33 @@
 import ballerina/http;
-// import ballerina/log;
 import ballerina/io;
+import ballerina/time;
 
-type Doctor record {
-    string name;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
-};
-
-type Patient record {
-    string name;
-    string dob;
-    string address;
-    string phone;
-    string email;
-};
-
-type Appointment record {
-    int appointmentNumber;
-    Doctor doctor;
-    Patient patient;
-    string hospital;
-    boolean paid;
-    string appointmentDate;
-};
-
-type PatientWithCardNo record {
-    *Patient;
-    string cardNo;
-};
-
-type ReservationRequest record {
-    PatientWithCardNo patient;
-    string doctor;
-    string hospital_id;
-    string hospital;
-    string appointment_date;
-};
-
-type Fee record {
-    string patientName;
-    string doctorName;
-    string actualFee;
-};
-
-type ReservationStatus record {
-    int appointmentNo;
-    string doctorName;
-    string patient;
-    decimal actualFee;
-    int discount;
-    decimal discounted;
-    string paymentID;
-    string status;
-};
-
-configurable string appointmentManagementService = "http://localhost:9090";
-configurable string paymentManagementService = "http://localhost:9090/healthcare/payments";
-
-final http:Client appointmentServicesEndpoint = check new (appointmentManagementService);
-final http:Client paymentEndpoint = check new (paymentManagementService);
+final http:Client clinicServiceEP = check new ("http://localhost:9090",
+    retryConfig = {
+        interval: 3,
+        count: 3,
+        backOffFactor: 0.5
+    }
+);
+final http:Client appointmentServiceEP = check new ("http://localhost:9091",
+    retryConfig = {
+        interval: 3,
+        count: 3,
+        backOffFactor: 0.5
+    }
+);
 
 configurable string issuer = ?;
 configurable string audience = ?;
 configurable string jwksUrl = ?;
-
-http:Client appointmentEP = check new ("http://localhost:9091");
 
 listener http:Listener httpListener = check new (9000);
 
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["*"]
-    },
+    }
+    ,
     auth: [
         {
             jwtValidatorConfig: {
@@ -98,12 +51,38 @@ service /patient on httpListener {
             scopes: ["insert_appointment"]
         }
     }
-    resource function get bymobile(string mobile) returns string|error? {
-        io:println("Inside Appointment");
-        json|http:ClientError patient = request.getJsonPayload();
-        io:println("Patient: ", patient);
+    resource function get appointments(string mobile) returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/appointments/[mobile];
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
 
-        return "Appointment Reserved Successfully";
+    resource function post appointment(NewAppointment newAppointment) returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/appointment.post(newAppointment);
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating appointment",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
     }
 
 }
