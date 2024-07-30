@@ -6,6 +6,7 @@ import ballerina/crypto;
 
 public function registerPatient(model:PatientSignupData data) returns model:ReturnMsg {
     model:ReturnMsg addPatientReturnMsg = {message: "", statusCode: 0};
+    io:println(data);
     if (data.fname.length() == 0) {
         addPatientReturnMsg.message = "First name cannot be empty";
         addPatientReturnMsg.statusCode = 400;
@@ -26,6 +27,11 @@ public function registerPatient(model:PatientSignupData data) returns model:Retu
         addPatientReturnMsg.statusCode = 400;
         return addPatientReturnMsg;
     }
+    else if (data.mobile.length() !== 9) {
+        addPatientReturnMsg.message = "Invalid Mobile Number";
+        addPatientReturnMsg.statusCode = 400;
+        return addPatientReturnMsg;
+    }
 
     else if(dao:isPatientExist(data.mobile) === true){
         addPatientReturnMsg.message="Mobile Number Already exist";
@@ -33,6 +39,7 @@ public function registerPatient(model:PatientSignupData data) returns model:Retu
         return addPatientReturnMsg;
     }
     else {
+        data.mobile ="0"+data.mobile;
         error?|json addPatientRecord = dao:patientRegistration(data);
         if addPatientRecord is error {
             addPatientReturnMsg.message = addPatientRecord.message();
