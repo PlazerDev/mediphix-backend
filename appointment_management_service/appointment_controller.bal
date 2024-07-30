@@ -26,7 +26,7 @@ service / on new http:Listener(9091) {
     }
 
     resource function get appointments/[string mobile]() returns http:Response|error {
-        model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError appointments = 'service:getAppointmentsByMobile(mobile);
+        model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError|error? appointments = 'service:getAppointmentsByMobile(mobile);
 
         http:Response response = new;
         if appointments is model:Appointment[] {
