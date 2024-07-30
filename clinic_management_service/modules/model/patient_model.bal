@@ -13,18 +13,6 @@ public type Address record {|
     string postal_code;
 |};
 
-public type Patient record {|
-    string mobile_number;
-    string first_name;
-    string last_name;
-    string nic;
-    string birthday;
-    string email;
-    string address;
-    string nationality;
-    string[] allergies;
-    string[] special_notes;
-|};
 
 public type Appointment record {|
     int appointmentNumber;
@@ -35,10 +23,3 @@ public type Appointment record {|
     string appointmentDate;
 |};
 
-public type Doctor record {
-    string name;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
-};
