@@ -11,7 +11,7 @@ public type ErrorDetails record {
 public type NotFoundError record {
     *http:NotFound;
     ErrorDetails body;
-}
+};
 
 public type UserNotFound record {
     *http:NotFound;

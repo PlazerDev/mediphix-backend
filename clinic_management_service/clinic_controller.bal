@@ -170,7 +170,6 @@ service / on new http:Listener(9090) {
             response.statusCode = 500;
             response.setJsonPayload(result.body.toJson());
         }
-        addCORSHeaders(response);
         return response;
 
     }
