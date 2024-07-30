@@ -1,61 +1,7 @@
 import ballerina/http;
 // import ballerina/log;
 import ballerina/io;
-
-type Doctor record {
-    string name;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
-};
-
-type Patient record {
-    string name;
-    string dob;
-    string address;
-    string phone;
-    string email;
-};
-
-type Appointment record {
-    int appointmentNumber;
-    Doctor doctor;
-    Patient patient;
-    string hospital;
-    boolean paid;
-    string appointmentDate;
-};
-
-type PatientWithCardNo record {
-    *Patient;
-    string cardNo;
-};
-
-type ReservationRequest record {
-    PatientWithCardNo patient;
-    string doctor;
-    string hospital_id;
-    string hospital;
-    string appointment_date;
-};
-
-type Fee record {
-    string patientName;
-    string doctorName;
-    string actualFee;
-};
-
-type ReservationStatus record {
-    int appointmentNo;
-    string doctorName;
-    string patient;
-    decimal actualFee;
-    int discount;
-    decimal discounted;
-    string paymentID;
-    string status;
-};
+import ballerina/time;
 
 final http:Client clinicServiceEP = check new ("http://localhost:9090",
     retryConfig = {
@@ -106,11 +52,38 @@ service /patient on httpListener {
             scopes: ["insert_appointment"]
         }
     }
-    resource function get bymobile(string mobile) returns http:Response|error? {
-        io:println("Inside Appointment");
-        http:Response|error? appointments = check appointmentServiceEP->/appointments/[mobile];
-        io:println(appointments);
-        return appointments;
+    resource function get appointments(string mobile) returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/appointments/[mobile];
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+    resource function post appointment(NewAppointment newAppointment) returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/appointment.post(newAppointment);
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating appointment",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
     }
 
 }

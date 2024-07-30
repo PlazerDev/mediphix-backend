@@ -262,6 +262,9 @@ version = "2.4.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
+modules = [
+	{org = "ballerina", packageName = "time", moduleName = "time"}
+]
 
 [[package]]
 org = "ballerina"
@@ -290,6 +293,7 @@ version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "time"},
 	{org = "ballerinai", name = "observe"}
 ]
 modules = [
