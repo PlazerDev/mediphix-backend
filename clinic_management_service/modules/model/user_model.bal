@@ -68,6 +68,8 @@ public type PatientSignupData record {|
     string nationality;
     string nic;
     string address;
+    string password;
+    string confirmpass;
 |};
 
 public type DoctorSignupData record {|

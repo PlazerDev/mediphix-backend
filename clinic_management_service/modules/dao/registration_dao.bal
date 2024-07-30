@@ -86,17 +86,18 @@ public function patientRegistration(model:PatientSignupData data) returns error?
                 familyName: data.lname
             },
             userName: "DEFAULT/" + data.email,
-            password: "Visal@9988",
+            password: data.password,
             emails: [
                 {
                     value: data.email,
                     primary: true
                 }
             ],
-            phoneNumbers: [
+            "phoneNumbers": [
                 {
+                    "type": "mobile",
                     value: data.mobile
-                }              
+                }
             ],
 
             "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
