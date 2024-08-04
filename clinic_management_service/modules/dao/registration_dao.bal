@@ -80,37 +80,56 @@ public function patientRegistration(model:PatientSignupData data) returns error?
     else {
         string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
         json userData = {
-            schemas: [],
-            name: {
-                givenName: data.fname,
-                familyName: data.lname
+            "schemas": [],
+            "name": {
+                "givenName": data.fname,
+                "familyName": data.lname
             },
-            userName: "DEFAULT/" + data.email,
-            password: data.password,
-            emails: [
+            "userName": "DEFAULT/" + data.email,
+            "password": data.password,
+            "emails": [
                 {
-                    value: data.email,
-                    primary: true
+                    "value": data.email,
+                    "primary": true
                 }
             ],
             "phoneNumbers": [
                 {
                     "type": "mobile",
-                    value: data.mobile
+                    "value": data.mobile
                 }
             ],
-
             "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
-                manager: {
-                    value: ""
+                "manager": {
+                    "value": ""
                 }
             },
             "urn:scim:wso2:schema": {
-                verifyEmail: false
-            }
+                "verifyEmail": false
+            },
+            "roles": [
+                {
+                    "type": "default",
+                    "value": "Internal/Patient"
+                }
+            ]
         };
+
         json|error? resp = addUser(scimEndpoint, bToken, userData);
-        return resp;
+        if resp is error {
+            mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
+            if deleteOne is mongodb:DatabaseError {
+                return deleteOne;
+            }
+            else {
+                
+            return resp;
+            }
+        }
+        else {
+            return resp;
+        }
+
     }
 }
 

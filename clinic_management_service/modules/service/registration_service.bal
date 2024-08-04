@@ -6,7 +6,6 @@ import ballerina/crypto;
 
 public function registerPatient(model:PatientSignupData data) returns model:ReturnMsg {
     model:ReturnMsg addPatientReturnMsg = {message: "", statusCode: 0};
-    io:println(data);
     if (data.fname.length() == 0) {
         addPatientReturnMsg.message = "First name cannot be empty";
         addPatientReturnMsg.statusCode = 400;
