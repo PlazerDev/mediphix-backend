@@ -13,8 +13,13 @@ configurable string clientId = ?;
 configurable string clientSecret = ?;
 configurable string bearerTokenEndpoint = ?;
 configurable string scimEndpoint = ?;
+configurable string doctorRoleId = ?;
+configurable string patientRoleId = ?;
+configurable string mcsRoleId = ?;
+
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+string endPoint = string `https://api.asgardeo.io/t/mediphix`;
 
 # Description.
 #
@@ -30,12 +35,13 @@ public isolated function fetchBeareToken(string tokenEndpoint, string clientId, 
     tokenRequest.setHeader("Content-Type", "application/json");
     tokenRequest.setPayload({
         "grant_type": "client_credentials",
-        "scope": "internal_user_mgt_create"
+        "scope": "internal_user_mgt_create internal_user_mgt_list internal_user_mgt_view internal_role_mgt_update internal_role_mgt_view"
     });
     json resp = check clientEndpoint->post("/oauth2/token", tokenRequest);
     string accessToken = check resp.access_token;
     return accessToken;
 }
+
 
 # Description.
 #
@@ -55,6 +61,7 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
 
     return resp;
 }
+
 
 # Description-This function used for search the role and get the role id.
 #
@@ -79,13 +86,85 @@ public isolated function searchRole(string token, string roleName) returns error
     tokenRequest.setHeader("Accept", "application/scim+json");
 
     tokenRequest.setPayload(payload);
-    model:SearchRoleResponse resp = check clientEndpoint->post("/scim2/v2/Roles/.search", tokenRequest);
+    model:scimSearchResponse resp = check clientEndpoint->post("/scim2/v2/Roles/.search", tokenRequest);
     io:println(resp);
     string roleId = check resp.Resources[0].id;
     return roleId;
 }
 
 
+# this function use for get the userID using the email
+#
+# + tokenEndpoint - token endpoint  
+# + token - bearer token  
+# + email - user email
+# + return - return the user ID string
+public isolated function searchUser(string tokenEndpoint, string token, string email) returns error|string {
+    final http:Client clientEndpoint = check new (tokenEndpoint);
+    json payload = {
+
+        "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:SearchRequest"
+        ],
+        "attributes": [
+
+            "id"
+        ],
+        "filter": string `emails eq ${email}`,
+        "domain": "DEFAULT",
+        "startIndex": 1
+
+    };
+    string authHeader = string `Bearer ${token}`;
+    http:Request tokenRequest = new;
+    tokenRequest.setHeader("Authorization", authHeader);
+    tokenRequest.setHeader("Content-Type", "application/scim+json");
+    tokenRequest.setHeader("Accept", "application/scim+json");
+    tokenRequest.setPayload(payload);
+    model:scimSearchResponse resp = check clientEndpoint->post("/scim2/Users/.search", tokenRequest);
+    io:println(resp);
+    string userId = check resp.Resources[0].id;
+    return userId;
+}
+
+
+# send patch request to update user role.
+#
+# + token - bearer token 
+# + userId - userID get from the searchUser function
+# + roleId - roleID get from the searchRole function
+# + return - return the response from the asgardio
+public isolated function updateRole(string token, string userId, string roleId) returns json|error {
+    string tokenEndPonit = string `https://api.asgardeo.io/t/mediphix/scim2`;
+    json payload = {
+        "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+
+            {
+                "op": "add",
+                "path": "users",
+                "value": [
+                    {
+                        "value": userId
+                    }
+                ]
+            }
+
+        ]
+    };
+    final http:Client clientEndpoint = check new (tokenEndPonit);
+    string authHeader = string `Bearer ${token}`;
+    http:Request tokenRequest = new;
+    tokenRequest.setHeader("Authorization", authHeader);
+    tokenRequest.setHeader("Content-Type", "application/scim+json");
+    tokenRequest.setHeader("Accept", "application/scim+json");
+    tokenRequest.setPayload(payload);
+    string endPoint = string `/v2/Roles/${roleId}`;
+    json resp = check clientEndpoint->patch(endPoint, tokenRequest);
+    return resp;
+}
 
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -137,27 +216,38 @@ public function patientRegistration(model:PatientSignupData data) returns error?
             },
             "urn:scim:wso2:schema": {
                 "verifyEmail": false
-            },
-            "roles": [
-                {
-                    "type": "default",
-                    "value": "Internal/Patient"
-                }
-            ]
+            }
         };
-
-        json|error? resp = addUser(scimEndpoint, bToken, userData);
+        json|error? resp = addUser(endPoint, bToken, userData);
         if resp is error {
             mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
             if deleteOne is mongodb:DatabaseError {
-                return deleteOne;
+   
+                deleteOne = patientCollection->deleteOne(patient);
             }
             else {
-
+                
                 return resp;
             }
         }
         else {
+            string userId = check searchUser(endPoint, bToken, data.email);
+            json|error? roleUpdateResponse = updateRole(bToken, userId, patientRoleId);
+            if roleUpdateResponse is error {
+                mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
+                if deleteOne is mongodb:DatabaseError {
+                    deleteOne = patientCollection->deleteOne(patient);
+                }
+                else {
+                    
+                    return deleteOne;
+                }
+            }
+            else {
+                return roleUpdateResponse;
+            }
+            io:println(roleUpdateResponse);
+       
             return resp;
         }
 
