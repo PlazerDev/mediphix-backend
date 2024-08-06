@@ -56,6 +56,37 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
     return resp;
 }
 
+# Description-This function used for search the role and get the role id.
+#
+# + token - Bearer token  
+# + roleName - Role name to be search..this name should be same as the role name in the asgardio
+# + return - return the role ID string
+public isolated function searchRole(string token, string roleName) returns error|string {
+    string endPoint = string `https://api.asgardeo.io/t/mediphix/scim2/v2/Roles/.search`;
+    json payload = {
+        "schemas": [
+            "urn:ietf:params:scim:api:messages:2.0:SearchRequest"
+        ],
+        "startIndex": 1,
+        "count": 10,
+        "filter": string `displayName eq ${roleName}`
+    };
+    final http:Client clientEndpoint = check new (endPoint);
+    string authHeader = string `Bearer ${token}`;
+    http:Request tokenRequest = new;
+    tokenRequest.setHeader("Authorization", authHeader);
+    tokenRequest.setHeader("Content-Type", "application/scim+json");
+    tokenRequest.setHeader("Accept", "application/scim+json");
+
+    tokenRequest.setPayload(payload);
+    model:SearchRoleResponse resp = check clientEndpoint->post("/scim2/v2/Roles/.search", tokenRequest);
+    io:println(resp);
+    string roleId = check resp.Resources[0].id;
+    return roleId;
+}
+
+
+
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
@@ -122,8 +153,8 @@ public function patientRegistration(model:PatientSignupData data) returns error?
                 return deleteOne;
             }
             else {
-                
-            return resp;
+
+                return resp;
             }
         }
         else {
