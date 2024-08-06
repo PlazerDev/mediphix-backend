@@ -16,7 +16,7 @@ configurable string scimEndpoint = ?;
 configurable string doctorRoleId = ?;
 configurable string patientRoleId = ?;
 configurable string mcsRoleId = ?;
-
+configurable string laborataryRoleId = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 string endPoint = string `https://api.asgardeo.io/t/mediphix`;
@@ -42,7 +42,6 @@ public isolated function fetchBeareToken(string tokenEndpoint, string clientId, 
     return accessToken;
 }
 
-
 # Description.
 #
 # + tokenEndpoint - asgardio SCIM API endpoint
@@ -61,7 +60,6 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
 
     return resp;
 }
-
 
 # Description-This function used for search the role and get the role id.
 #
@@ -91,7 +89,6 @@ public isolated function searchRole(string token, string roleName) returns error
     string roleId = check resp.Resources[0].id;
     return roleId;
 }
-
 
 # this function use for get the userID using the email
 #
@@ -126,7 +123,6 @@ public isolated function searchUser(string tokenEndpoint, string token, string e
     string userId = check resp.Resources[0].id;
     return userId;
 }
-
 
 # send patch request to update user role.
 #
@@ -222,11 +218,11 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         if resp is error {
             mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
             if deleteOne is mongodb:DatabaseError {
-   
+
                 deleteOne = patientCollection->deleteOne(patient);
             }
             else {
-                
+
                 return resp;
             }
         }
@@ -239,7 +235,7 @@ public function patientRegistration(model:PatientSignupData data) returns error?
                     deleteOne = patientCollection->deleteOne(patient);
                 }
                 else {
-                    
+
                     return deleteOne;
                 }
             }
@@ -247,14 +243,14 @@ public function patientRegistration(model:PatientSignupData data) returns error?
                 return roleUpdateResponse;
             }
             io:println(roleUpdateResponse);
-       
+
             return resp;
         }
 
     }
 }
 
-public function doctorRegistration(model:DoctorSignupData data) returns error? {
+public function doctorRegistration(model:DoctorSignupData data) returns ()|error?|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
@@ -272,6 +268,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns error? {
         availability: "not assigned",
         fee: 0.0,
         verified: false
+
     };
     model:User doctorUser = {
         email: data.email,
@@ -283,9 +280,65 @@ public function doctorRegistration(model:DoctorSignupData data) returns error? {
         return insertedUser;
     }
     else {
-        return check doctorCollection->insertOne(doctor);
-    }
+        error? insertedDoctor = doctorCollection->insertOne(doctor);
+        if (insertedDoctor is error) {
+            mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(doctorUser);
+            mongodb:DeleteResult|mongodb:Error deletedDoctor = doctorCollection->deleteOne(doctor);
+            return insertedDoctor;
+        }
+        else {
+            string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
+            json userData = {
+                "schemas": [],
+                "name": {
+                    "givenName": data.name
 
+                },
+                "userName": "DEFAULT/" + data.email,
+                "password": data.password,
+                "emails": [
+                    {
+                        "value": data.email,
+                        "primary": true
+                    }
+                ],
+                "phoneNumbers": [
+                    {
+                        "type": "mobile",
+                        "value": data.mobile
+                    }
+                ],
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                    "manager": {
+                        "value": ""
+                    }
+                },
+                "urn:scim:wso2:schema": {
+                    "verifyEmail": false
+                }
+            };
+            json|error? resp = addUser(endPoint, bToken, userData);
+            if resp is error {
+                mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(doctorUser);
+                mongodb:DeleteResult|mongodb:Error deletedDoctor = doctorCollection->deleteOne(doctor);
+                return resp;
+            }
+            else {
+                string userId = check searchUser(endPoint, bToken, data.email);
+                json|error? roleUpdateResponse = updateRole(bToken, userId, doctorRoleId);
+                if roleUpdateResponse is error {
+                    mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(doctorUser);
+                    mongodb:DeleteResult|mongodb:Error deletedDoctor = doctorCollection->deleteOne(doctor);
+                    return roleUpdateResponse;
+                }
+                else {
+                    return ();
+                }
+                
+            }
+        }
+
+    }
 }
 
 public function medicalCenterRegistration(model:otherSignupData data) returns error? {

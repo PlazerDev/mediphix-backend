@@ -82,8 +82,8 @@ public type DoctorSignupData record {|
     string email;
     string password;
     string confirmpass;
-    byte idfront;
-    byte idback;
+    string idfront;
+    string idback;
 |};
 
 //this is used for laboratory and medical centers
