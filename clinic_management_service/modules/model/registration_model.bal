@@ -104,3 +104,12 @@ public type ReturnMsg record {|
     int statusCode;
 |};
 
+public type scimSearchResponse record {|
+    json[] Resources;
+    int totalResults;
+    int startIndex;
+    int itemsPerPage;
+    string[] schemas;
+|};
+
+
