@@ -367,7 +367,56 @@ public function medicalCenterRegistration(model:otherSignupData data) returns er
         return insertedUser;
     }
     else {
-        return check medicalCenterCollection->insertOne(mc);
+        string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
+            json userData = {
+                "schemas": [],
+                "name": {
+                    "givenName": data.name
+
+                },
+                "userName": "DEFAULT/" + data.email,
+                "password": data.password,
+                "emails": [
+                    {
+                        "value": data.email,
+                        "primary": true
+                    }
+                ],
+                "phoneNumbers": [
+                    {
+                        "type": "mobile",
+                        "value": data.mobile
+                    }
+                ],
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                    "manager": {
+                        "value": ""
+                    }
+                },
+                "urn:scim:wso2:schema": {
+                    "verifyEmail": false
+                }
+            };
+            json|error? resp = addUser(endPoint, bToken, userData);
+            if resp is error {
+                mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+                mongodb:DeleteResult|mongodb:Error deletedMC = medicalCenterCollection->deleteOne(mc);
+                return resp;
+            }
+            else {
+                string userId = check searchUser(endPoint, bToken, data.email);
+                json|error? roleUpdateResponse = updateRole(bToken, userId, mcsRoleId);
+                if roleUpdateResponse is error {
+                    mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+                    mongodb:DeleteResult|mongodb:Error deletedMC = medicalCenterCollection->deleteOne(mc);
+                    return roleUpdateResponse;
+                }
+                else {
+                    return ();
+                }
+                
+            }
+       
     }
 
 }
@@ -398,7 +447,55 @@ public function laborataryRegistration(model:otherSignupData data) returns error
         return insertedUser;
     }
     else {
-        return check laborataryCollection->insertOne(lab);
+        string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
+            json userData = {
+                "schemas": [],
+                "name": {
+                    "givenName": data.name
+
+                },
+                "userName": "DEFAULT/" + data.email,
+                "password": data.password,
+                "emails": [
+                    {
+                        "value": data.email,
+                        "primary": true
+                    }
+                ],
+                "phoneNumbers": [
+                    {
+                        "type": "mobile",
+                        "value": data.mobile
+                    }
+                ],
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                    "manager": {
+                        "value": ""
+                    }
+                },
+                "urn:scim:wso2:schema": {
+                    "verifyEmail": false
+                }
+            };
+            json|error? resp = addUser(endPoint, bToken, userData);
+            if resp is error {
+                mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+                mongodb:DeleteResult|mongodb:Error deletedLab = laborataryCollection->deleteOne(lab);
+                return resp;
+            }
+            else {
+                string userId = check searchUser(endPoint, bToken, data.email);
+                json|error? roleUpdateResponse = updateRole(bToken, userId, laborataryRoleId);
+                if roleUpdateResponse is error {
+                    mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+                    mongodb:DeleteResult|mongodb:Error deletedLab = laborataryCollection->deleteOne(lab);
+                    return roleUpdateResponse;
+                }
+                else {
+                    return ();
+                }
+                
+            }
     }
 
 }
