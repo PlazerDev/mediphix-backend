@@ -7,7 +7,7 @@ public type ErrorDetails record {
     time:Utc timeStamp;
 };
 
-public type UserNotFound record {
+public type NotFoundError record {
     *http:NotFound;
     ErrorDetails body;
 };
