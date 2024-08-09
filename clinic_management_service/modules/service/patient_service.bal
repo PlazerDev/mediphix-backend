@@ -17,7 +17,7 @@ function savepatientService(model:Patient patient) {
     // }
 }
 
-public function getPatient(string mobile) returns model:Patient|model:ValueError|model:UserNotFound|model:InternalError {
+public function getPatient(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
 
     if (mobile.length() === 0) {
         model:ErrorDetails errorDetails = {
@@ -42,8 +42,8 @@ public function getPatient(string mobile) returns model:Patient|model:ValueError
     //     };
     //     return valueError;
     // }
-    model:Patient|model:UserNotFound|error? patient = dao:getPatient(mobile);
-    if patient is model:Patient|model:UserNotFound {
+    model:Patient|model:NotFoundError|error? patient = dao:getPatient(mobile);
+    if patient is model:Patient|model:NotFoundError {
         return patient;
     } else if patient is error {
         model:ErrorDetails errorDetails = {
