@@ -26,7 +26,7 @@ service / on new http:Listener(9091) {
     }
 
     resource function get appointments/[string mobile]() returns http:Response|error {
-        model:Appointment[]|model:InternalError|model:UserNotFound|model:ValueError|error? appointments = 'service:getAppointmentsByMobile(mobile);
+        model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByMobile(mobile);
 
         http:Response response = new;
         if appointments is model:Appointment[] {
@@ -35,12 +35,36 @@ service / on new http:Listener(9091) {
         } else if appointments is model:InternalError {
             response.statusCode = 500;
             response.setJsonPayload(appointments.body.toJson());
-        } else if appointments is model:UserNotFound {
+        } else if appointments is model:NotFoundError {
             response.statusCode = 404;
             response.setJsonPayload(appointments.body.toJson());
         } else if appointments is model:ValueError {
             response.statusCode = 406;
             response.setJsonPayload(appointments.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error"});
+        }
+
+        return response;
+    }
+
+    resource function put appointment/status/[string mobile]/[int appointmentNumber]/[model:AppointmentStatus status]() returns http:Response|error {
+        http:Ok|model:InternalError|model:ValueError|model:NotFoundError|error appointmentUpdateStatus = 'service:updateAppointmentStatus(mobile, appointmentNumber, status);
+
+        http:Response response = new;
+        if appointmentUpdateStatus is http:Ok {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Appointment status updated successfully"});
+        } else if appointmentUpdateStatus is model:ValueError {
+            response.statusCode = 406;
+            response.setJsonPayload(appointmentUpdateStatus.body.toJson());
+        }else if appointmentUpdateStatus is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(appointmentUpdateStatus.body.toJson());
+        } else if appointmentUpdateStatus is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(appointmentUpdateStatus.body.toJson());
         } else {
             response.statusCode = 500;
             response.setJsonPayload({message: "Internal server error"});
