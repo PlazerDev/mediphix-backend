@@ -31,7 +31,7 @@ public function savePatient(model:Patient patient) returns error? {
     }
 }
 
-public function getPatient(string mobile) returns model:Patient|model:UserNotFound|error? {
+public function getPatient(string mobile) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"mobile_number": mobile};
@@ -42,7 +42,7 @@ public function getPatient(string mobile) returns model:Patient|model:UserNotFou
             details: string `patient/${mobile}`,
             timeStamp: time:utcNow()
         };
-        model:UserNotFound userNotFound = {body: errorDetails};
+        model:NotFoundError userNotFound = {body: errorDetails};
 
         return userNotFound;
     }
