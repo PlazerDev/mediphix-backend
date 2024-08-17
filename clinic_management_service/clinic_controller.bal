@@ -134,7 +134,7 @@ service / on new http:Listener(9090) {
     }
     // Get patient with mobile number
     resource function get patient(string mobile) returns http:Response|error? {
-        model:Patient|model:ValueError|model:UserNotFound|model:InternalError patient = 'service:getPatient(mobile.trim());
+        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatient(mobile.trim());
 
         http:Response response = new;
         if patient is model:Patient {
@@ -143,7 +143,7 @@ service / on new http:Listener(9090) {
         } else if patient is model:ValueError {
             response.statusCode = 406;
             response.setJsonPayload(patient.body.toJson());
-        } else if patient is model:UserNotFound {
+        } else if patient is model:NotFoundError {
             response.statusCode = 404;
             response.setJsonPayload(patient.body.toJson());
         } else if patient is model:InternalError {

@@ -1,5 +1,4 @@
 import appointment_management_service.model;
-
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
@@ -63,7 +62,7 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
 
 }
 
-public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:UserNotFound|error? {
+public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
@@ -80,8 +79,69 @@ public function getAppointmentsByMobile(string mobile) returns model:Appointment
             details: string `appointment/${mobile}`,
             timeStamp: time:utcNow()
         };
-        model:UserNotFound userNotFound = {body: errorDetails};
+        model:NotFoundError userNotFound = {body: errorDetails};
         return userNotFound;
     }
 
+}
+
+public function getAppointmentByMobileAndNumber(string mobile, string appointmentNumber) returns model:Appointment|model:InternalError|model:NotFoundError|error {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    map<json> filter = {"patientMobile": mobile};
+    model:Appointment|error? findResults = check appointmentCollection->findOne(filter, {}, (), model:Appointment);
+    if findResults is model:Appointment {
+        return findResults;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find the appointment for the given mobile number and appointment number",
+            details: string `appointment/${mobile}/${appointmentNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError appointmentNotFound = {body: errorDetails};
+        return appointmentNotFound;
+    }
+
+}
+
+public function updateAppointmentStatus(string mobile, int appointmentNumber, model:AppointmentStatus status) returns http:Ok|model:InternalError|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    map<json> filter = {"patientMobile": mobile, "appointmentNumber": appointmentNumber};
+    mongodb:Update update = {"set": {"status": string `${status}`}};
+    mongodb:UpdateOptions options = {};
+    mongodb:UpdateResult|error result = appointmentCollection->updateOne(filter, update, options);
+    if (result is mongodb:UpdateResult) {
+        if (result.matchedCount == 0) {
+            log:printError("Failed to find the appointment for the given mobile number and appointment number");
+            model:ErrorDetails errorDetails = {
+                message: "Failed to find the appointment for the given mobile number and appointment number",
+                details: string `appointment/${mobile}/${appointmentNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:NotFoundError appointmentNotFound = {body: errorDetails};
+            return appointmentNotFound;
+        } else if (result.modifiedCount == 0) {
+            log:printError("Failed to update the appointment status");
+            model:ErrorDetails errorDetails = {
+                message: "Failed to update the appointment status",
+                details: string `appointment/${mobile}/${appointmentNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
+        log:printInfo("Update successful.");
+        return http:OK;
+    }
+    else {
+        log:printError("Update failed.", result);
+        model:ErrorDetails errorDetails = {
+            message: "Failed to update the appointment status",
+            details: string `appointment/${mobile}/${appointmentNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
 }

@@ -85,6 +85,7 @@ service /patient on httpListener {
         return errorResponse;
     }
 
+
 }
 
 @http:ServiceConfig {
@@ -120,6 +121,51 @@ service /doctor on httpListener {
         io:println("Patient: ", patient);
 
         return "Appointment Reserved Successfully";
+    }
+
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    },
+    auth: [
+        {
+            jwtValidatorConfig: {
+                issuer: issuer,
+                audience: audience,
+                signatureConfig: {
+                    jwksConfig: {
+                        url: jwksUrl
+                    }
+                }
+            },
+            scopes: ["update_appointment_status"]
+        }
+    ]
+}
+service /receptionist on httpListener {
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["update_appointment_status"]
+        }
+    }
+    resource function put appointment/status(string mobile, int appointmentNumber, AppointmentStatus status) returns http:Response|error {
+        http:Response|error response = check appointmentServiceEP->/appointment/status/[mobile]/[appointmentNumber]/[status];
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while updating appointment status",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
     }
 
 }

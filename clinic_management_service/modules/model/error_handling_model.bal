@@ -13,11 +13,6 @@ public type NotFoundError record {
     ErrorDetails body;
 };
 
-public type UserNotFound record {
-    *http:NotFound;
-    ErrorDetails body;
-};
-
 public type ValueError record {
     *http:NotAcceptable;
     ErrorDetails body;

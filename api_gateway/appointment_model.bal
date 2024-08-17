@@ -9,14 +9,39 @@ public enum AppointmentStatus {
     CANCELLED
 };
 
+public enum AppointmentCategory {
+    GENERAL_MEDICINE,
+    CARDIOLOGY,
+    ORTHOPEDICS,
+    PEDIATRICS,
+    GYNECOLOGY_OBSTETRICS,
+    DERMATOLOGY,
+    ENT,
+    NEUROLOGY,
+    GASTROENTEROLOGY,
+    PULMONOLOGY,
+    ONCOLOGY,
+    ENDOCRINOLOGY,
+    NEPHROLOGY,
+    UROLOGY,
+    PSYCHIATRY_MENTAL_HEALTH,
+    OPHTHALMOLOGY,
+    DENTISTRY,
+    PHYSICAL_THERAPY_REHABILITATION,
+    ALLERGY_IMMUNOLOGY,
+    RADIOLOGY,
+    GERIATRICS,
+    EMERGENCY_MEDICINE,
+    OCCUPATIONAL_HEALTH
+};
+
 public type NewAppointment record {
     string doctorEmail;
     string patientMobile;
     int doctorSessionId;
-    int category;
+    AppointmentCategory category;
     string hospital;
     boolean paid;
-    AppointmentStatus status;
     string appointmentDate;
     string appointmentTime;
 };
@@ -26,7 +51,7 @@ public type Appointment record {
     string doctorEmail;
     string patientMobile;
     int doctorSessionId;
-    int category;
+    AppointmentCategory category;
     string hospital;
     boolean paid;
     AppointmentStatus status;
@@ -40,3 +65,4 @@ public type AppointmentNumberCounter record {
     string _id;
     int sequence_value;
 };
+
