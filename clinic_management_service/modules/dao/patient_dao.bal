@@ -1,8 +1,8 @@
 import clinic_management_service.model;
 
+// import ballerina/io;
 import ballerina/time;
 import ballerinax/mongodb;
-
 
 public function savePatient(model:Patient patient) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -47,5 +47,34 @@ public function getPatient(string mobile) returns model:Patient|model:NotFoundEr
         return userNotFound;
     }
     return findResults;
+}
+
+public function getAppointments(string mobile) returns model:Appointment[]|error|model:ReturnResponse {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    map<json> filter = {
+        "patientMobile": mobile,
+        "status": "ACTIVE"
+    };
+    mongodb:FindOptions findOptions = {
+        sort: {"appointmentDate": 1} // Sort by appointmentDate in ascending order
+    };
+    stream<model:Appointment, error?>|error? findResults = appointmentCollection->find(filter, findOptions, (), model:Appointment);
+
+    if findResults is stream<model:Appointment, error?> {
+        model:Appointment[]|error appointments = from model:Appointment appointment in findResults
+            select appointment;
+        return appointments;
+
+    }
+
+    else {
+        model:ReturnResponse returnResponse = {
+            message: "Database error occurred",
+            statusCode: 500
+        };
+        return returnResponse;
+    }
+
 }
 

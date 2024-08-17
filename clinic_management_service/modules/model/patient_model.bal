@@ -1,4 +1,5 @@
-
+// import ballerina/time;
+import ballerina/time;
 
 public type PatientWithCardNo record {
     *Patient;
@@ -14,12 +15,29 @@ public type Address record {|
 |};
 
 
+
+
 public type Appointment record {|
     int appointmentNumber;
-    Doctor doctor;
-    Patient patient;
+    string doctorEmail;
+    string patientMobile;
+    int doctorSessionId;
+    int category;
     string hospital;
     boolean paid;
+    AppointmentStatus status;
     string appointmentDate;
+    string appointmentTime;
+    time:Date createdTime;
+    time:Date lastModifiedTime;
 |};
 
+
+public enum AppointmentStatus {
+    ACTIVE,
+    PAID,
+    INQUEUE,
+    ONGOING,
+    OVER,
+    CANCELLED
+};
