@@ -153,6 +153,22 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    // Get appointments of a patient
+    resource function get appointments(string mobile) returns http:Response|error {
+        model:Appointment[]|model:ReturnResponse appointments = check 'service:getAppointments(mobile);
+
+        http:Response response = new;
+        if appointments is model:Appointment[] {
+            response.statusCode = 200;
+            response.setJsonPayload(appointments.toJson());
+        } else if appointments is model:ReturnResponse {
+            response.statusCode = 404;
+            response.setJsonPayload(appointments.toJson());
+        }
+        io:println(appointments);
+        return response;
+    }
+
     // medical center staff controllers .......................................................................................
 
     // return initial informtion of a medical center staff member by userId

@@ -1,21 +1,7 @@
 import clinic_management_service.dao;
 import clinic_management_service.model;
+
 import ballerina/time;
-
-
-function savepatientService(model:Patient patient) {
-
-    error? savepatientResult = dao:savePatient(patient);
-    if savepatientResult is error {
-
-    }
-
-    // do {
-    //     mongodb:Client mongoDb = check new (connection = "mongodb+srv://username:password");
-    // } on fail var e {
-
-    // }
-}
 
 public function getPatient(string mobile) returns model:Patient|model:ValueError|model:UserNotFound|model:InternalError {
 
@@ -62,5 +48,20 @@ public function getPatient(string mobile) returns model:Patient|model:ValueError
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
+
+}
+
+public function getAppointments(string mobile) returns model:ReturnResponse|model:Appointment[]|error {
+
+    if (mobile.length() === 0) {
+        model:ReturnResponse returnResponse = {
+            message: "Please provide a mobile number",
+            statusCode: "400"
+        };
+        return returnResponse;
+    }
+
+    model:Appointment[]|model:ReturnResponse appointments = check dao:getAppointments(mobile) ;
+    return  appointments;
 
 }

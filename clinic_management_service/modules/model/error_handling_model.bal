@@ -27,3 +27,9 @@ public type InternalError record {
     *http:InternalServerError;
     ErrorDetails body;
 };
+
+public type ReturnResponse record {|
+    string message;
+    string statusCode;
+    
+|};
