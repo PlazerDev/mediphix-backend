@@ -28,8 +28,8 @@ public type InternalError record {
     ErrorDetails body;
 };
 
-public type ReturnResponse record {|
+public type ReturnResponse record {
     string message;
-    string statusCode;
+    int statusCode;
     
-|};
+};

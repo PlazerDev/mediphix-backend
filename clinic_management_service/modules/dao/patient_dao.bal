@@ -52,8 +52,14 @@ public function getPatient(string mobile) returns model:Patient|model:UserNotFou
 public function getAppointments(string mobile) returns model:Appointment[]|error|model:ReturnResponse {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
-    map<json> filter = {"patientMobile": mobile};
-    stream<model:Appointment, error?>|error? findResults =  appointmentCollection->find(filter, {}, (), model:Appointment);
+    map<json> filter = {
+        "patientMobile": mobile,
+        "status": "ACTIVE"
+    };
+    mongodb:FindOptions findOptions = {
+        sort: {"appointmentDate": 1} // Sort by appointmentDate in ascending order
+    };
+    stream<model:Appointment, error?>|error? findResults = appointmentCollection->find(filter, findOptions, (), model:Appointment);
 
     if findResults is stream<model:Appointment, error?> {
         model:Appointment[]|error appointments = from model:Appointment appointment in findResults
@@ -61,10 +67,11 @@ public function getAppointments(string mobile) returns model:Appointment[]|error
         return appointments;
 
     }
+
     else {
         model:ReturnResponse returnResponse = {
-            message: "Failed to find appointments for the user",
-            statusCode: "500"
+            message: "Database error occurred",
+            statusCode: 500
         };
         return returnResponse;
     }

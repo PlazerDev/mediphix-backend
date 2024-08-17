@@ -56,12 +56,17 @@ public function getAppointments(string mobile) returns model:ReturnResponse|mode
     if (mobile.length() === 0) {
         model:ReturnResponse returnResponse = {
             message: "Please provide a mobile number",
-            statusCode: "400"
+            statusCode: 400
         };
         return returnResponse;
     }
 
-    model:Appointment[]|model:ReturnResponse appointments = check dao:getAppointments(mobile) ;
-    return  appointments;
+    model:Appointment[]|model:ReturnResponse appointments = check dao:getAppointments(mobile);
+    if appointments is model:Appointment[] {
+        return appointments;
+    } else if appointments is model:ReturnResponse {
+        return appointments;
+    } 
+    
 
 }

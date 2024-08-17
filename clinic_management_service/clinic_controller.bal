@@ -162,7 +162,7 @@ service / on new http:Listener(9090) {
             response.statusCode = 200;
             response.setJsonPayload(appointments.toJson());
         } else if appointments is model:ReturnResponse {
-            response.statusCode = 404;
+            response.statusCode = appointments.statusCode;
             response.setJsonPayload(appointments.toJson());
         }
         io:println(appointments);
