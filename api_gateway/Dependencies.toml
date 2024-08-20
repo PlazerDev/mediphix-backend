@@ -10,7 +10,7 @@ distribution-version = "2201.9.0"
 [[package]]
 org = "ballerina"
 name = "auth"
-version = "2.11.0"
+version = "2.11.2"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -93,7 +93,7 @@ modules = [
 [[package]]
 org = "ballerina"
 name = "io"
-version = "1.6.0"
+version = "1.6.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"}
@@ -119,6 +119,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.string"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "jwt", moduleName = "jwt"}
 ]
 
 [[package]]
@@ -205,6 +208,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
 ]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
+]
 
 [[package]]
 org = "ballerina"
@@ -287,14 +293,29 @@ modules = [
 ]
 
 [[package]]
+org = "ballerinax"
+name = "redis"
+version = "3.0.2"
+dependencies = [
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "jballerina.java"}
+]
+modules = [
+	{org = "ballerinax", packageName = "redis", moduleName = "redis"}
+]
+
+[[package]]
 org = "sashm"
 name = "api_gateway"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jwt"},
+	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "time"},
-	{org = "ballerinai", name = "observe"}
+	{org = "ballerinai", name = "observe"},
+	{org = "ballerinax", name = "redis"}
 ]
 modules = [
 	{org = "sashm", packageName = "api_gateway", moduleName = "api_gateway"}

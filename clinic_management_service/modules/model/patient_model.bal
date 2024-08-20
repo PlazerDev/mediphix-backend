@@ -1,6 +1,19 @@
 // import ballerina/time;
 import ballerina/time;
 
+public type Patient record {|
+    string mobile_number;
+    string first_name;
+    string last_name;
+    string nic;
+    string birthday;
+    string email;
+    string address;
+    string nationality;
+    string[] allergies?;
+    string[] special_notes?;
+|};
+
 public type PatientWithCardNo record {
     *Patient;
     string cardNo;

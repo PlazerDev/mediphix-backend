@@ -3,7 +3,7 @@ import clinic_management_service.model;
 
 import ballerina/time;
 
-public function getPatient(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
+public function getPatientByMobile(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
 
     if (mobile.length() === 0) {
         model:ErrorDetails errorDetails = {
@@ -28,7 +28,7 @@ public function getPatient(string mobile) returns model:Patient|model:ValueError
     //     };
     //     return valueError;
     // }
-    model:Patient|model:NotFoundError|error? patient = dao:getPatient(mobile);
+    model:Patient|model:NotFoundError|error? patient = dao:getPatientByMobile(mobile);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else if patient is error {
@@ -43,6 +43,35 @@ public function getPatient(string mobile) returns model:Patient|model:ValueError
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry2!",
             details: string `patient/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
+}
+
+public function getPatientByEmail(string email) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
+
+    if (email.length() === 0) {
+        model:ErrorDetails errorDetails = {
+            message: "Please provide a mobile number",
+            details: string `patient/${email}`,
+            timeStamp: time:utcNow()
+        };
+        model:ValueError valueError = {
+            body: errorDetails
+        };
+        return valueError;
+    }
+
+    model:Patient|model:NotFoundError|error? patient = dao:getPatientByEmail(email);
+    if patient is model:Patient|model:NotFoundError {
+        return patient;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `patient/${email}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
@@ -66,7 +95,6 @@ public function getAppointments(string mobile) returns model:ReturnResponse|mode
         return appointments;
     } else if appointments is model:ReturnResponse {
         return appointments;
-    } 
-    
+    }
 
 }
