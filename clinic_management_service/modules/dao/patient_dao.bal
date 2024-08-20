@@ -31,7 +31,7 @@ public function savePatient(model:Patient patient) returns error? {
     }
 }
 
-public function getPatient(string mobile) returns model:Patient|model:NotFoundError|error? {
+public function getPatientByMobile(string mobile) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"mobile_number": mobile};
@@ -40,6 +40,24 @@ public function getPatient(string mobile) returns model:Patient|model:NotFoundEr
         model:ErrorDetails errorDetails = {
             message: string `Failed to find user with mobile number ${mobile}`,
             details: string `patient/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
+    return findResults;
+}
+
+public function getPatientByEmail(string email) returns model:Patient|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
+    map<json> filter = {"email": email};
+    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, (), model:Patient);
+    if findResults !is model:Patient {
+        model:ErrorDetails errorDetails = {
+            message: string `Failed to find user with email ${email}`,
+            details: string `patient/${email}`,
             timeStamp: time:utcNow()
         };
         model:NotFoundError userNotFound = {body: errorDetails};

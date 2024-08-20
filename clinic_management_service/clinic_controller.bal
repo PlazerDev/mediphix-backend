@@ -31,8 +31,6 @@ type ReservationStatus record {
     string status;
 };
 
-
-
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["*"]
@@ -67,10 +65,8 @@ service / on new http:Listener(9090) {
     resource function post signup/doctor(model:DoctorSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is doctor");
-        
 
-        model:ReturnMsg result =   'service:registerDoctor(data)  ;
-
+        model:ReturnMsg result = 'service:registerDoctor(data);
 
         http:Response response = new;
         if (result.statusCode == 500 || result.statusCode == 400) {
@@ -81,7 +77,6 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: "Doctor Registered Successfully"});
         }
 
-
         io:println(result);
         return (response);
 
@@ -90,10 +85,8 @@ service / on new http:Listener(9090) {
     resource function post signup/medicalcenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
-        
 
-        model:ReturnMsg result =   'service:registerMedicalCenter(data) ;
-
+        model:ReturnMsg result = 'service:registerMedicalCenter(data);
 
         http:Response response = new;
         if (result.statusCode == 500 || result.statusCode == 400) {
@@ -104,7 +97,6 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: "Medical Center Registered Successfully"});
         }
 
-
         io:println(result);
         return (response);
 
@@ -113,10 +105,8 @@ service / on new http:Listener(9090) {
     resource function post signup/laboratary(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Laboratary");
-        
 
-        model:ReturnMsg result =   'service:registerLaboratary(data) ;
-
+        model:ReturnMsg result = 'service:registerLaboratary(data);
 
         http:Response response = new;
         if (result.statusCode == 500 || result.statusCode == 400) {
@@ -127,14 +117,14 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: "Laboratary Registered Successfully"});
         }
 
-
         io:println(result);
-        return (response);         
+        return (response);
 
     }
+
     // Get patient with mobile number
-    resource function get patient(string mobile) returns http:Response|error? {
-        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatient(mobile.trim());
+    resource function get patient/[string mobile]() returns http:Response|error? {
+        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByMobile(mobile.trim());
 
         http:Response response = new;
         if patient is model:Patient {
@@ -151,6 +141,17 @@ service / on new http:Listener(9090) {
             response.setJsonPayload(patient.body.toJson());
         }
         return response;
+    }
+
+    // Get patient with email
+    resource function get patientMobileByEmail/[string email]() returns string|error? {
+        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByEmail(email.trim());
+
+        if patient is model:Patient {
+            return patient.mobile_number;
+        } else {
+            return error("Error occurred while retrieving patient mobile number");
+        }
     }
 
     // Get appointments of a patient
