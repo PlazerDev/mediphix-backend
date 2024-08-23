@@ -5,12 +5,14 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.9.0"
+distribution-version = "2201.9.2"
 
 [[package]]
 org = "ballerina"
 name = "auth"
-version = "2.11.1"
+
+version = "2.11.2"
+
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "jballerina.java"},

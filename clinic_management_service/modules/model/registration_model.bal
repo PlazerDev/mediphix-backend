@@ -5,19 +5,6 @@ public type User record {|
     string password;
 |};
 
-public type Patient record {|
-    string mobile_number;
-    string first_name;
-    string last_name;
-    string nic;
-    string birthday;
-    string email;
-    string address;
-    string nationality;
-    string[] allergies?;
-    string[] special_notes?;
-|};
-
 public type Doctor record {|
     string name;
     string slmc;
