@@ -1,11 +1,9 @@
 import ballerina/http;
 import ballerina/io;
-import ballerina/log;
 import ballerina/jwt;
+import ballerina/log;
 import ballerina/time;
 import ballerinax/redis;
-
-// import ballerina/auth;
 
 redis:Client redis = check new (
     connection = {
@@ -70,64 +68,29 @@ service /patient on httpListener {
             scopes: ["check_patient"]
         }
     }
-    resource function get ispatient(http:Request req) returns http:Response|error? {
-        string? authHeader = check req.getHeader("Authorization");
-        if authHeader is string {
-            string token = authHeader.substring(7);
-            [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);
-            json payload = jwtInformation[1].toJson();
-            string userEmail = check payload.username;
-            io:println("JWT username: ", userEmail);
-            if userEmail is string {
+    resource function get patientdata(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userMobile = check getCachedUserMobile(userEmail, userType);
+            Patient patient = check getPatientData(userMobile);
 
-                string? mobile = check redis->get(userEmail);
-                if mobile is string {
-                    io:println("This patient exists in cache: ", mobile);
-                    http:Response|error? response = check clinicServiceEP->/patient/[mobile];
-                    if (response !is http:Response) {
-                        ErrorDetails errorDetails = {
-                            message: "Internal server error",
-                            details: "Error occurred while retrieving appointments",
-                            timeStamp: time:utcNow()
-                        };
-                        InternalError internalError = {body: errorDetails};
-                        http:Response errorResponse = new;
-                        errorResponse.statusCode = 500;
-                        errorResponse.setJsonPayload(internalError.body.toJson());
-                        return errorResponse;
-                    }
-                    return response;
-                } else {
-                    log:printInfo("This patient does not exist in cache");
-                    string mobileNumber = check clinicServiceEP->/patientMobileByEmail/[userEmail];
-                    string stringResult = check redis->setEx(userEmail, mobileNumber, DEFAULT_CACHE_EXPIRY);
-                    io:println("Cached: ", stringResult);
-                    http:Response? response = check clinicServiceEP->/patient/[mobileNumber];
-                    if (response !is http:Response) {
-                        ErrorDetails errorDetails = {
-                            message: "Internal server error",
-                            details: "Error occurred while retrieving appointments",
-                            timeStamp: time:utcNow()
-                        };
-                        InternalError internalError = {body: errorDetails};
-                        http:Response errorResponse = new;
-                        errorResponse.statusCode = 500;
-                        errorResponse.setJsonPayload(internalError.body.toJson());
-                        return errorResponse;
-                    }
-                    return response;
-                }
-            }
+            http:Response response = new;
+            response.setJsonPayload(patient.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
         }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while retrieving patient details",
-            timeStamp: time:utcNow()
-        };
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
     }
 
     @http:ResourceConfig {
@@ -254,20 +217,42 @@ service /receptionist on httpListener {
 
 }
 
-// public function getPatientMobileByEmail(string userEmail) returns string|error? {
-//     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-//     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-//     map<json> filter = {"email": userEmail};
-//     Patient|error? findResults = check patientCollection->findOne(filter, {}, (), Patient);
-//     if findResults !is Patient {
-//         ErrorDetails errorDetails = {
-//             message: string `Failed to find user with email ${userEmail}`,
-//             details: string `patient/${userEmail}`,
-//             timeStamp: time:utcNow()
-//         };
-//         NotFoundError userNotFound = {body: errorDetails};
+public function getUserEmailByJWT(http:Request req) returns string|error {
+    string authHeader = check req.getHeader("Authorization");
+    string token = authHeader.substring(7);
+    [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);
+    json payload = jwtInformation[1].toJson();
+    string userEmail = check payload.username;
+    io:println("JWT username: ", userEmail);
+    return userEmail;
+}
 
-//         return userNotFound;
-//     }
-//     return findResults;
-// }
+public function getCachedUserMobile(string userEmail, string userType) returns string|error {
+    string? mobile = check redis->get(userEmail);
+    string userMobile = "";
+    if mobile is string {
+        io:println("This user exists in cache: ", mobile);
+        userMobile = mobile;
+    } else {
+        log:printInfo("This user mobile does not exist in cache");
+        string mobileNumber = "";
+        if (userType == "patient") {
+            mobileNumber = check clinicServiceEP->/patientMobileByEmail/[userEmail];
+
+        } else if (userType == "doctor") {
+            mobileNumber = check clinicServiceEP->/doctorMobileByEmail/[userEmail];
+        }
+        string stringResult = check redis->setEx(userEmail, mobileNumber, DEFAULT_CACHE_EXPIRY);
+        io:println("Cached: ", stringResult);
+        userMobile = mobileNumber;
+    }
+    if (userMobile == "") {
+        return error("Error occurred while retrieving user mobile number");
+    }
+    return userMobile;
+}
+
+public function getPatientData(string mobile) returns Patient|error {
+    Patient patient = check clinicServiceEP->/patient/[mobile];
+    return patient;
+}
