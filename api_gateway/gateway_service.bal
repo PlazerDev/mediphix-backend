@@ -7,13 +7,13 @@ import ballerinax/redis;
 
 redis:Client redis = check new (
     connection = {
-        host: "localhost",
+        host: "redis",
         port: 6379
     }
 );
 
 // Endpoint for the clinic service
-final http:Client clinicServiceEP = check new ("http://localhost:9090",
+final http:Client clinicServiceEP = check new ("http://clinic_management_service:9090",
     retryConfig = {
         interval: 3,
         count: 3,
@@ -22,7 +22,7 @@ final http:Client clinicServiceEP = check new ("http://localhost:9090",
 );
 
 // Endpoint for the appointment service
-final http:Client appointmentServiceEP = check new ("http://localhost:9091",
+final http:Client appointmentServiceEP = check new ("http://appointment_management_service:9091",
     retryConfig = {
         interval: 3,
         count: 3,

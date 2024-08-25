@@ -145,6 +145,7 @@ service / on new http:Listener(9090) {
 
     // Get patient with email
     resource function get patientMobileByEmail/[string email]() returns string|error? {
+        io:println("Inside get patient mobile by email");
         model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByEmail(email.trim());
 
         if patient is model:Patient {
