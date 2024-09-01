@@ -6,6 +6,8 @@ public enum AppointmentStatus {
     INQUEUE,
     ONGOING,
     OVER,
+    LATE,
+    ABSENT,
     CANCELLED
 };
 
