@@ -24,21 +24,22 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
 
     model:AppointmentStatus appointmentStatus = "ACTIVE";
 
-    if (newAppointment.paid) {
+    if (newAppointment.isPaid) {
         appointmentStatus = "PAID";
     }
 
     // Create a new appointment
     model:Appointment appointment = {
         appointmentNumber: newAppointmentNumber,
-        doctorEmail: newAppointment.doctorEmail,
+        doctorMobile: newAppointment.doctorMobile,
         patientMobile: newAppointment.patientMobile,
-        doctorSessionId: newAppointment.doctorSessionId,
+        sessionId: newAppointment.sessionId,
         category: newAppointment.category,
-        hospital: newAppointment.hospital,
-        paid: newAppointment.paid,
+        medicalCenterId: newAppointment.medicalCenterId,
+        medicalCenterName: newAppointment.medicalCenterName,
+        isPaid: newAppointment.isPaid,
+        payment: newAppointment.payment,
         status: appointmentStatus,
-        appointmentDate: newAppointment.appointmentDate,
         appointmentTime: newAppointment.appointmentTime,
         createdTime: time:utcToCivil(time:utcNow()),
         lastModifiedTime: time:utcToCivil(time:utcNow())

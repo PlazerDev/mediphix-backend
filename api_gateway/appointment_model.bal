@@ -48,15 +48,16 @@ public type NewAppointment record {
 
 public type Appointment record {
     int appointmentNumber;
-    string doctorEmail;
+    string doctorMobile;
     string patientMobile;
-    int doctorSessionId;
-    AppointmentCategory category;
-    string hospital;
-    boolean paid;
+    int sessionId;
+    string category;
+    int medicalCenterId;
+    string medicalCenterName;
+    boolean isPaid;
+    decimal payment;
     AppointmentStatus status;
-    string appointmentDate;
-    string appointmentTime;
+    time:Date appointmentTime;
     time:Date createdTime;
     time:Date lastModifiedTime;
 };
