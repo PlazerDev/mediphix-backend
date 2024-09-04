@@ -171,6 +171,24 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    //Doctor Colnrollers ......................................................................................................................
+
+    resource function get getSessionDetails/[string mobile]() returns http:Response|error?{
+        model:Sessions[]|model:InternalError session = check 'service:getSessionDetails(mobile.trim());
+        
+        http:Response response = new;
+        if session is model:Sessions[] {
+            response.statusCode = 200;
+            response.setJsonPayload(session.toJson());
+            io:println("Function responde successfully");
+        } else if session is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(session.body.toJson());
+        }
+        return response;
+
+    }
+
     // medical center staff controllers .......................................................................................
 
     // return initial informtion of a medical center staff member by userId
