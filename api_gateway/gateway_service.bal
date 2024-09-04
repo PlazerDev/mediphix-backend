@@ -150,7 +150,7 @@ service /patient on httpListener {
                     }
                 }
             },
-            scopes: ["insert_appointment", "retrieve_own_patient_data"]
+            scopes: ["insert_appointment", "retrieve_own_patient_data","retrive_appoinments"]
         }
     ]
 }
@@ -169,6 +169,55 @@ service /doctor on httpListener {
 
         return "Appointment Reserved Successfully";
     }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get appointments(string mobile) returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/appointments/[mobile];
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getSessionDetails(string mobile) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/getSessionDetails/[mobile];
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+    
+
+
 
 }
 

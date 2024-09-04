@@ -66,3 +66,13 @@ public type AppointmentNumberCounter record {
     int sequence_value;
 };
 
+public  type Session record {
+    int sessionNumber;
+    string medicalCenterName;
+    string doctorEmail;
+    string hospital;
+    string appointmentDate;
+    string appointmentTime;
+    AppointmentCategory category;
+    string medicalCenterMobile;
+};

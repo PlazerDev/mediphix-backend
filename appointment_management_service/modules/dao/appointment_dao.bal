@@ -1,4 +1,5 @@
 import appointment_management_service.model;
+
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
@@ -144,4 +145,30 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
+}
+
+public function getOngoingAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<json> filter = {
+        "patientMobile": mobile,
+        "status": "ONGOING"
+    };
+    stream<model:Appointment, error?> findResults = check appointmentCollection->find(filter, {}, (), model:Appointment);
+
+    model:Appointment[]|error appointments = from model:Appointment appointment in findResults
+        select appointment;
+    if appointments is model:Appointment[] {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find appointments for the given mobile number",
+            details: string `appointment/${mobile}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+
 }
