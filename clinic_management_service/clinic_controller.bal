@@ -145,6 +145,7 @@ service / on new http:Listener(9090) {
 
     // Get patient with email
     resource function get patientMobileByEmail/[string email]() returns string|error? {
+        io:println("Inside get patient mobile by email");
         model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByEmail(email.trim());
 
         if patient is model:Patient {
@@ -168,6 +169,24 @@ service / on new http:Listener(9090) {
         }
         io:println(appointments);
         return response;
+    }
+
+    //Doctor Colnrollers ......................................................................................................................
+
+    resource function get getSessionDetails/[string mobile]() returns http:Response|error?{
+        model:Sessions[]|model:InternalError session = check 'service:getSessionDetails(mobile.trim());
+        
+        http:Response response = new;
+        if session is model:Sessions[] {
+            response.statusCode = 200;
+            response.setJsonPayload(session.toJson());
+            io:println("Function responde successfully");
+        } else if session is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(session.body.toJson());
+        }
+        return response;
+
     }
 
     // medical center staff controllers .......................................................................................

@@ -72,7 +72,8 @@ public function getAppointments(string mobile) returns model:Appointment[]|error
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
     map<json> filter = {
         "patientMobile": mobile,
-        "status": "ACTIVE"
+        "status": {"$ne": ["CANCELLED", "OVER"]} // Filter out cancelled and over appointments
+
     };
     mongodb:FindOptions findOptions = {
         sort: {"appointmentDate": 1} // Sort by appointmentDate in ascending order

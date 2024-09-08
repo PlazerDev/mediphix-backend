@@ -54,3 +54,6 @@ Ballerina.lock
 
 # ingnore test directory
 test/
+
+# ignore redis dump
+dump.rdb
