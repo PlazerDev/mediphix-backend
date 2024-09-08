@@ -117,6 +117,7 @@ service /patient on httpListener {
     }
 
     resource function post appointment(NewAppointment newAppointment) returns http:Response|error? {
+        io:println("Inside Appointment");
         http:Response|error? response = check appointmentServiceEP->/appointment.post(newAppointment);
         if (response is http:Response) {
             return response;

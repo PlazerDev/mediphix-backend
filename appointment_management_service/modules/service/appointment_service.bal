@@ -5,7 +5,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError {
+public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError|error {
     // Get the next appointment number
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;
@@ -40,7 +40,7 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         isPaid: newAppointment.isPaid,
         payment: newAppointment.payment,
         status: appointmentStatus,
-        appointmentTime: newAppointment.appointmentTime,
+        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00Z
         createdTime: time:utcToCivil(time:utcNow()),
         lastModifiedTime: time:utcToCivil(time:utcNow())
     };
