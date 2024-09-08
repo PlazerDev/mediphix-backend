@@ -90,7 +90,7 @@ public type NewAppointment record {
     boolean isPaid;
     decimal payment;
     AppointmentStatus status;
-    time:Date appointmentTime;
+    string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00Z
 };
 
 public type Appointment record {
