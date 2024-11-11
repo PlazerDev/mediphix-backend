@@ -1,6 +1,7 @@
 import clinic_management_service.dao;
 import clinic_management_service.model;
 
+import ballerina/io;
 import ballerina/time;
 
 public function getPatientByMobile(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
@@ -29,11 +30,12 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:Va
     //     return valueError;
     // }
     model:Patient|model:NotFoundError|error? patient = dao:getPatientByMobile(mobile);
+    io:println(`In patient service... ${patient}`);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else if patient is error {
         model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry1!",
+            message: "Unexpected internal error occurred, please retry!",
             details: string `patient/${mobile}`,
             timeStamp: time:utcNow()
         };
@@ -41,7 +43,7 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:Va
         return internalError;
     } else {
         model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry2!",
+            message: "Unexpected internal error occurred, please retry!",
             details: string `patient/${mobile}`,
             timeStamp: time:utcNow()
         };
@@ -66,6 +68,7 @@ public function getPatientByEmail(string email) returns model:Patient|model:Valu
     }
 
     model:Patient|model:NotFoundError|error? patient = dao:getPatientByEmail(email);
+    io:println(`In patient service... ${patient}`);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else {
