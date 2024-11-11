@@ -1,5 +1,7 @@
 import clinic_management_service.model;
 
+import ballerina/io;
+
 // import ballerina/io;
 import ballerina/time;
 import ballerinax/mongodb;
@@ -35,8 +37,31 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:No
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"mobile_number": mobile};
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, (), model:Patient);
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "mobile_number": 1,
+        "first_name": 1,
+        "last_name": 1,
+        "nic": 1,
+        "birthday": 1,
+        "email": 1,
+        "address": 1,
+        "nationality": 1,
+        // Optional fields; include if needed
+        "allergies": 1,
+        "special_notes": 1
+    };
+    io:println("Retrieving patient...");
+    model:Patient|error? findResults = null;
+    do {
+        findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
+    } on fail {
+        io:println("Error occurred while retrieving patient... might be in the projection.");  
+    }
+
     if findResults !is model:Patient {
+        io:println(findResults);
+
         model:ErrorDetails errorDetails = {
             message: string `Failed to find user with mobile number ${mobile}`,
             details: string `patient/${mobile}`,
@@ -53,7 +78,21 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"email": email};
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, (), model:Patient);
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "mobile_number": 1,
+        "first_name": 1,
+        "last_name": 1,
+        "nic": 1,
+        "birthday": 1,
+        "email": 1,
+        "address": 1,
+        "nationality": 1,
+        // Optional fields; include if needed
+        "allergies": 1,
+        "special_notes": 1
+    };
+    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
     if findResults !is model:Patient {
         model:ErrorDetails errorDetails = {
             message: string `Failed to find user with email ${email}`,

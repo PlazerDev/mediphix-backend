@@ -1,5 +1,6 @@
 
 public type Patient record {|
+    string _id;
     string mobile_number;
     string first_name;
     string last_name;
