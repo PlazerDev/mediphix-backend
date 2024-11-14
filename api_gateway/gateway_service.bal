@@ -216,6 +216,19 @@ service /doctor on httpListener {
         return response;
     }
 
+     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
+    resource function get getDoctorName(string mobile) returns http:Response|error? {
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+        
+    }
+
     
 
 
