@@ -1,8 +1,6 @@
 import clinic_management_service.model;
 
-import ballerina/io;
-
-// import ballerina/io;
+import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
@@ -33,10 +31,10 @@ public function savePatient(model:Patient patient) returns error? {
     }
 }
 
-public function getPatientByMobile(string mobile) returns model:Patient|model:NotFoundError|error? {
+public function getPatientById(string userId) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    map<json> filter = {"mobile_number": mobile};
+    map<json> filter = {"_id": {"$oid": userId}};
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "mobile_number": 1,
@@ -47,24 +45,18 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:No
         "email": 1,
         "address": 1,
         "nationality": 1,
-        // Optional fields; include if needed
         "allergies": 1,
         "special_notes": 1
     };
-    io:println("Retrieving patient...");
-    model:Patient|error? findResults = null;
-    do {
-        findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
-    } on fail {
-        io:println("Error occurred while retrieving patient... might be in the projection.");  
-    }
+
+    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
 
     if findResults !is model:Patient {
-        io:println(findResults);
+        log:printInfo("Failed to find user with user id " + userId);
 
         model:ErrorDetails errorDetails = {
-            message: string `Failed to find user with mobile number ${mobile}`,
-            details: string `patient/${mobile}`,
+            message: string `Failed to find user with user id ${userId}`,
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:NotFoundError userNotFound = {body: errorDetails};
@@ -88,7 +80,6 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
         "email": 1,
         "address": 1,
         "nationality": 1,
-        // Optional fields; include if needed
         "allergies": 1,
         "special_notes": 1
     };

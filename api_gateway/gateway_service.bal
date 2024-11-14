@@ -72,8 +72,8 @@ service /patient on httpListener {
         do {
             string userEmail = check getUserEmailByJWT(req);
             string userType = "patient";
-            string userMobile = check getCachedUserMobile(userEmail, userType);
-            Patient patient = check getPatientData(userMobile);
+            string userId = check getCachedUserId(userEmail, userType);
+            Patient patient = check getPatientData(userId);
 
             http:Response response = new;
             response.setJsonPayload(patient.toJson());
@@ -219,7 +219,6 @@ service /doctor on httpListener {
     
 
 
-
 }
 
 @http:ServiceConfig {
@@ -277,32 +276,32 @@ public function getUserEmailByJWT(http:Request req) returns string|error {
     return userEmail;
 }
 
-public function getCachedUserMobile(string userEmail, string userType) returns string|error {
-    string? mobile = check redis->get(userEmail);
-    string userMobile = "";
-    if mobile is string {
-        io:println("This user exists in cache: ", mobile);
-        userMobile = mobile;
+public function getCachedUserId(string userEmail, string userType) returns string|error {
+    string? objectId = check redis->get(userEmail);
+    string userId = "";
+    if objectId is string {
+        io:println("This user exists in cache: ", objectId);
+        userId = objectId;
     } else {
         log:printInfo("This user mobile does not exist in cache");
-        string mobileNumber = "";
+        string id = "";
         if (userType == "patient") {
-            mobileNumber = check clinicServiceEP->/patientMobileByEmail/[userEmail];
+            id = check clinicServiceEP->/patientIdByEmail/[userEmail];
 
         } else if (userType == "doctor") {
-            mobileNumber = check clinicServiceEP->/doctorMobileByEmail/[userEmail];
+            id = check clinicServiceEP->/doctorIdByEmail/[userEmail];
         }
-        string stringResult = check redis->setEx(userEmail, mobileNumber, DEFAULT_CACHE_EXPIRY);
+        string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);
-        userMobile = mobileNumber;
+        userId = id;
     }
-    if (userMobile == "") {
+    if (userId == "") {
         return error("Error occurred while retrieving user mobile number");
     }
-    return userMobile;
+    return userId;
 }
 
-public function getPatientData(string mobile) returns Patient|error {
-    Patient patient = check clinicServiceEP->/patient/[mobile];
+public function getPatientData(string userId) returns Patient|error {
+    Patient patient = check clinicServiceEP->/patient/[userId];
     return patient;
 }
