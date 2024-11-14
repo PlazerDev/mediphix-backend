@@ -4,6 +4,7 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/io;
 
+
 type Doctor record {
     string name;
     string hospital;
@@ -187,6 +188,23 @@ service / on new http:Listener(9090) {
         }
         return response;
 
+    }
+
+
+    // Get doctor name by mobile  .................V..............................................
+    resource function get getDoctorName/[string mobile]() returns error|http:Response {
+        string|model:InternalError doctorName =  check 'service:getDoctorName(mobile.trim());
+
+        io:println(doctorName);
+        http:Response response = new;
+        if (doctorName is string) {
+            response.statusCode = 200;
+            response.setJsonPayload({doctorName: doctorName});
+        } else {
+            response.statusCode = 404;
+            response.setJsonPayload({message: "Doctor not found"});
+        }
+        return response;
     }
 
     // medical center staff controllers .......................................................................................
