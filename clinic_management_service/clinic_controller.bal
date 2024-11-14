@@ -123,10 +123,9 @@ service / on new http:Listener(9090) {
 
     }
 
-    // Get patient with mobile number
-    resource function get patient/[string mobile]() returns http:Response|error? {
-        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByMobile(mobile.trim());
-        io:println("Patient in controller",patient);
+    // Get patient with user id
+    resource function get patient/[string userId]() returns http:Response|error? {
+        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientById(userId.trim());
         http:Response response = new;
         if patient is model:Patient {
             response.statusCode = 200;
@@ -145,12 +144,10 @@ service / on new http:Listener(9090) {
     }
 
     // Get patient with email
-    resource function get patientMobileByEmail/[string email]() returns string|error? {
-        io:println("Inside get patient mobile by email");
+    resource function get patientIdByEmail/[string email]() returns string|error? {
         model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByEmail(email.trim());
-        io:println("Patient mobile by email in controller",patient);
         if patient is model:Patient {
-            return patient.mobile_number;
+            return patient._id;
         } else {
             return error("Error occurred while retrieving patient mobile number");
         }

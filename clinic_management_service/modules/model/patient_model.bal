@@ -1,7 +1,7 @@
 // import ballerina/time;
 import ballerina/time;
 
-public type Patient record {
+public type Patient record {|
     string _id;
     string mobile_number;
     string first_name;
@@ -13,7 +13,7 @@ public type Patient record {
     string nationality;
     string[] allergies?;
     string[] special_notes?;
-};
+|};
 
 public type UnregisteredPatient record {|
     string mobile_number;

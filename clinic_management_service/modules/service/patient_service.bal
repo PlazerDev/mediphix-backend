@@ -1,15 +1,14 @@
 import clinic_management_service.dao;
 import clinic_management_service.model;
 
-import ballerina/io;
 import ballerina/time;
 
-public function getPatientByMobile(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
+public function getPatientById(string userId) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
 
-    if (mobile.length() === 0) {
+    if (userId.length() === 0) {
         model:ErrorDetails errorDetails = {
-            message: "Please provide a mobile number",
-            details: string `patient/${mobile}`,
+            message: "Invalid user id",
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:ValueError valueError = {
@@ -29,14 +28,13 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:Va
     //     };
     //     return valueError;
     // }
-    model:Patient|model:NotFoundError|error? patient = dao:getPatientByMobile(mobile);
-    io:println(`In patient service... ${patient}`);
+    model:Patient|model:NotFoundError|error? patient = dao:getPatientById(userId);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else if patient is error {
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
-            details: string `patient/${mobile}`,
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
@@ -44,7 +42,7 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:Va
     } else {
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
-            details: string `patient/${mobile}`,
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
@@ -68,7 +66,6 @@ public function getPatientByEmail(string email) returns model:Patient|model:Valu
     }
 
     model:Patient|model:NotFoundError|error? patient = dao:getPatientByEmail(email);
-    io:println(`In patient service... ${patient}`);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else {
