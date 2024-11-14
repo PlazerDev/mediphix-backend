@@ -5,7 +5,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError {
+public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError|error {
     // Get the next appointment number
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;
@@ -24,22 +24,23 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
 
     model:AppointmentStatus appointmentStatus = "ACTIVE";
 
-    if (newAppointment.paid) {
+    if (newAppointment.isPaid) {
         appointmentStatus = "PAID";
     }
 
     // Create a new appointment
     model:Appointment appointment = {
         appointmentNumber: newAppointmentNumber,
-        doctorEmail: newAppointment.doctorEmail,
+        doctorMobile: newAppointment.doctorMobile,
         patientMobile: newAppointment.patientMobile,
-        doctorSessionId: newAppointment.doctorSessionId,
+        sessionId: newAppointment.sessionId,
         category: newAppointment.category,
-        hospital: newAppointment.hospital,
-        paid: newAppointment.paid,
+        medicalCenterId: newAppointment.medicalCenterId,
+        medicalCenterName: newAppointment.medicalCenterName,
+        isPaid: newAppointment.isPaid,
+        payment: newAppointment.payment,
         status: appointmentStatus,
-        appointmentDate: newAppointment.appointmentDate,
-        appointmentTime: newAppointment.appointmentTime,
+        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00Z
         createdTime: time:utcToCivil(time:utcNow()),
         lastModifiedTime: time:utcToCivil(time:utcNow())
     };

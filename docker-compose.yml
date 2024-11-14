@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  api_gateway:
+    image: ballerina/ballerina:2201.9.0
+    container_name: api_gateway
+    working_dir: /app
+    volumes:
+      - ./api_gateway:/app
+    command: bal run
+    ports:
+      - "9000:9000"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  clinic_service:
+    image: ballerina/ballerina:2201.9.0
+    container_name: clinic_management_service
+    working_dir: /app
+    volumes:
+      - ./clinic_management_service:/app
+    command: bal run
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
+  appointment_service:
+    image: ballerina/ballerina:2201.9.0
+    container_name: appointment_management_service
+    working_dir: /app
+    volumes:
+      - ./appointment_management_service:/app
+    command: bal run
+    ports:
+      - "9091:9091"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
