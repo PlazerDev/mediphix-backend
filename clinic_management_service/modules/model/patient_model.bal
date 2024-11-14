@@ -13,6 +13,11 @@ public type Patient record {|
     string nationality;
     string[] allergies?;
     string[] special_notes?;
+    string[] doctors?;
+    string[] medical_centers?;
+    string[] appointments?;
+    string[] medical_records?;
+    string[] lab_reports?;
 |};
 
 public type UnregisteredPatient record {|
@@ -26,6 +31,11 @@ public type UnregisteredPatient record {|
     string nationality;
     string[] allergies?;
     string[] special_notes?;
+    string[] doctors?;
+    string[] medical_centers?;
+    string[] appointments?;
+    string[] medical_records?;
+    string[] lab_reports?;
 |};
 
 public type PatientWithCardNo record {
