@@ -231,7 +231,6 @@ service /doctor on httpListener {
 
     
 
-
 }
 
 @http:ServiceConfig {
