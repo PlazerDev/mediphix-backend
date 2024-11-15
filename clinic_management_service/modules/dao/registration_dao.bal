@@ -165,7 +165,7 @@ public isolated function updateRole(string token, string userId, string roleId) 
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    model:Patient patient = {
+    model:UnregisteredPatient patient = {
         mobile_number: data.mobile,
         first_name: data.fname,
         last_name: data.lname,
@@ -175,8 +175,12 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         address: data.address,
         nationality: data.nationality,
         allergies: [],
-        special_notes: []
-
+        special_notes: [],
+        doctors: [],
+        medical_centers: [],
+        appointments: [],
+        medical_records: [],
+        lab_reports: []
     };
     mongodb:Error? insertOne = patientCollection->insertOne(patient);
     if insertOne is mongodb:DatabaseError {
@@ -255,7 +259,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
-    model:Doctor doctor = {
+    model:UnregisteredDoctor doctor = {
         name: data.name,
         slmc: data.slmc,
         nic: data.nic,
@@ -267,8 +271,13 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         category: "not assigned",
         availability: "not assigned",
         fee: 0.0,
-        verified: false
-
+        verified: false,
+        patients: [],
+        medical_centers: [],
+        sessions: [],
+        channells: [],
+        medical_records: [],
+        lab_reports: []
     };
     model:User doctorUser = {
         email: data.email,

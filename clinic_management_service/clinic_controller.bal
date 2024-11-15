@@ -4,6 +4,7 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/io;
 
+
 type Doctor record {
     string name;
     string hospital;
@@ -122,10 +123,9 @@ service / on new http:Listener(9090) {
 
     }
 
-    // Get patient with mobile number
-    resource function get patient/[string mobile]() returns http:Response|error? {
-        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByMobile(mobile.trim());
-
+    // Get patient with user id
+    resource function get patient/[string userId]() returns http:Response|error? {
+        model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientById(userId.trim());
         http:Response response = new;
         if patient is model:Patient {
             response.statusCode = 200;
@@ -144,12 +144,10 @@ service / on new http:Listener(9090) {
     }
 
     // Get patient with email
-    resource function get patientMobileByEmail/[string email]() returns string|error? {
-        io:println("Inside get patient mobile by email");
+    resource function get patientIdByEmail/[string email]() returns string|error? {
         model:Patient|model:ValueError|model:NotFoundError|model:InternalError patient = 'service:getPatientByEmail(email.trim());
-
         if patient is model:Patient {
-            return patient.mobile_number;
+            return patient._id;
         } else {
             return error("Error occurred while retrieving patient mobile number");
         }
@@ -187,6 +185,23 @@ service / on new http:Listener(9090) {
         }
         return response;
 
+    }
+
+
+    // Get doctor name by mobile  .................V..............................................
+    resource function get getDoctorName/[string mobile]() returns error|http:Response {
+        string|model:InternalError doctorName =  check 'service:getDoctorName(mobile.trim());
+
+        io:println(doctorName);
+        http:Response response = new;
+        if (doctorName is string) {
+            response.statusCode = 200;
+            response.setJsonPayload({doctorName: doctorName});
+        } else {
+            response.statusCode = 404;
+            response.setJsonPayload({message: "Doctor not found"});
+        }
+        return response;
     }
 
     // medical center staff controllers .......................................................................................

@@ -1,6 +1,7 @@
 import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 public function getSessionDetails(string mobile) returns error|model:InternalError|model:Sessions[]{    
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
@@ -54,5 +55,29 @@ public function getSessionDetails(string mobile) returns error|model:InternalErr
    
  
     
+}
+
+public function getDoctorName(string mobile) returns error|string|model:InternalError {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+
+    map<json> filter = { "mobile": mobile };
+    model:Doctor|mongodb:Error? findResults =  check   doctorCollection->findOne(filter);
+    io:println("Find result",findResults);
+    
+    if findResults is model:Doctor {
+        return findResults.name;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving doctor name",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
 }
 

@@ -3,12 +3,12 @@ import clinic_management_service.model;
 
 import ballerina/time;
 
-public function getPatientByMobile(string mobile) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
+public function getPatientById(string userId) returns model:Patient|model:ValueError|model:NotFoundError|model:InternalError {
 
-    if (mobile.length() === 0) {
+    if (userId.length() === 0) {
         model:ErrorDetails errorDetails = {
-            message: "Please provide a mobile number",
-            details: string `patient/${mobile}`,
+            message: "Invalid user id",
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:ValueError valueError = {
@@ -28,21 +28,21 @@ public function getPatientByMobile(string mobile) returns model:Patient|model:Va
     //     };
     //     return valueError;
     // }
-    model:Patient|model:NotFoundError|error? patient = dao:getPatientByMobile(mobile);
+    model:Patient|model:NotFoundError|error? patient = dao:getPatientById(userId);
     if patient is model:Patient|model:NotFoundError {
         return patient;
     } else if patient is error {
         model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry1!",
-            details: string `patient/${mobile}`,
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     } else {
         model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry2!",
-            details: string `patient/${mobile}`,
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};

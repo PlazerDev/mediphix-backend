@@ -5,22 +5,6 @@ public type User record {|
     string password;
 |};
 
-public type Doctor record {|
-    string name;
-    string slmc;
-    string nic;
-    string education;
-    string mobile;
-    string[] specialization;
-    string email;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
-    boolean verified;
-
-|};
-
 public type MedicalCenter record {|
     string name;
     string address;
