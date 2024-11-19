@@ -1,5 +1,6 @@
 
 public type Patient record {|
+    string _id;
     string mobile_number;
     string first_name;
     string last_name;
@@ -10,9 +11,14 @@ public type Patient record {|
     string nationality;
     string[] allergies?;
     string[] special_notes?;
+    string[] doctors?;
+    string[] medical_centers?;
+    string[] appointments?;
+    string[] medical_records?;
+    string[] lab_reports?;
 |};
 
-public type JWTPayload record {|
+public type JWTPayload record {
     string iss; // Issuer of the token
     string sub; // Subject (typically the user identifier)
     string aud; // Audience (the client ID)
@@ -29,4 +35,4 @@ public type JWTPayload record {|
     string org_name;     // Organization name
     string binding_ref;  // Binding reference
     string username;     // Username associated with the token
-|};
+};

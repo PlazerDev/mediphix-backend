@@ -1,6 +1,6 @@
 import clinic_management_service.model;
 
-// import ballerina/io;
+import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
@@ -31,15 +31,32 @@ public function savePatient(model:Patient patient) returns error? {
     }
 }
 
-public function getPatientByMobile(string mobile) returns model:Patient|model:NotFoundError|error? {
+public function getPatientById(string userId) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    map<json> filter = {"mobile_number": mobile};
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, (), model:Patient);
+    map<json> filter = {"_id": {"$oid": userId}};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "mobile_number": 1,
+        "first_name": 1,
+        "last_name": 1,
+        "nic": 1,
+        "birthday": 1,
+        "email": 1,
+        "address": 1,
+        "nationality": 1,
+        "allergies": 1,
+        "special_notes": 1
+    };
+
+    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
+
     if findResults !is model:Patient {
+        log:printInfo("Failed to find user with user id " + userId);
+
         model:ErrorDetails errorDetails = {
-            message: string `Failed to find user with mobile number ${mobile}`,
-            details: string `patient/${mobile}`,
+            message: string `Failed to find user with user id ${userId}`,
+            details: string `patient/${userId}`,
             timeStamp: time:utcNow()
         };
         model:NotFoundError userNotFound = {body: errorDetails};
@@ -53,7 +70,20 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     map<json> filter = {"email": email};
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, (), model:Patient);
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "mobile_number": 1,
+        "first_name": 1,
+        "last_name": 1,
+        "nic": 1,
+        "birthday": 1,
+        "email": 1,
+        "address": 1,
+        "nationality": 1,
+        "allergies": 1,
+        "special_notes": 1
+    };
+    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
     if findResults !is model:Patient {
         model:ErrorDetails errorDetails = {
             message: string `Failed to find user with email ${email}`,
