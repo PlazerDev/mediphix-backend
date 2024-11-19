@@ -94,26 +94,33 @@ service /patient on httpListener {
     }
 
     @http:ResourceConfig {
-        // "insert_appointment" scope is required to invoke this resource
         auth: {
             scopes: ["insert_appointment"]
         }
     }
-    resource function get appointments(string mobile) returns http:Response|error? {
-        http:Response|error? response = check appointmentServiceEP->/appointments/[mobile];
-        if (response !is http:Response) {
+    resource function get appointments(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userId = check getCachedUserId(userEmail, userType);
+            Appointment[] appointments = check getAppointments(userId) ?: [];
+
+            http:Response response = new;
+            response.setJsonPayload(appointments.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving appointments",
+                details: "Error occurred while retrieving appointment details",
                 timeStamp: time:utcNow()
             };
-            InternalError internalError = {body: errorDetails};
             http:Response errorResponse = new;
             errorResponse.statusCode = 500;
-            errorResponse.setJsonPayload(internalError.body.toJson());
+            errorResponse.setJsonPayload(errorDetails.toJson());
             return errorResponse;
         }
-        return response;
     }
 
     resource function post appointment(NewAppointment newAppointment) returns http:Response|error? {
@@ -151,11 +158,41 @@ service /patient on httpListener {
                     }
                 }
             },
-            scopes: ["insert_appointment", "retrieve_own_patient_data","retrive_appoinments"]
+            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments"]
         }
     ]
 }
 service /doctor on httpListener {
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["check_patient"]
+        }
+    }
+    resource function get patientdata(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userId = check getCachedUserId(userEmail, userType);
+            Patient patient = check getPatientData(userId);
+
+            http:Response response = new;
+            response.setJsonPayload(patient.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
 
     @http:ResourceConfig {
         auth: {
@@ -193,7 +230,6 @@ service /doctor on httpListener {
         return response;
     }
 
-
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
@@ -216,7 +252,7 @@ service /doctor on httpListener {
         return response;
     }
 
-     @http:ResourceConfig {
+    @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
@@ -226,10 +262,8 @@ service /doctor on httpListener {
         io:println("Inside getDoctorName in gateway");
         http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
         return doctorName;
-        
-    }
 
-    
+    }
 
 }
 
@@ -316,4 +350,9 @@ public function getCachedUserId(string userEmail, string userType) returns strin
 public function getPatientData(string userId) returns Patient|error {
     Patient patient = check clinicServiceEP->/patient/[userId];
     return patient;
+}
+
+public function getAppointments(string userId) returns Appointment[]|error? {
+    Appointment[] appointments = check appointmentServiceEP->/appointments/[userId];
+    return appointments;
 }

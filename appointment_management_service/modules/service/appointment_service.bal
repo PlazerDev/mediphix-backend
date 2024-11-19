@@ -31,9 +31,10 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
     // Create a new appointment
     model:Appointment appointment = {
         appointmentNumber: newAppointmentNumber,
-        doctorMobile: newAppointment.doctorMobile,
-        patientMobile: newAppointment.patientMobile,
+        doctorId: newAppointment.doctorId,
+        patientId: newAppointment.patientId,
         sessionId: newAppointment.sessionId,
+        medicalRecordId: "",
         category: newAppointment.category,
         medicalCenterId: newAppointment.medicalCenterId,
         medicalCenterName: newAppointment.medicalCenterName,
@@ -59,11 +60,11 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
     }
 }
 
-public function getAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
-    if (mobile.length() === 0 || mobile.length() !== 10) {
+public function getAppointmentsByUserId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
+    if (userId.length() === 0) {
         model:ErrorDetails errorDetails = {
             message: "Please provide a valid mobile number",
-            details: string `appointment/${mobile}`,
+            details: string `appointment/${userId}`,
             timeStamp: time:utcNow()
         };
         model:ValueError valueError = {
@@ -72,7 +73,8 @@ public function getAppointmentsByMobile(string mobile) returns model:Appointment
         return valueError;
     }
 
-    model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByMobile(mobile);
+
+    model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByUserId(userId);
     if appointments is model:Appointment[] {
         return appointments;
     } else if appointments is model:InternalError {
@@ -83,7 +85,7 @@ public function getAppointmentsByMobile(string mobile) returns model:Appointment
         io:println(appointments);
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
-            details: string `appointment/${mobile}`,
+            details: string `appointment/${userId}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
