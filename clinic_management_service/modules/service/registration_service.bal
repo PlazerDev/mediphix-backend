@@ -82,7 +82,7 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
         addDoctorReturnMsg.statusCode = 400;
         return addDoctorReturnMsg;
     }
-    else if (data.password !== data.confirmpass) {
+    else if (data.password !== data.confirmPassword) {
         addDoctorReturnMsg.message = "Password and Confirm Password should be same";
         addDoctorReturnMsg.statusCode = 400;
         return addDoctorReturnMsg;
@@ -135,7 +135,7 @@ public function registerMedicalCenter(model:otherSignupData data) returns model:
         returnMsg.statusCode = 400;
         return returnMsg;
     }
-     else if (data.password !== data.confirmpass) {
+     else if (data.password !== data.confirmPassword) {
         returnMsg.message = "Password and Confirm Password should be same";
         returnMsg.statusCode = 400;
         return returnMsg;
@@ -187,7 +187,7 @@ public function registerLaboratary(model:otherSignupData data) returns model:Ret
         returnMsg.statusCode = 400;
         return returnMsg;
     }
-     else if (data.password !== data.confirmpass) {
+     else if (data.password !== data.confirmPassword) {
         returnMsg.message = "Password and Confirm Password should be same";
         returnMsg.statusCode = 400;
         return returnMsg;
