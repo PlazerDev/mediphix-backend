@@ -40,21 +40,22 @@ public type PatientSignupData record {|
     string nic;
     string address;
     string password;
-    string confirmpass;
+    string confirmPassword;
 |};
 
 public type DoctorSignupData record {|
     string name;
     string slmc;
     string nic;
-    string education;
+    string[] education;
     string mobile;
     string[] specialization;
     string email;
     string password;
-    string confirmpass;
-    string idfront;
-    string idback;
+    string confirmPassword;
+    string profilePic;
+    byte[] idFront;
+    byte[] idBack;
 |};
 
 //this is used for laboratory and medical centers
@@ -64,7 +65,7 @@ public type otherSignupData record {|
     string mobile;
     string email;
     string password;
-    string confirmpass;
+    string confirmPassword;
     byte idfront;
     byte idback;
     string district;

@@ -4,7 +4,6 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
-import ballerina/io;
 
 configurable string username = ?;
 configurable string password = ?;

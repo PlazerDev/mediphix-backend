@@ -1,47 +1,26 @@
 import ballerina/time;
 
 public type Doctor record {|
-    string _id;
+    string _id?;
     string name;
     string slmc;
     string nic;
-    string education;
+    string[] education;
     string mobile;
-    string[] specialization;
+    string[] specialization?;
     string email;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
+    string[] category?;
+    string[] availability?;
     boolean verified;
     string[] patients?;
     string[] medical_centers?;
     string[] sessions?;
-    string[] channells?;
+    string[] channellings?;
     string[] medical_records?;
     string[] lab_reports?;
+    string mediaStorage?;
 |};
 
-public type UnregisteredDoctor record {|
-    string name;
-    string slmc;
-    string nic;
-    string education;
-    string mobile;
-    string[] specialization;
-    string email;
-    string hospital;
-    string category;
-    string availability;
-    decimal fee;
-    boolean verified;
-    string[] patients?;
-    string[] medical_centers?;
-    string[] sessions?;
-    string[] channells?;
-    string[] medical_records?;
-    string[] lab_reports?;
-|};
 
 public type SessionSlot record {
     time:Date startTime;
