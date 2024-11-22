@@ -159,7 +159,7 @@ service /patient on httpListener {
                 }
             },
 
-            scopes: ["insert_appointment", "retrieve_own_patient_data","retrive_appoinments","submit_patient_records"]
+            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments", "submit_patient_records"]
 
         }
     ]
@@ -266,6 +266,17 @@ service /doctor on httpListener {
         return doctorName;
     }
 
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post doctor/registration(string mobile) returns http:Response|error? {
+        // json|http:ClientError patient = request.getJsonPayload();
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+    }
 
     @http:ResourceConfig {
         auth: {
@@ -274,9 +285,8 @@ service /doctor on httpListener {
     }
     resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
-        
 
-        if(response is http:Response) {
+        if (response is http:Response) {
             return response;
         }
         ErrorDetails errorDetails = {
@@ -289,7 +299,7 @@ service /doctor on httpListener {
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(internalError.body.toJson());
         return errorResponse;
-    }    
+    }
 
 }
 

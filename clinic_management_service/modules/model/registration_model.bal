@@ -38,6 +38,7 @@ public type PatientSignupData record {|
     string email;
     string nationality;
     string nic;
+    string gender;
     string address;
     string password;
     string confirmPassword;
@@ -53,7 +54,8 @@ public type DoctorSignupData record {|
     string email;
     string password;
     string confirmPassword;
-    string profilePic;
+    string profileImage?;
+    byte[] profileImageFile;
     byte[] idFront;
     byte[] idBack;
 |};

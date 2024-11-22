@@ -2,6 +2,20 @@ import clinic_management_service.dao;
 import clinic_management_service.model;
 import ballerina/io;
 import ballerina/crypto;
+import ballerinax/aws.s3;
+
+configurable string AWS_ACCESS_KEY_ID = ?;
+configurable string AWS_SECRET_ACCESS_KEY = ?;
+configurable string AWS_REGION = ?;
+configurable string S3_BUCKET_NAME = ?;
+
+s3:ConnectionConfig amazonS3Config = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    region: AWS_REGION
+};
+
+s3:Client amazonS3Client = check new(amazonS3Config);
 
 
 public function registerPatient(model:PatientSignupData data) returns model:ReturnMsg {
@@ -112,6 +126,18 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
     }
 
 }
+
+// public function uploadToS3(string email, string filePath, string mimeType) returns string {
+//     string contentType = "application/pdf";
+//     string key = fileName;
+//     string content = fileContent;
+//     error?|s3:PutObjectResult result = s3:putObject(amazonS3Client, S3_BUCKET_NAME, key, content, contentType);
+//     if (result is error) {
+//         return "Error";
+//     } else {
+//         return "Success";
+//     }
+// }
 
 public function registerMedicalCenter(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
