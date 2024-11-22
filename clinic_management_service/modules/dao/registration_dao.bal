@@ -259,7 +259,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
-    model:UnregisteredDoctor doctor = {
+    model:Doctor doctor = {
         name: data.name,
         slmc: data.slmc,
         nic: data.nic,
@@ -267,17 +267,16 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         mobile: data.mobile,
         specialization: data.specialization,
         email: data.email,
-        hospital: "not assigned",
-        category: "not assigned",
-        availability: "not assigned",
-        fee: 0.0,
+        category: [],
+        availability: [],
         verified: false,
         patients: [],
         medical_centers: [],
         sessions: [],
-        channells: [],
+        channellings: [],
         medical_records: [],
-        lab_reports: []
+        lab_reports: [],
+        mediaStorage: ""
     };
     model:User doctorUser = {
         email: data.email,
