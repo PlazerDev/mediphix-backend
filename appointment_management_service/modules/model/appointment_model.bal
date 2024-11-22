@@ -81,11 +81,11 @@ public enum AppointmentCategory {
 // }
 
 public type NewAppointment record {
-    string doctorMobile;
-    string patientMobile;
-    int sessionId;
+    string doctorId;
+    string patientId;
+    string sessionId;
     string category;
-    int medicalCenterId;
+    string medicalCenterId;
     string medicalCenterName;
     boolean isPaid;
     decimal payment;
@@ -93,13 +93,15 @@ public type NewAppointment record {
     string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00Z
 };
 
-public type Appointment record {
+public type Appointment record {|
+    string _id?;
     int appointmentNumber;
-    string doctorMobile;
-    string patientMobile;
-    int sessionId;
+    string doctorId;
+    string patientId;
+    string sessionId;
+    string medicalRecordId;
     string category;
-    int medicalCenterId;
+    string medicalCenterId;
     string medicalCenterName;
     boolean isPaid;
     decimal payment;
@@ -107,7 +109,23 @@ public type Appointment record {
     time:Date appointmentTime;
     time:Date createdTime;
     time:Date lastModifiedTime;
-};
+|};
+
+// public type NewUnsavedAppointment record {|
+//     int appointmentNumber;
+//     string doctorId;
+//     string patientId;
+//     int sessionId;
+//     string category;
+//     int medicalCenterId;
+//     string medicalCenterName;
+//     boolean isPaid;
+//     decimal payment;
+//     AppointmentStatus status;
+//     time:Date appointmentTime;
+//     time:Date createdTime;
+//     time:Date lastModifiedTime;
+// |};
 
 public type AppointmentNumberCounter record {
     string _id;
