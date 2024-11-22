@@ -8,6 +8,7 @@ public type Patient record {|
     string last_name;
     string nic;
     string birthday;
+    string gender;
     string email;
     string address;
     string nationality;
@@ -26,6 +27,7 @@ public type UnregisteredPatient record {|
     string last_name;
     string nic;
     string birthday;
+    string gender;
     string email;
     string address;
     string nationality;

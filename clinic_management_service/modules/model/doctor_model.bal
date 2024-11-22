@@ -18,7 +18,8 @@ public type Doctor record {|
     string[] channellings?;
     string[] medical_records?;
     string[] lab_reports?;
-    string mediaStorage?;
+    string profileImage?;
+    string media_storage?;
 |};
 
 

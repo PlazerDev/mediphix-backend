@@ -9,7 +9,7 @@ public function getSessionDetails(string mobile) returns error|model:InternalErr
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
-    // //ineed send some dummey data to test the function 
+    
     // model:Sessions session = {
     //     sessionId: "1",
     //     doctorName: "Dr. John Doe",
