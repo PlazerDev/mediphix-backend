@@ -149,7 +149,7 @@ service / on new http:Listener(9090) {
         if patient is model:Patient {
             return patient._id;
         } else {
-            return error("Error occurred while retrieving patient mobile number");
+            return error("Error occurred while retrieving patient id number");
         }
     }
 
