@@ -86,9 +86,9 @@ public function getPatientIdByRefNumber(string refNumber) returns string|model:I
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
-    map<anydata>? appointment = check appointmentCollection->findOne({_id: refNumber});
+    map<anydata>? appointment = check appointmentCollection->findOne({appointmentNumber: refNumber});
     if appointment is map<anydata> {
-        return appointment["patientMobile"].toString();
+        return appointment["patientId"].toString();
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",

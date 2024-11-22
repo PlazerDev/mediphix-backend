@@ -204,6 +204,25 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    //submit patient record
+    resource function post submitPatientRecord(model:PatientRecord patientRecord) returns http:Response|error {
+    http:Created|model:InternalError patientRecordSubmissionStatus = check 'service:submitPatientRecord(patientRecord);
+    http:Response response = new;
+
+    if (patientRecordSubmissionStatus is http:Created) {
+        response.statusCode = 201;
+        response.setJsonPayload({message: "Patient record submitted successfully"});
+        return response;
+    } 
+    else if (patientRecordSubmissionStatus is model:InternalError) {
+        response.statusCode = 500;
+        response.setJsonPayload(patientRecordSubmissionStatus.body.toJson());
+    }
+
+    return response;
+}
+
+
     // medical center staff controllers .......................................................................................
 
     // return initial informtion of a medical center staff member by userId
