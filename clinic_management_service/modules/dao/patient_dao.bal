@@ -78,6 +78,7 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
         "last_name": 1,
         "nic": 1,
         "birthday": 1,
+        "gender":1,
         "email": 1,
         "address": 1,
         "nationality": 1,

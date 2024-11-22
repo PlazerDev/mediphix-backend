@@ -265,13 +265,12 @@ service /doctor on httpListener {
 
     }
 
-    // resource function post doctor/registration(http:Request request) returns http:Response|error? {
-    //     json|http:ClientError patient = request.getJsonPayload();
-    //     io:println("Inside getDoctorName in gateway");
-    //     http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-    //     return doctorName;
-
-    // }
+    resource function post doctor/registration(string mobile) returns http:Response|error? {
+        // json|http:ClientError patient = request.getJsonPayload();
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+    }
 
 }
 
