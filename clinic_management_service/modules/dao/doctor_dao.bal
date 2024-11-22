@@ -2,6 +2,7 @@ import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
 import ballerina/io;
+import ballerina/http;
 
 public function getSessionDetails(string mobile) returns error|model:InternalError|model:Sessions[]{    
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
@@ -81,3 +82,28 @@ public function getDoctorName(string mobile) returns error|string|model:Internal
     }
 }
 
+public function getPatientIdByRefNumber(string refNumber) returns string|model:InternalError|error {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<anydata>? appointment = check appointmentCollection->findOne({_id: refNumber});
+    if appointment is map<anydata> {
+        return appointment["patientMobile"].toString();
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find the appointment for the given reference number.",
+            details: "refNumber/" + refNumber,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
+public function createPatientRecord(map<anydata> recordToStore) returns http:Created|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection recordBookCollection = check mediphixDb->getCollection("record_book");
+
+    check recordBookCollection->insertOne(recordToStore);
+    return http:CREATED;
+}
