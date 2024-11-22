@@ -158,7 +158,9 @@ service /patient on httpListener {
                     }
                 }
             },
-            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments"]
+
+            scopes: ["insert_appointment", "retrieve_own_patient_data","retrive_appoinments","submit_patient_records"]
+
         }
     ]
 }
@@ -262,15 +264,49 @@ service /doctor on httpListener {
         io:println("Inside getDoctorName in gateway");
         http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
         return doctorName;
-
     }
 
+<<<<<<< HEAD
     resource function post doctor/registration(string mobile) returns http:Response|error? {
         // json|http:ClientError patient = request.getJsonPayload();
         io:println("Inside getDoctorName in gateway");
         http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
         return doctorName;
     }
+=======
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["submit_patient_records"]
+        }
+    }
+    resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
+        
+
+        if(response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating appointment",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+    }    
+
+    // resource function post doctor/registration(http:Request request) returns http:Response|error? {
+    //     json|http:ClientError patient = request.getJsonPayload();
+    //     io:println("Inside getDoctorName in gateway");
+    //     http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+    //     return doctorName;
+
+    // }
+>>>>>>> 5da435e16400c59f9f526c70ebc1b93af59e809c
 
 }
 
