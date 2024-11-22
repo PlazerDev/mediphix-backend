@@ -1,6 +1,8 @@
 import clinic_management_service.model;
 import clinic_management_service.dao;
 
+
+
 //get doctorname by mobile
 public function getDoctorName(string mobile) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:getDoctorName(mobile);

@@ -170,6 +170,7 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         first_name: data.fname,
         last_name: data.lname,
         birthday: data.dob,
+        gender: data.gender,
         email: data.email,
         nic: data.nic,
         address: data.address,
@@ -276,7 +277,8 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         channellings: [],
         medical_records: [],
         lab_reports: [],
-        mediaStorage: ""
+        profileImage:"",
+        media_storage: ""
     };
     model:User doctorUser = {
         email: data.email,
