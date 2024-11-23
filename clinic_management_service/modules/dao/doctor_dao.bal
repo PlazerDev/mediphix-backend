@@ -82,6 +82,47 @@ public function getDoctorName(string mobile) returns error|string|model:Internal
     }
 }
 
+public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "name": 1,
+        "address": 1,
+        "mobile": 1,
+        "email": 1,
+        "district": 1,
+        "verified": 1,
+        "appointmentCategories": 1,
+        "mediaStorage": 1,
+        "specialNotes": 1,
+        "doctors": 1,
+        "appointments": 1,
+        "patients": 1,
+        "medicalCenterStaff": 1,
+        "idfront": 1,
+        "idback": 1,
+        "fee": 1
+    };
+
+    stream<model:MedicalCenter, error?>|mongodb:Error? findResults =  check medicalCenterCollection->find({},{},projection,model:MedicalCenter);
+    if findResults is stream<model:MedicalCenter, error?> {
+        model:MedicalCenter[]|error medicalCenters = from model:MedicalCenter mc in findResults
+            select mc; 
+        return medicalCenters;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving medical centers",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+}
+
 public function getPatientIdByRefNumber(string refNumber) returns string|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");

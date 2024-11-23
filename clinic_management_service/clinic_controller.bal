@@ -222,6 +222,19 @@ service / on new http:Listener(9090) {
     return response;
 }
 
+    resource  function get  getAllMedicalCenters() returns http:Response|error? {
+            model:MedicalCenter[]|model:InternalError medicalCenters = check 'service:getAllMedicalCenters();
+            http:Response response = new;
+            if medicalCenters is model:MedicalCenter[] {
+                response.statusCode = 200;
+                response.setJsonPayload(medicalCenters.toJson());
+            } else if medicalCenters is model:InternalError {
+                response.statusCode = 500;
+                response.setJsonPayload(medicalCenters.body.toJson());
+            }
+            return response;
+    }
+
 
     // medical center staff controllers .......................................................................................
 

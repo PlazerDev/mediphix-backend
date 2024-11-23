@@ -5,18 +5,7 @@ public type User record {|
     string password;
 |};
 
-public type MedicalCenter record {|
-    string name;
-    string address;
-    string mobile;
-    string email;
-    byte idfront;
-    byte idback;
-    string district;
-    boolean verified;
-    decimal fee;
 
-|};
 
 public type Laboratary record {|
     string name;
