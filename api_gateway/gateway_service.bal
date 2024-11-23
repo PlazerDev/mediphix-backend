@@ -283,6 +283,8 @@ service /doctor on httpListener {
             scopes: ["submit_patient_records"]
         }
     }
+
+    //submit patient medical record
     resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
 
@@ -300,6 +302,79 @@ service /doctor on httpListener {
         errorResponse.setJsonPayload(internalError.body.toJson());
         return errorResponse;
     }
+
+     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
+//get previous appointments details
+    resource function get previousAppointments(http:Request req) returns http:Response|error? {
+        do {
+            string doctorEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string doctorId = check getCachedUserId(doctorEmail, userType);
+            Appointment[] allAppointments = check getAppointments(doctorId) ?: [];
+
+            time:Utc currentTime = time:utcNow();
+            Appointment[] previousAppointments = from Appointment appointment in allAppointments
+                                      let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
+                                      where appointmentUtcResult is time:Utc && appointmentUtcResult < currentTime
+                                      select appointment;
+
+            http:Response response = new;
+            response.setJsonPayload(previousAppointments.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving previous appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+}
+
+//get upcoming appointments details
+resource function get upcomingAppointments(http:Request req) returns http:Response|error? {
+    do {
+
+        string doctorEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string doctorId = check getCachedUserId(doctorEmail, userType);
+        Appointment[] allAppointments = check getAppointments(doctorId) ?: [];
+
+        time:Utc currentTime = time:utcNow();
+
+        Appointment[] upcomingAppointments = from Appointment appointment in allAppointments
+                                             let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
+                                             where appointmentUtcResult is time:Utc && appointmentUtcResult > currentTime
+                                             select appointment;
+
+        http:Response response = new;
+        response.setJsonPayload(upcomingAppointments.toJson());
+        response.statusCode = 200;
+        return response;
+
+    } on fail {
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving upcoming appointment details",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+}
+
 
 }
 
