@@ -1,3 +1,5 @@
+import ballerina/time;
+
 public type Session record {
     string sessionId;
     string doctorId;
@@ -25,21 +27,4 @@ public type TimeSlot record {
     string[] appointmentId;
     string[] patientId;
     string[] medicalStaffId;
-};
-
-public enum SessionStatus {
-    ACTIVE,
-    ONGOING,
-    CANCELLED,
-    OVER
-};
-
-public enum Repitition {
-    MON,
-    TUE,
-    WED,
-    THU,
-    FRI,
-    SAT,
-    SUN
 };
