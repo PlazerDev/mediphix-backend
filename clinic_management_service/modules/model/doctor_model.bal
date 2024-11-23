@@ -103,3 +103,4 @@ public type AppointmentData record {|
     int queueNo;
     string startTime;
 |};
+
