@@ -254,6 +254,30 @@ service /doctor on httpListener {
         return response;
     }
 
+
+    
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getAllMedicalCenters() returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
