@@ -254,9 +254,20 @@ service /doctor on httpListener {
         return response;
     }
 
-
-    
     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
+    resource function get getDoctorName(string mobile) returns http:Response|error? {
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+    }
+
+    //get all medical centers
+   @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
@@ -278,16 +289,33 @@ service /doctor on httpListener {
         return response;
     }
 
-    @http:ResourceConfig {
+    
+
+
+     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
     }
+    resource function get getMyMedicalCenters(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getMyMedicalCenters/[userId];
+            return response;
 
-    resource function get getDoctorName(string mobile) returns http:Response|error? {
-        io:println("Inside getDoctorName in gateway");
-        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-        return doctorName;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
     }
 
     @http:ResourceConfig {
@@ -326,6 +354,7 @@ service /doctor on httpListener {
         errorResponse.setJsonPayload(internalError.body.toJson());
         return errorResponse;
     }
+
 
      @http:ResourceConfig {
         auth: {
@@ -400,6 +429,7 @@ resource function get upcomingAppointments(http:Request req) returns http:Respon
 }
 
 
+
 }
 
 @http:ServiceConfig {
@@ -453,7 +483,7 @@ public function getUserEmailByJWT(http:Request req) returns string|error {
     [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);
     json payload = jwtInformation[1].toJson();
     string userEmail = check payload.username;
-    io:println("JWT username: ", userEmail);
+    io:println("JWT userEmail: ", userEmail);
     return userEmail;
 }
 

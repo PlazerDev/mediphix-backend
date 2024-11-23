@@ -6,6 +6,13 @@ import ballerina/time;
 
 
 
+
+//get doctorId by email
+public function doctorIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:doctorIdByEmail(email);
+    return result;
+}
+
 //get doctorname by mobile
 public function getDoctorName(string mobile) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:getDoctorName(mobile);
@@ -20,6 +27,13 @@ public function getSessionDetails(string mobile) returns error|model:Sessions[]|
 
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
     model:MedicalCenter[]|model:InternalError result = check dao:getAllMedicalCenters();
+    return result;
+}
+
+//get medical centers
+public function getMyMedicalCenters(string id) returns error|model:MedicalCenter[]|model:InternalError
+ {
+    model:InternalError|model:MedicalCenter[] result = check dao:getMyMedicalCenters(id);
     return result;
 }
 
