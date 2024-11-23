@@ -153,6 +153,16 @@ service / on new http:Listener(9090) {
         }
     }
 
+    //get doctor name by email
+    resource function get doctorIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError doctor = 'service:doctorIdByEmail(email.trim());
+        if doctor is string {
+            return doctor;
+        } else {
+            return error("Error occurred while retrieving doctor id number");
+        }
+    }
+
     // Get appointments of a patient
     resource function get appointments(string mobile) returns http:Response|error {
         model:Appointment[]|model:ReturnResponse appointments = check 'service:getAppointments(mobile);
@@ -233,6 +243,20 @@ service / on new http:Listener(9090) {
                 response.setJsonPayload(medicalCenters.body.toJson());
             }
             return response;
+    }
+
+    //get my medical centers
+    resource function get getMyMedicalCenters/[string userId]() returns error|http:Response {
+        model:MedicalCenter[]|model:InternalError medicalCenters = check 'service:getMyMedicalCenters(userId.trim());
+        http:Response response = new;
+        if medicalCenters is model:MedicalCenter[] {
+            response.statusCode = 200;
+            response.setJsonPayload(medicalCenters.toJson());
+        } else if medicalCenters is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(medicalCenters.body.toJson());
+        }
+        return response;
     }
 
 
