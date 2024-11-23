@@ -356,7 +356,7 @@ public function medicalCenterRegistration(model:otherSignupData data) returns er
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
 
-    model:MedicalCenter mc = {
+    model:UnregisteredMedicalCEnter mc = {
         name: data.name,
         address: data.address,
         mobile: data.mobile,
