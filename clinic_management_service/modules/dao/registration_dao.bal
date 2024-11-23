@@ -165,7 +165,7 @@ public isolated function updateRole(string token, string userId, string roleId) 
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    model:UnregisteredPatient patient = {
+    model:Patient patient = {
         mobile_number: data.mobile,
         first_name: data.fname,
         last_name: data.lname,

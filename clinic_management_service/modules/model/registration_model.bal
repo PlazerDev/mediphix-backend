@@ -50,14 +50,14 @@ public type DoctorSignupData record {|
     string nic;
     string[] education;
     string mobile;
-    string[] specialization;
+    string[] specialization?;
     string email;
     string password;
     string confirmPassword;
     string profileImage?;
-    byte[] profileImageFile;
-    byte[] idFront;
-    byte[] idBack;
+    byte[] profileImageFile?;
+    byte[] idFront?;
+    byte[] idBack?;
 |};
 
 //this is used for laboratory and medical centers

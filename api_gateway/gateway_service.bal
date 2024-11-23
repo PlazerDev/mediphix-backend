@@ -4,6 +4,7 @@ import ballerina/jwt;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/redis;
+import ballerina/mime;
 
 redis:Client redis = check new (
     connection = {
@@ -62,6 +63,28 @@ listener http:Listener httpListener = check new (9000);
     ]
 }
 service /patient on httpListener {
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["check_patient"]
+        }
+    }
+    resource function post register/patient(PatientSignupData data) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering patient",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
 
     @http:ResourceConfig {
         auth: {
@@ -271,11 +294,37 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function post doctor/registration(string mobile) returns http:Response|error? {
-        // json|http:ClientError patient = request.getJsonPayload();
-        io:println("Inside getDoctorName in gateway");
-        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-        return doctorName;
+    resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
+        io:println("Doctor data: ", data);
+        http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering doctor",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+
+        return errorResponse;
+    }
+
+    resource function post upload/doctoridfront(http:Request request) returns http:Response|error? {
+        io:println("Inside upload/doctoridfront in gateway");
+        io:println("Payload", request.getJsonPayload());
+
+        http:Response response = new;
+        response.statusCode = 200;
+        response.setJsonPayload({message: "Doctor ID front uploaded successfully"});
+        return response;
+        // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
+        // return idFrontString;
     }
 
     @http:ResourceConfig {
@@ -302,6 +351,9 @@ service /doctor on httpListener {
     }
 
 }
+
+
+
 
 @http:ServiceConfig {
     cors: {
@@ -365,7 +417,7 @@ public function getCachedUserId(string userEmail, string userType) returns strin
         io:println("This user exists in cache: ", objectId);
         userId = objectId;
     } else {
-        log:printInfo("This user mobile does not exist in cache");
+        log:printInfo("This user id does not exist in cache, lets retrieve from the DB");
         string id = "";
         if (userType == "patient") {
             id = check clinicServiceEP->/patientIdByEmail/[userEmail];
@@ -391,4 +443,36 @@ public function getPatientData(string userId) returns Patient|error {
 public function getAppointments(string userId) returns Appointment[]|error? {
     Appointment[] appointments = check appointmentServiceEP->/appointments/[userId];
     return appointments;
+}
+
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /unregistered on httpListener {
+    resource function post doctor/upload/doctoridfront/[string email](http:Request request) returns http:Response|error? {
+        mime:Entity[] formData = check request.getBodyParts();
+        byte[] fileBytes = [];
+        string emailHead = email;
+        string contentType = "";
+        string fileName = "";
+
+        foreach mime:Entity part in formData {
+            if part.getContentDisposition().name == "file" {
+                fileBytes = check part.getByteArray();
+                contentType = part.getContentType();
+                io:println("Decomposed: ", part.getContentDisposition());
+                fileName = part.getContentDisposition().fileName;
+            }
+        }
+
+        http:Response response = check clinicServiceEP->/doctor/uploadmedia/["doctor"]/[email]/[fileName]/[contentType].post(fileBytes);
+
+        return response;
+        // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
+        // return idFrontString;
+    }
+
 }
