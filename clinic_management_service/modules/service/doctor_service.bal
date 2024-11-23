@@ -18,6 +18,7 @@ public function getSessionDetails(string mobile) returns error|model:Sessions[]|
 
 }
 
+
 public function submitPatientRecord(model:PatientRecord patientRecord) returns http:Created|model:InternalError|error {
 
     string refNumber = patientRecord.appointmentData.refNumber;
@@ -56,3 +57,10 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
     }
 
 }
+
+public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
+    model:MedicalCenter[]|model:InternalError result = check dao:getAllMedicalCenters();
+    return result;
+}
+
+

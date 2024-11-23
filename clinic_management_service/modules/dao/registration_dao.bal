@@ -361,11 +361,15 @@ public function medicalCenterRegistration(model:otherSignupData data) returns er
         address: data.address,
         mobile: data.mobile,
         email: data.email,
-        idfront: data.idfront,
-        idback: data.idback,
+        idfront: "",
+        idback: "",
+        // idfront: data.idfront,
+        // idback: data.idback,
         district: data.district,
         verified: false,
-        fee: 0.0
+        fee: 0.0,
+        appointment_categories:[],
+        number_of_doctors: 0
     };
     model:User mcUser = {
         email: data.email,

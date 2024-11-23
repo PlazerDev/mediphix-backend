@@ -10,11 +10,15 @@ public type MedicalCenter record {|
     string address;
     string mobile;
     string email;
-    byte idfront;
-    byte idback;
+    string idfront;
+    string idback;
+    // byte idfront;
+    // byte idback;
     string district;
     boolean verified;
     decimal fee;
+    int number_of_doctors;
+    string[] appointment_categories;
 
 |};
 

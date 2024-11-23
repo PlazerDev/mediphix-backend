@@ -254,7 +254,7 @@ service /doctor on httpListener {
         return response;
     }
 
-    @http:ResourceConfig {
+     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
@@ -264,42 +264,12 @@ service /doctor on httpListener {
         io:println("Inside getDoctorName in gateway");
         http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
         return doctorName;
+        
     }
 
-    @http:ResourceConfig {
-        auth: {
-            scopes: ["retrive_appoinments"]
-        }
-    }
-    resource function post doctor/registration(string mobile) returns http:Response|error? {
-        // json|http:ClientError patient = request.getJsonPayload();
-        io:println("Inside getDoctorName in gateway");
-        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-        return doctorName;
-    }
+    
 
-    @http:ResourceConfig {
-        auth: {
-            scopes: ["submit_patient_records"]
-        }
-    }
-    resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
-        http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
 
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while creating appointment",
-            timeStamp: time:utcNow()
-        };
-        InternalError internalError = {body: errorDetails};
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(internalError.body.toJson());
-        return errorResponse;
-    }
 
 }
 
