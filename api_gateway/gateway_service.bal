@@ -417,7 +417,7 @@ service /doctor on httpListener {
             string doctorEmail = check getUserEmailByJWT(req);
             string userType = "doctor";
             string doctorId = check getCachedUserId(doctorEmail, userType);
-            Appointment[] allAppointments = check getAppointments(doctorId) ?: [];
+            Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
 
             time:Utc currentTime = time:utcNow();
             Appointment[] previousAppointments = from Appointment appointment in allAppointments
@@ -448,17 +448,22 @@ resource function get upcomingAppointments(http:Request req) returns http:Respon
     do {
 
         string doctorEmail = check getUserEmailByJWT(req);
+        log:printDebug("Extracted doctor email: " + doctorEmail);
         string userType = "doctor";
         string doctorId = check getCachedUserId(doctorEmail, userType);
-        Appointment[] allAppointments = check getAppointments(doctorId) ?: [];
+        log:printDebug("Retrieved doctor ID: " + doctorId);
+        Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
+        log:printDebug("Fetched all appointments: " + allAppointments.toString());
 
         time:Utc currentTime = time:utcNow();
+        log:printDebug("Current UTC time: " + currentTime.toString());
 
         Appointment[] upcomingAppointments = from Appointment appointment in allAppointments
                                              let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
                                              where appointmentUtcResult is time:Utc && appointmentUtcResult > currentTime
                                              select appointment;
 
+        
         http:Response response = new;
         response.setJsonPayload(upcomingAppointments.toJson());
         response.statusCode = 200;
@@ -574,6 +579,10 @@ public function getAppointments(string userId) returns Appointment[]|error? {
     return appointments;
 }
 
+public function getAppointmentsForDoctor(string userId) returns Appointment[]|error? {
+    Appointment[] appointments = check appointmentServiceEP->/appointmentsByDoctorId/[userId];
+    return appointments;
+}
 
 @http:ServiceConfig {
     cors: {
