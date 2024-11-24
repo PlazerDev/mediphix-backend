@@ -2,9 +2,22 @@ import clinic_management_service.dao;
 import clinic_management_service.model;
 
 import ballerina/http;
+import ballerina/io;
 import ballerina/time;
+import ballerinax/aws.s3;
 
+configurable string AWS_ACCESS_KEY_ID = ?;
+configurable string AWS_SECRET_ACCESS_KEY = ?;
+configurable string AWS_REGION = ?;
+configurable string S3_BUCKET_NAME = ?;
 
+s3:ConnectionConfig amazonS3Config = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    region: AWS_REGION
+};
+
+s3:Client amazonS3Client = check new (amazonS3Config);
 
 
 //get doctorId by email
@@ -42,7 +55,6 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
     string refNumber = patientRecord.appointmentData.refNumber;
     string|model:InternalError|error patientIdResult = dao:getPatientIdByRefNumber(refNumber);
 
-
     string patientId;
     if patientIdResult is string {
         patientId = patientIdResult;
@@ -55,7 +67,7 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
-    
+
     map<anydata> recordToStore = {
         patientId: patientId,
         patientRecord: patientRecord
@@ -75,3 +87,36 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
     }
 
 }
+
+public function uploadDoctorMedia(string uploadType, byte[] fileBytes, string email, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
+    string fileNameNew = "/doctor-resources/" + email + "/" + fileName;
+    io:println("File name: ", fileNameNew);
+    map<string> metadata = {
+        "contenttype": fileType + "/" + extension
+    };
+    error? result = amazonS3Client->createObject(S3_BUCKET_NAME, fileNameNew, fileBytes, (), metadata);
+    if (result is error) {
+        io:println("Error uploading media: ", result);
+        model:ErrorDetails errorDetails = {
+            message: "Failed to upload media. Please retry!",
+            details: "doctor/uploadmedia",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+    return "Success";
+
+}
+
+// public function uploadToS3(string email, string filePath, string mimeType) returns string {
+//     string contentType = "application/pdf";
+//     string key = fileName;
+//     string content = fileContent;
+//     error?|s3:PutObjectResult result = s3:putObject(amazonS3Client, S3_BUCKET_NAME, key, content, contentType);
+//     if (result is error) {
+//         return "Error";
+//     } else {
+//         return "Success";
+//     }
+// }
