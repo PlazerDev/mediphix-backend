@@ -146,8 +146,9 @@ service /patient on httpListener {
         }
     }
 
-    resource function post appointment(NewAppointment newAppointment) returns http:Response|error? {
+    resource function post appointment(http:Request request,NewAppointment newAppointment) returns http:Response|error? {
         io:println("Inside Appointment");
+        newAppointment.patientId = check getCachedUserId(check getUserEmailByJWT(request), "patient");
         http:Response|error? response = check appointmentServiceEP->/appointment.post(newAppointment);
         if (response is http:Response) {
             return response;
@@ -592,6 +593,7 @@ public function getAppointmentsForDoctor(string userId) returns Appointment[]|er
 service /unregistered on httpListener {
     resource function post doctor/upload/doctoridfront/[string email](http:Request request) returns http:Response|error? {
         mime:Entity[] formData = check request.getBodyParts();
+        io:println("FormData: ", formData);
         byte[] fileBytes = [];
         string emailHead = email;
         string contentType = "";
@@ -606,7 +608,7 @@ service /unregistered on httpListener {
             }
         }
 
-        http:Response response = check clinicServiceEP->/doctor/uploadmedia/["doctor"]/[email]/[fileName]/[contentType].post(fileBytes);
+        http:Response response = check clinicServiceEP->/doctor/uploadmedia/["doctor"]/[emailHead]/[fileName]/[contentType].post(fileBytes);
 
         return response;
         // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);

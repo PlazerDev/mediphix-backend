@@ -37,8 +37,8 @@ public enum AppointmentCategory {
 
 public type NewAppointment record {
     string doctorId;
-    string patientId;
-    int sessionId;
+    string patientId?;
+    string sessionId;
     string category;
     string medicalCenterId;
     string medicalCenterName;
@@ -54,7 +54,7 @@ public type Appointment record {|
     string doctorId;
     string patientId;
     string sessionId;
-    string medicalRecordId;
+    string medicalRecordId?;
     string category;
     string medicalCenterId;
     string medicalCenterName;
