@@ -99,7 +99,7 @@ public type Appointment record {|
     string doctorId;
     string patientId;
     string sessionId;
-    string medicalRecordId;
+    string medicalRecordId?;
     string category;
     string medicalCenterId;
     string medicalCenterName;
