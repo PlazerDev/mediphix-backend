@@ -4,6 +4,7 @@ import ballerina/jwt;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/redis;
+import ballerina/mime;
 
 redis:Client redis = check new (
     connection = {
@@ -62,6 +63,28 @@ listener http:Listener httpListener = check new (9000);
     ]
 }
 service /patient on httpListener {
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["check_patient"]
+        }
+    }
+    resource function post register/patient(PatientSignupData data) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering patient",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
 
     @http:ResourceConfig {
         auth: {
@@ -158,7 +181,9 @@ service /patient on httpListener {
                     }
                 }
             },
-            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments"]
+
+            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments", "submit_patient_records"]
+
         }
     ]
 }
@@ -262,10 +287,207 @@ service /doctor on httpListener {
         io:println("Inside getDoctorName in gateway");
         http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
         return doctorName;
-
     }
 
+    //get all medical centers
+   @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getAllMedicalCenters() returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+    
+
+
+     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getMyMedicalCenters(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getMyMedicalCenters/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
+        io:println("Doctor data: ", data);
+        http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering doctor",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+
+        return errorResponse;
+    }
+
+    resource function post upload/doctoridfront(http:Request request) returns http:Response|error? {
+        io:println("Inside upload/doctoridfront in gateway");
+        io:println("Payload", request.getJsonPayload());
+
+        http:Response response = new;
+        response.statusCode = 200;
+        response.setJsonPayload({message: "Doctor ID front uploaded successfully"});
+        return response;
+        // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
+        // return idFrontString;
+    }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["submit_patient_records"]
+        }
+    }
+
+    //submit patient medical record
+    resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating appointment",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+    }
+
+
+     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
+//get previous appointments details
+    resource function get previousAppointments(http:Request req) returns http:Response|error? {
+        do {
+            string doctorEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string doctorId = check getCachedUserId(doctorEmail, userType);
+            Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
+
+            time:Utc currentTime = time:utcNow();
+            Appointment[] previousAppointments = from Appointment appointment in allAppointments
+                                      let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
+                                      where appointmentUtcResult is time:Utc && appointmentUtcResult < currentTime
+                                      select appointment;
+
+            http:Response response = new;
+            response.setJsonPayload(previousAppointments.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving previous appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
 }
+
+//get upcoming appointments details
+resource function get upcomingAppointments(http:Request req) returns http:Response|error? {
+    do {
+
+        string doctorEmail = check getUserEmailByJWT(req);
+        log:printDebug("Extracted doctor email: " + doctorEmail);
+        string userType = "doctor";
+        string doctorId = check getCachedUserId(doctorEmail, userType);
+        log:printDebug("Retrieved doctor ID: " + doctorId);
+        Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
+        log:printDebug("Fetched all appointments: " + allAppointments.toString());
+
+        time:Utc currentTime = time:utcNow();
+        log:printDebug("Current UTC time: " + currentTime.toString());
+
+        Appointment[] upcomingAppointments = from Appointment appointment in allAppointments
+                                             let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
+                                             where appointmentUtcResult is time:Utc && appointmentUtcResult > currentTime
+                                             select appointment;
+
+        
+        http:Response response = new;
+        response.setJsonPayload(upcomingAppointments.toJson());
+        response.statusCode = 200;
+        return response;
+
+    } on fail {
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving upcoming appointment details",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+}
+
+
+
+}
+
+
+
 
 @http:ServiceConfig {
     cors: {
@@ -318,7 +540,7 @@ public function getUserEmailByJWT(http:Request req) returns string|error {
     [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);
     json payload = jwtInformation[1].toJson();
     string userEmail = check payload.username;
-    io:println("JWT username: ", userEmail);
+    io:println("JWT userEmail: ", userEmail);
     return userEmail;
 }
 
@@ -329,7 +551,7 @@ public function getCachedUserId(string userEmail, string userType) returns strin
         io:println("This user exists in cache: ", objectId);
         userId = objectId;
     } else {
-        log:printInfo("This user mobile does not exist in cache");
+        log:printInfo("This user id does not exist in cache, lets retrieve from the DB");
         string id = "";
         if (userType == "patient") {
             id = check clinicServiceEP->/patientIdByEmail/[userEmail];
@@ -355,4 +577,40 @@ public function getPatientData(string userId) returns Patient|error {
 public function getAppointments(string userId) returns Appointment[]|error? {
     Appointment[] appointments = check appointmentServiceEP->/appointments/[userId];
     return appointments;
+}
+
+public function getAppointmentsForDoctor(string userId) returns Appointment[]|error? {
+    Appointment[] appointments = check appointmentServiceEP->/appointmentsByDoctorId/[userId];
+    return appointments;
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /unregistered on httpListener {
+    resource function post doctor/upload/doctoridfront/[string email](http:Request request) returns http:Response|error? {
+        mime:Entity[] formData = check request.getBodyParts();
+        byte[] fileBytes = [];
+        string emailHead = email;
+        string contentType = "";
+        string fileName = "";
+
+        foreach mime:Entity part in formData {
+            if part.getContentDisposition().name == "file" {
+                fileBytes = check part.getByteArray();
+                contentType = part.getContentType();
+                io:println("Decomposed: ", part.getContentDisposition());
+                fileName = part.getContentDisposition().fileName;
+            }
+        }
+
+        http:Response response = check clinicServiceEP->/doctor/uploadmedia/["doctor"]/[email]/[fileName]/[contentType].post(fileBytes);
+
+        return response;
+        // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
+        // return idFrontString;
+    }
+
 }

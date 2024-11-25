@@ -4,6 +4,7 @@ import ballerina/io;
 import ballerina/crypto;
 
 
+
 public function registerPatient(model:PatientSignupData data) returns model:ReturnMsg {
     model:ReturnMsg addPatientReturnMsg = {message: "", statusCode: 0};
     if (data.fname.length() == 0) {
@@ -82,7 +83,7 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
         addDoctorReturnMsg.statusCode = 400;
         return addDoctorReturnMsg;
     }
-    else if (data.password !== data.confirmpass) {
+    else if (data.password !== data.confirmPassword) {
         addDoctorReturnMsg.message = "Password and Confirm Password should be same";
         addDoctorReturnMsg.statusCode = 400;
         return addDoctorReturnMsg;
@@ -113,6 +114,8 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
 
 }
 
+
+
 public function registerMedicalCenter(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
     if (data.name.length() == 0) {
@@ -135,7 +138,7 @@ public function registerMedicalCenter(model:otherSignupData data) returns model:
         returnMsg.statusCode = 400;
         return returnMsg;
     }
-     else if (data.password !== data.confirmpass) {
+     else if (data.password !== data.confirmPassword) {
         returnMsg.message = "Password and Confirm Password should be same";
         returnMsg.statusCode = 400;
         return returnMsg;
@@ -187,7 +190,7 @@ public function registerLaboratary(model:otherSignupData data) returns model:Ret
         returnMsg.statusCode = 400;
         return returnMsg;
     }
-     else if (data.password !== data.confirmpass) {
+     else if (data.password !== data.confirmPassword) {
         returnMsg.message = "Password and Confirm Password should be same";
         returnMsg.statusCode = 400;
         return returnMsg;

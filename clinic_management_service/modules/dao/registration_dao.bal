@@ -165,11 +165,12 @@ public isolated function updateRole(string token, string userId, string roleId) 
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    model:UnregisteredPatient patient = {
+    model:Patient patient = {
         mobile_number: data.mobile,
         first_name: data.fname,
         last_name: data.lname,
         birthday: data.dob,
+        gender: data.gender,
         email: data.email,
         nic: data.nic,
         address: data.address,
@@ -259,7 +260,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
-    model:UnregisteredDoctor doctor = {
+    model:Doctor doctor = {
         name: data.name,
         slmc: data.slmc,
         nic: data.nic,
@@ -267,17 +268,17 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         mobile: data.mobile,
         specialization: data.specialization,
         email: data.email,
-        hospital: "not assigned",
-        category: "not assigned",
-        availability: "not assigned",
-        fee: 0.0,
+        category: [],
+        availability: [],
         verified: false,
         patients: [],
         medical_centers: [],
         sessions: [],
-        channells: [],
+        channellings: [],
         medical_records: [],
-        lab_reports: []
+        lab_reports: [],
+        profileImage:"",
+        media_storage: ""
     };
     model:User doctorUser = {
         email: data.email,
@@ -355,7 +356,7 @@ public function medicalCenterRegistration(model:otherSignupData data) returns er
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
 
-    model:MedicalCenter mc = {
+    model:UnregisteredMedicalCEnter mc = {
         name: data.name,
         address: data.address,
         mobile: data.mobile,
