@@ -19,7 +19,6 @@ s3:ConnectionConfig amazonS3Config = {
 
 s3:Client amazonS3Client = check new (amazonS3Config);
 
-
 //get doctorId by email
 public function doctorIdByEmail(string email) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:doctorIdByEmail(email);
@@ -45,7 +44,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
 
 //get medical centers
 public function getMyMedicalCenters(string id) returns error|model:MedicalCenter[]|model:InternalError
- {
+{
     model:InternalError|model:MedicalCenter[] result = check dao:getMyMedicalCenters(id);
     return result;
 }
@@ -88,13 +87,44 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
 
 }
 
-public function uploadDoctorMedia(string uploadType, byte[] fileBytes, string email, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
-    string fileNameNew = "/doctor-resources/" + email + "/" + fileName;
-    io:println("File name: ", fileNameNew);
+public function uploadMedia(string userType, string uploadType, string email, byte[] fileBytes, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
+    string fileNameNew = "other";
+    if (userType === "doctor" && uploadType === "idFrontImage") {
+        fileNameNew = "doctor-resources/" + email + "/" + "idFrontImage";
+    } else if (userType === "doctor" && uploadType === "idBackImage") {
+        fileNameNew = "doctor-resources/" + email + "/" + "idBackImage";
+    } else if (userType === "doctor" && uploadType === "medicalCertificates") {
+        fileNameNew = "doctor-resources/" + email + "/" + "medicalCertificates" + "/" + fileName;
+    } else if (userType === "doctor" && uploadType === "profileImage") {
+        fileNameNew = "doctor-resources/" + email + "/" + "profileImage";
+    } else if (userType === "medicalCenter" && uploadType === "logo") {
+        fileNameNew = "medical-center-resources/" + email + "/" + "logo";
+    } else if (userType === "medicalCenter" && uploadType === "license") {
+        fileNameNew = "medical-center-resources/" + email + "/" + "license";
+    } else if (userType === "patient" && uploadType === "prescription") {
+        fileNameNew = "patient-resources/" + email + "/" + "prescription" + "/" + fileName;
+    } else if (userType === "patient" && uploadType === "reports") {
+        fileNameNew = "patient-resources/" + email + "/" + "reports" + "/" + fileName;
+    } else if (userType === "patient" && uploadType === "profileImage") {
+        fileNameNew = "patient-resources/" + email + "/" + "profileImage";
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Invalid upload type",
+            details: "doctor/uploadmedia",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+    string contentType = fileType + "/" + extension;
     map<string> metadata = {
-        "contenttype": fileType + "/" + extension
+        "Content-Type": contentType
     };
-    error? result = amazonS3Client->createObject(S3_BUCKET_NAME, fileNameNew, fileBytes, (), metadata);
+    s3:ObjectCreationHeaders headers = {
+        contentType: contentType
+    };
+
+    error? result = amazonS3Client->createObject(S3_BUCKET_NAME, fileNameNew, fileBytes, (), headers, metadata);
     if (result is error) {
         io:println("Error uploading media: ", result);
         model:ErrorDetails errorDetails = {

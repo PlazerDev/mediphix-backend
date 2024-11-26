@@ -180,33 +180,33 @@ service / on new http:Listener(9090) {
 
     //submit patient record
     resource function post submitPatientRecord(model:PatientRecord patientRecord) returns http:Response|error {
-    http:Created|model:InternalError patientRecordSubmissionStatus = check 'service:submitPatientRecord(patientRecord);
-    http:Response response = new;
+        http:Created|model:InternalError patientRecordSubmissionStatus = check 'service:submitPatientRecord(patientRecord);
+        http:Response response = new;
 
-    if (patientRecordSubmissionStatus is http:Created) {
-        response.statusCode = 201;
-        response.setJsonPayload({message: "Patient record submitted successfully"});
+        if (patientRecordSubmissionStatus is http:Created) {
+            response.statusCode = 201;
+            response.setJsonPayload({message: "Patient record submitted successfully"});
+            return response;
+        }
+        else if (patientRecordSubmissionStatus is model:InternalError) {
+            response.statusCode = 500;
+            response.setJsonPayload(patientRecordSubmissionStatus.body.toJson());
+        }
+
         return response;
-    } 
-    else if (patientRecordSubmissionStatus is model:InternalError) {
-        response.statusCode = 500;
-        response.setJsonPayload(patientRecordSubmissionStatus.body.toJson());
     }
 
-    return response;
-}
-
-    resource  function get  getAllMedicalCenters() returns http:Response|error? {
-            model:MedicalCenter[]|model:InternalError medicalCenters = check 'service:getAllMedicalCenters();
-            http:Response response = new;
-            if medicalCenters is model:MedicalCenter[] {
-                response.statusCode = 200;
-                response.setJsonPayload(medicalCenters.toJson());
-            } else if medicalCenters is model:InternalError {
-                response.statusCode = 500;
-                response.setJsonPayload(medicalCenters.body.toJson());
-            }
-            return response;
+    resource function get getAllMedicalCenters() returns http:Response|error? {
+        model:MedicalCenter[]|model:InternalError medicalCenters = check 'service:getAllMedicalCenters();
+        http:Response response = new;
+        if medicalCenters is model:MedicalCenter[] {
+            response.statusCode = 200;
+            response.setJsonPayload(medicalCenters.toJson());
+        } else if medicalCenters is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(medicalCenters.body.toJson());
+        }
+        return response;
     }
 
     //get my medical centers
@@ -222,7 +222,6 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
-
 
     // medical center staff controllers .......................................................................................
 
@@ -245,11 +244,12 @@ service / on new http:Listener(9090) {
 
     }
 
-    resource function post doctor/uploadmedia/[string uploadType]/[string email]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
+    resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
-        string|model:InternalError|error? result = 'service:uploadDoctorMedia(uploadType, fileBytes, email, fileName, fileType, extension);
+        string|model:InternalError|error? result = 'service:uploadMedia(userType, uploadType, emailHead, fileBytes, fileName, fileType, extension);
         http:Response response = new;
         if (result is string) {
+            io:println("Media uploaded successfully ", result);
             response.statusCode = 200;
             response.setJsonPayload({message: "Media uploaded successfully"});
         } else if (result is model:InternalError) {
