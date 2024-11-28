@@ -589,9 +589,6 @@ service /media on httpListener {
         if !emailValidator.isFullMatch(email) {
             return error("Invalid email address");
         }
-        string:RegExp emailHeadRegExp = re `@`;
-        string emailHead = emailHeadRegExp.split(email)[0];
-        io:println("Email head: ", emailHead);
         string contentType = "";
         string fileName = "";
 
@@ -604,7 +601,7 @@ service /media on httpListener {
             }
         }
 
-        http:Response response = check clinicServiceEP->/uploadmedia/[userType]/[uploadType]/[emailHead]/[fileName]/[contentType].post(fileBytes);
+        http:Response response = check clinicServiceEP->/uploadmedia/[userType]/[uploadType]/[email]/[fileName]/[contentType].post(fileBytes);
 
         return response;
     }

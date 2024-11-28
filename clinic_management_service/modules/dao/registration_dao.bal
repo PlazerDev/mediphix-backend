@@ -1,4 +1,5 @@
 import clinic_management_service.model;
+import clinic_management_service.'service;
 
 import ballerina/http;
 import ballerina/io;
@@ -259,7 +260,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
-
+    string emaiHead = 'service.getEmailHead(data.email);
     model:Doctor doctor = {
         name: data.name,
         slmc: data.slmc,
@@ -277,8 +278,8 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         channellings: [],
         medical_records: [],
         lab_reports: [],
-        profileImage:"",
-        media_storage: ""
+        profileImage:`doctor-resources/${emaiHead}/profileImage`,
+        media_storage: `doctor-resources/${emaiHead}`
     };
     model:User doctorUser = {
         email: data.email,

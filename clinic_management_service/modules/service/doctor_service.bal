@@ -88,25 +88,26 @@ public function submitPatientRecord(model:PatientRecord patientRecord) returns h
 }
 
 public function uploadMedia(string userType, string uploadType, string email, byte[] fileBytes, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
+    string emailHead = getEmailHead(email);
     string fileNameNew = "other";
     if (userType === "doctor" && uploadType === "idFrontImage") {
-        fileNameNew = "doctor-resources/" + email + "/" + "idFrontImage";
+        fileNameNew = "doctor-resources/" + emailHead + "/" + "idFrontImage";
     } else if (userType === "doctor" && uploadType === "idBackImage") {
-        fileNameNew = "doctor-resources/" + email + "/" + "idBackImage";
+        fileNameNew = "doctor-resources/" + emailHead + "/" + "idBackImage";
     } else if (userType === "doctor" && uploadType === "medicalCertificates") {
-        fileNameNew = "doctor-resources/" + email + "/" + "medicalCertificates" + "/" + fileName;
+        fileNameNew = "doctor-resources/" + emailHead + "/" + "medicalCertificates" + "/" + fileName;
     } else if (userType === "doctor" && uploadType === "profileImage") {
-        fileNameNew = "doctor-resources/" + email + "/" + "profileImage";
+        fileNameNew = "doctor-resources/" + emailHead + "/" + "profileImage";
     } else if (userType === "medicalCenter" && uploadType === "logo") {
-        fileNameNew = "medical-center-resources/" + email + "/" + "logo";
+        fileNameNew = "medical-center-resources/" + emailHead + "/" + "logo";
     } else if (userType === "medicalCenter" && uploadType === "license") {
-        fileNameNew = "medical-center-resources/" + email + "/" + "license";
+        fileNameNew = "medical-center-resources/" + emailHead + "/" + "license";
     } else if (userType === "patient" && uploadType === "prescription") {
-        fileNameNew = "patient-resources/" + email + "/" + "prescription" + "/" + fileName;
+        fileNameNew = "patient-resources/" + emailHead + "/" + "prescription" + "/" + fileName;
     } else if (userType === "patient" && uploadType === "reports") {
-        fileNameNew = "patient-resources/" + email + "/" + "reports" + "/" + fileName;
+        fileNameNew = "patient-resources/" + emailHead + "/" + "reports" + "/" + fileName;
     } else if (userType === "patient" && uploadType === "profileImage") {
-        fileNameNew = "patient-resources/" + email + "/" + "profileImage";
+        fileNameNew = "patient-resources/" + emailHead + "/" + "profileImage";
     } else {
         model:ErrorDetails errorDetails = {
             message: "Invalid upload type",
@@ -124,6 +125,7 @@ public function uploadMedia(string userType, string uploadType, string email, by
         contentType: contentType
     };
 
+
     error? result = amazonS3Client->createObject(S3_BUCKET_NAME, fileNameNew, fileBytes, (), headers, metadata);
     if (result is error) {
         io:println("Error uploading media: ", result);
@@ -134,19 +136,17 @@ public function uploadMedia(string userType, string uploadType, string email, by
         };
         model:InternalError internalError = {body: errorDetails};
         return internalError;
+    } else {
+        io:println("Success uploading media: ", result);
     }
     return "Success";
 
 }
 
-// public function uploadToS3(string email, string filePath, string mimeType) returns string {
-//     string contentType = "application/pdf";
-//     string key = fileName;
-//     string content = fileContent;
-//     error?|s3:PutObjectResult result = s3:putObject(amazonS3Client, S3_BUCKET_NAME, key, content, contentType);
-//     if (result is error) {
-//         return "Error";
-//     } else {
-//         return "Success";
-//     }
-// }
+public function getEmailHead(string email) returns string {
+    string:RegExp emailHeadRegExp = re `@`;
+    string emailHead = emailHeadRegExp.split(email)[0];
+    return emailHead;
+}
+
+
