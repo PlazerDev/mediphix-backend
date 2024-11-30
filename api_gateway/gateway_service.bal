@@ -443,22 +443,27 @@ service /doctor on httpListener {
     //get upcoming appointments details
     resource function get upcomingAppointments(http:Request req) returns http:Response|error? {
         do {
-
             string doctorEmail = check getUserEmailByJWT(req);
-            log:printDebug("Extracted doctor email: " + doctorEmail);
             string userType = "doctor";
             string doctorId = check getCachedUserId(doctorEmail, userType);
-            log:printDebug("Retrieved doctor ID: " + doctorId);
             Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
-            log:printDebug("Fetched all appointments: " + allAppointments.toString());
+            io:println("Fetched all appointments: ", allAppointments.toString());
 
-            time:Utc currentTime = time:utcNow();
-            log:printDebug("Current UTC time: " + currentTime.toString());
+            time:Utc currentUtcTime = time:utcNow();
 
-            Appointment[] upcomingAppointments = from Appointment appointment in allAppointments
-                let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
-                where appointmentUtcResult is time:Utc && appointmentUtcResult > currentTime
-                select appointment;
+            Appointment[] upcomingAppointments = [];
+            foreach Appointment appointment in allAppointments {
+                string appointmentTimeStr = appointment.appointmentTime.toString();
+                io:println("appointmentTimeStr: ", appointmentTimeStr);
+                time:Utc parsedTime = check time:utcFromString(appointmentTimeStr);
+                io:println("parsedTime: ", parsedTime);
+                // Compare parsed appointment time with the current time
+                if parsedTime > currentUtcTime {
+                    upcomingAppointments.push(appointment);
+                }
+            }
+
+            io:println("Filtered upcoming appointments: ", upcomingAppointments.toString());
 
             http:Response response = new;
             response.setJsonPayload(upcomingAppointments.toJson());
@@ -466,6 +471,7 @@ service /doctor on httpListener {
             return response;
 
         } on fail {
+
             ErrorDetails errorDetails = {
                 message: "Internal server error",
                 details: "Error occurred while retrieving upcoming appointment details",

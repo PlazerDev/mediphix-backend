@@ -108,7 +108,7 @@ public function getAppointmentsByDoctorId(string userId) returns model:Appointme
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
-    map<json> filter = {"doctorId": {"$oid": userId}};
+    map<json> filter = {"doctorId": userId};
 
     map<json> projection = {
         "_id": {"$toString": "$_id"},
