@@ -260,5 +260,44 @@ service / on new http:Listener(9090) {
 
     }
 
+    resource function get media/[string userType]/[string uploadType]/[string email]() returns http:Response|error? {
+        io:println("Get media function called");
+        stream<byte[], io:Error?>|model:InternalError|error? result = 'service:getMedia(userType, uploadType, email);
+
+        if (result is stream<byte[], io:Error?>) {
+            io:println("Media retrieved");
+            http:Response response = new;
+            response.setPayload(result);
+            return response;
+        } else if (result is model:InternalError) {
+            http:Response response = new;
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+            return response;
+        } else {
+            return error("Error occurred while retrieving media");
+        }
+    }
+
+    resource function get medialink/[string userType]/[string uploadType]/[string email]() returns http:Response|error? {
+        io:println("Get media function called");
+        string|error? result = 'service:getMediaLink(userType, uploadType, email);
+
+        if (result is string) {
+            io:println("Media retrieved");
+            http:Response response = new;
+            json jsonResponse = { "mediaLink": result };
+            response.setJsonPayload(jsonResponse);
+            return response;
+        } else if (result is error) {
+            http:Response response = new;
+            response.statusCode = 500;
+            response.setJsonPayload({ "message": result.message() });
+            return response;
+        } else {
+            return error("Error occurred while retrieving media");
+        }
+    }
+
 }
 

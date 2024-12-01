@@ -17,6 +17,8 @@ configurable string doctorRoleId = ?;
 configurable string patientRoleId = ?;
 configurable string mcsRoleId = ?;
 configurable string laborataryRoleId = ?;
+configurable string AWS_REGION = ?;
+configurable string S3_BUCKET_NAME = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 string endPoint = string `https://api.asgardeo.io/t/mediphix`;
@@ -257,7 +259,8 @@ public function patientRegistration(model:PatientSignupData data) returns error?
 
 public function getEmailHead(string email) returns string {
     string:RegExp emailHeadRegExp = re `@`;
-    string emailHead = emailHeadRegExp.split(email)[0];
+    string[] emailChunks = emailHeadRegExp.split(email);
+    string emailHead = string:'join("", ...emailChunks);
     return emailHead;
 }
 
@@ -283,8 +286,8 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         channellings: [],
         medical_records: [],
         lab_reports: [],
-        profileImage: "doctor-resources/" + emaiHead + "/profileImage",
-        media_storage: "doctor-resources/" + emaiHead
+        profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/doctor-resources/" + emaiHead + "/profileImage",
+        media_storage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/doctor-resources/" + emaiHead
     };
     model:User doctorUser = {
         email: data.email,
