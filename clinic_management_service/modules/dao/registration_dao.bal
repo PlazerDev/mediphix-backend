@@ -51,6 +51,7 @@ public isolated function fetchBeareToken(string tokenEndpoint, string clientId, 
 # + payload - the user data to be added
 # + return - return the response from the asgardio
 public isolated function addUser(string tokenEndpoint, string token, json payload) returns json|error {
+    io:println("Inside addUser DAO"); // comment
     final http:Client clientEndpoint = check new (tokenEndpoint);
     string authHeader = string `Bearer ${token}`;
     http:Request tokenRequest = new;
@@ -58,8 +59,10 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
     tokenRequest.setHeader("Content-Type", "application/scim+json");
     tokenRequest.setHeader("Accept", "application/scim+json");
     tokenRequest.setPayload(payload);
+    io:println("Before toker req in add user", tokenRequest); // comment
     json resp = check clientEndpoint->post("/scim2/Users", tokenRequest);
-
+    
+    io:println("Inside addUser DAO ........... END", resp); // comment
     return resp;
 }
 
@@ -165,6 +168,7 @@ public isolated function updateRole(string token, string userId, string roleId) 
 }
 
 public function patientRegistration(model:PatientSignupData data) returns error?|json {
+    io:println("Inside patientRegistrationDAO"); // comment
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
     model:Patient patient = {
@@ -191,7 +195,10 @@ public function patientRegistration(model:PatientSignupData data) returns error?
     }
     //asgardio integration part 
     else {
+        io:println("before bToken DAO..........."); //comment
         string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
+        io:println("after bToken DAO..........."); //comment
+
         json userData = {
             "schemas": [],
             "name": {
@@ -234,8 +241,13 @@ public function patientRegistration(model:PatientSignupData data) returns error?
             }
         }
         else {
+             io:println("Before user role adding DAO"); // comment
             string userId = check searchUser(endPoint, bToken, data.email);
+             io:println("After user user ID fetch DAO"); // comment
+
             json|error? roleUpdateResponse = updateRole(bToken, userId, patientRoleId);
+             io:println("Role Updated", roleUpdateResponse); // comment
+
             if roleUpdateResponse is error {
                 mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
                 if deleteOne is mongodb:DatabaseError {

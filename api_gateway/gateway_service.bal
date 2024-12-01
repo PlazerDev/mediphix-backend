@@ -70,6 +70,7 @@ service /patient on httpListener {
         }
     }
     resource function post register/patient(PatientSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
 
         if (response is http:Response) {
