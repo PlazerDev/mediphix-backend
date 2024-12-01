@@ -344,6 +344,74 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
+
+    resource function get getDoctorDetails(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post setDoctorJoinRequest(http:Request req,MedicalCenterId id) returns error?|http:Response {
+        do {
+
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+           
+            
+           
+            http:Response|error? response = check clinicServiceEP->/setDoctorJoinRequest/[userId]/[id.id].post(message = "");
+            return  response;
+            
+            
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post doctor/registration(string mobile) returns http:Response|error? {
+        // json|http:ClientError patient = request.getJsonPayload();
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+
     resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
         io:println("Doctor data: ", data);
         http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
@@ -375,6 +443,7 @@ service /doctor on httpListener {
         return response;
         // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
         // return idFrontString;
+
     }
 
     @http:ResourceConfig {
@@ -443,22 +512,27 @@ service /doctor on httpListener {
     //get upcoming appointments details
     resource function get upcomingAppointments(http:Request req) returns http:Response|error? {
         do {
-
             string doctorEmail = check getUserEmailByJWT(req);
-            log:printDebug("Extracted doctor email: " + doctorEmail);
             string userType = "doctor";
             string doctorId = check getCachedUserId(doctorEmail, userType);
-            log:printDebug("Retrieved doctor ID: " + doctorId);
             Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
-            log:printDebug("Fetched all appointments: " + allAppointments.toString());
+            io:println("Fetched all appointments: ", allAppointments.toString());
 
-            time:Utc currentTime = time:utcNow();
-            log:printDebug("Current UTC time: " + currentTime.toString());
+            time:Utc currentUtcTime = time:utcNow();
 
-            Appointment[] upcomingAppointments = from Appointment appointment in allAppointments
-                let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
-                where appointmentUtcResult is time:Utc && appointmentUtcResult > currentTime
-                select appointment;
+            Appointment[] upcomingAppointments = [];
+            foreach Appointment appointment in allAppointments {
+                string appointmentTimeStr = appointment.appointmentTime.toString();
+                io:println("appointmentTimeStr: ", appointmentTimeStr);
+                time:Utc parsedTime = check time:utcFromString(appointmentTimeStr);
+                io:println("parsedTime: ", parsedTime);
+                // Compare parsed appointment time with the current time
+                if parsedTime > currentUtcTime {
+                    upcomingAppointments.push(appointment);
+                }
+            }
+
+            io:println("Filtered upcoming appointments: ", upcomingAppointments.toString());
 
             http:Response response = new;
             response.setJsonPayload(upcomingAppointments.toJson());
@@ -466,6 +540,7 @@ service /doctor on httpListener {
             return response;
 
         } on fail {
+
             ErrorDetails errorDetails = {
                 message: "Internal server error",
                 details: "Error occurred while retrieving upcoming appointment details",
@@ -589,9 +664,6 @@ service /media on httpListener {
         if !emailValidator.isFullMatch(email) {
             return error("Invalid email address");
         }
-        string:RegExp emailHeadRegExp = re `@`;
-        string emailHead = emailHeadRegExp.split(email)[0];
-        io:println("Email head: ", emailHead);
         string contentType = "";
         string fileName = "";
 
@@ -604,9 +676,45 @@ service /media on httpListener {
             }
         }
 
-        http:Response response = check clinicServiceEP->/uploadmedia/[userType]/[uploadType]/[emailHead]/[fileName]/[contentType].post(fileBytes);
+        http:Response response = check clinicServiceEP->/uploadmedia/[userType]/[uploadType]/[email]/[fileName]/[contentType].post(fileBytes);
 
         return response;
+    }
+
+    resource function get images(http:Request request, string email, string userType, string uploadType) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/media/[userType]/[uploadType]/[email];
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving images",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+        
+    }
+
+    resource function get imagelink(http:Request request, string userType, string uploadType) returns http:Response|error? {
+        string email = check getUserEmailByJWT(request);
+        http:Response|error? response = check clinicServiceEP->/medialink/[userType]/[uploadType]/[email];
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving images",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
     }
 
 }

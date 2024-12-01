@@ -17,6 +17,8 @@ configurable string doctorRoleId = ?;
 configurable string patientRoleId = ?;
 configurable string mcsRoleId = ?;
 configurable string laborataryRoleId = ?;
+configurable string AWS_REGION = ?;
+configurable string S3_BUCKET_NAME = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 string endPoint = string `https://api.asgardeo.io/t/mediphix`;
@@ -255,11 +257,18 @@ public function patientRegistration(model:PatientSignupData data) returns error?
     }
 }
 
+public function getEmailHead(string email) returns string {
+    string:RegExp emailHeadRegExp = re `@`;
+    string[] emailChunks = emailHeadRegExp.split(email);
+    string emailHead = string:'join("", ...emailChunks);
+    return emailHead;
+}
+
 public function doctorRegistration(model:DoctorSignupData data) returns ()|error?|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
-
+    string emaiHead = getEmailHead(data.email);
     model:Doctor doctor = {
         name: data.name,
         slmc: data.slmc,
@@ -277,8 +286,8 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
         channellings: [],
         medical_records: [],
         lab_reports: [],
-        profileImage:"",
-        media_storage: ""
+        profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/doctor-resources/" + emaiHead + "/profileImage",
+        media_storage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/doctor-resources/" + emaiHead
     };
     model:User doctorUser = {
         email: data.email,
@@ -344,7 +353,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
                 else {
                     return ();
                 }
-                
+
             }
         }
 
@@ -378,55 +387,55 @@ public function medicalCenterRegistration(model:otherSignupData data) returns er
     }
     else {
         string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
-            json userData = {
-                "schemas": [],
-                "name": {
-                    "givenName": data.name
+        json userData = {
+            "schemas": [],
+            "name": {
+                "givenName": data.name
 
-                },
-                "userName": "DEFAULT/" + data.email,
-                "password": data.password,
-                "emails": [
-                    {
-                        "value": data.email,
-                        "primary": true
-                    }
-                ],
-                "phoneNumbers": [
-                    {
-                        "type": "mobile",
-                        "value": data.mobile
-                    }
-                ],
-                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
-                    "manager": {
-                        "value": ""
-                    }
-                },
-                "urn:scim:wso2:schema": {
-                    "verifyEmail": false
+            },
+            "userName": "DEFAULT/" + data.email,
+            "password": data.password,
+            "emails": [
+                {
+                    "value": data.email,
+                    "primary": true
                 }
-            };
-            json|error? resp = addUser(endPoint, bToken, userData);
-            if resp is error {
+            ],
+            "phoneNumbers": [
+                {
+                    "type": "mobile",
+                    "value": data.mobile
+                }
+            ],
+            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                "manager": {
+                    "value": ""
+                }
+            },
+            "urn:scim:wso2:schema": {
+                "verifyEmail": false
+            }
+        };
+        json|error? resp = addUser(endPoint, bToken, userData);
+        if resp is error {
+            mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+            mongodb:DeleteResult|mongodb:Error deletedMC = medicalCenterCollection->deleteOne(mc);
+            return resp;
+        }
+        else {
+            string userId = check searchUser(endPoint, bToken, data.email);
+            json|error? roleUpdateResponse = updateRole(bToken, userId, mcsRoleId);
+            if roleUpdateResponse is error {
                 mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
                 mongodb:DeleteResult|mongodb:Error deletedMC = medicalCenterCollection->deleteOne(mc);
-                return resp;
+                return roleUpdateResponse;
             }
             else {
-                string userId = check searchUser(endPoint, bToken, data.email);
-                json|error? roleUpdateResponse = updateRole(bToken, userId, mcsRoleId);
-                if roleUpdateResponse is error {
-                    mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
-                    mongodb:DeleteResult|mongodb:Error deletedMC = medicalCenterCollection->deleteOne(mc);
-                    return roleUpdateResponse;
-                }
-                else {
-                    return ();
-                }
-                
+                return ();
             }
-       
+
+        }
+
     }
 
 }
@@ -458,54 +467,54 @@ public function laborataryRegistration(model:otherSignupData data) returns error
     }
     else {
         string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
-            json userData = {
-                "schemas": [],
-                "name": {
-                    "givenName": data.name
+        json userData = {
+            "schemas": [],
+            "name": {
+                "givenName": data.name
 
-                },
-                "userName": "DEFAULT/" + data.email,
-                "password": data.password,
-                "emails": [
-                    {
-                        "value": data.email,
-                        "primary": true
-                    }
-                ],
-                "phoneNumbers": [
-                    {
-                        "type": "mobile",
-                        "value": data.mobile
-                    }
-                ],
-                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
-                    "manager": {
-                        "value": ""
-                    }
-                },
-                "urn:scim:wso2:schema": {
-                    "verifyEmail": false
+            },
+            "userName": "DEFAULT/" + data.email,
+            "password": data.password,
+            "emails": [
+                {
+                    "value": data.email,
+                    "primary": true
                 }
-            };
-            json|error? resp = addUser(endPoint, bToken, userData);
-            if resp is error {
+            ],
+            "phoneNumbers": [
+                {
+                    "type": "mobile",
+                    "value": data.mobile
+                }
+            ],
+            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                "manager": {
+                    "value": ""
+                }
+            },
+            "urn:scim:wso2:schema": {
+                "verifyEmail": false
+            }
+        };
+        json|error? resp = addUser(endPoint, bToken, userData);
+        if resp is error {
+            mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
+            mongodb:DeleteResult|mongodb:Error deletedLab = laborataryCollection->deleteOne(lab);
+            return resp;
+        }
+        else {
+            string userId = check searchUser(endPoint, bToken, data.email);
+            json|error? roleUpdateResponse = updateRole(bToken, userId, laborataryRoleId);
+            if roleUpdateResponse is error {
                 mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
                 mongodb:DeleteResult|mongodb:Error deletedLab = laborataryCollection->deleteOne(lab);
-                return resp;
+                return roleUpdateResponse;
             }
             else {
-                string userId = check searchUser(endPoint, bToken, data.email);
-                json|error? roleUpdateResponse = updateRole(bToken, userId, laborataryRoleId);
-                if roleUpdateResponse is error {
-                    mongodb:DeleteResult|mongodb:Error deletedUser = userCollection->deleteOne(mcUser);
-                    mongodb:DeleteResult|mongodb:Error deletedLab = laborataryCollection->deleteOne(lab);
-                    return roleUpdateResponse;
-                }
-                else {
-                    return ();
-                }
-                
+                return ();
             }
+
+        }
     }
 
 }

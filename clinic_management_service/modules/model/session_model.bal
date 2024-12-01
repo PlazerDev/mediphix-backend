@@ -15,6 +15,7 @@ public type Session record {
     SessionStatus sessionStatus;
     string location;
     decimal payment;
+    int patientCount;
     string[] timeSlotId;
     string[] medicalStaffId;
 };

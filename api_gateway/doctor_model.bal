@@ -48,6 +48,20 @@ public type AppointmentData record {|
     string startTime;
 |};
 
+
+public type DoctorMedicalCenterRequest record {|
+    string doctorId;
+    string medicalCenterId;
+    // string doctorName;
+    // string medicalCenterName;
+    boolean verified;
+|};
+
+public type MedicalCenterId record {
+    string id;
+
+};
+
 public type DoctorSignupData record {|
     string name;
     string slmc;
@@ -63,3 +77,4 @@ public type DoctorSignupData record {|
     byte[] idFront?;
     byte[] idBack?;
 |};
+

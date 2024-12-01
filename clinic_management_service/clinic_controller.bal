@@ -163,20 +163,25 @@ service / on new http:Listener(9090) {
     }
 
     // Get doctor name by mobile  .................V..............................................
-    resource function get getDoctorName/[string mobile]() returns error|http:Response {
-        string|model:InternalError doctorName = check 'service:getDoctorName(mobile.trim());
 
-        io:println(doctorName);
+    resource function get getDoctorDetails/[string id]() returns error|http:Response {
+        model:Doctor|model:InternalError doctorDetails =  check 'service:getDoctorDetails(id.trim());
+        
+        io:println(doctorDetails);
+
         http:Response response = new;
-        if (doctorName is string) {
+        if (doctorDetails is model:Doctor) {
             response.statusCode = 200;
-            response.setJsonPayload({doctorName: doctorName});
+            response.setJsonPayload(doctorDetails);
         } else {
             response.statusCode = 404;
             response.setJsonPayload({message: "Doctor not found"});
         }
         return response;
     }
+
+    //this function return doctor details
+    
 
     //submit patient record
     resource function post submitPatientRecord(model:PatientRecord patientRecord) returns http:Response|error {
@@ -207,6 +212,22 @@ service / on new http:Listener(9090) {
             response.setJsonPayload(medicalCenters.body.toJson());
         }
         return response;
+    }
+    resource  function post  setDoctorJoinRequest/[string userId]/[string medicalCenterId]() returns http:Response|error? {
+            model:DoctorMedicalCenterRequest request={
+                doctorId: userId,
+                medicalCenterId: medicalCenterId,
+                verified: false
+            };
+            http:Created|error? result = check 'service:setDoctorJoinRequest(request);
+            http:Response response = new;
+            if (result is http:Created){
+                response.statusCode=200;
+            }
+            else{
+                response.statusCode=500;
+            }
+           
     }
 
     //get my medical centers
@@ -258,6 +279,45 @@ service / on new http:Listener(9090) {
         }
         return response;
 
+    }
+
+    resource function get media/[string userType]/[string uploadType]/[string email]() returns http:Response|error? {
+        io:println("Get media function called");
+        stream<byte[], io:Error?>|model:InternalError|error? result = 'service:getMedia(userType, uploadType, email);
+
+        if (result is stream<byte[], io:Error?>) {
+            io:println("Media retrieved");
+            http:Response response = new;
+            response.setPayload(result);
+            return response;
+        } else if (result is model:InternalError) {
+            http:Response response = new;
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+            return response;
+        } else {
+            return error("Error occurred while retrieving media");
+        }
+    }
+
+    resource function get medialink/[string userType]/[string uploadType]/[string email]() returns http:Response|error? {
+        io:println("Get media function called");
+        string|error? result = 'service:getMediaLink(userType, uploadType, email);
+
+        if (result is string) {
+            io:println("Media retrieved");
+            http:Response response = new;
+            json jsonResponse = { "mediaLink": result };
+            response.setJsonPayload(jsonResponse);
+            return response;
+        } else if (result is error) {
+            http:Response response = new;
+            response.statusCode = 500;
+            response.setJsonPayload({ "message": result.message() });
+            return response;
+        } else {
+            return error("Error occurred while retrieving media");
+        }
     }
 
 }

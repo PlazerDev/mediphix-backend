@@ -158,17 +158,38 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
 
 
 
-public function getDoctorName(string mobile) returns error|string|model:InternalError {
+public function getDoctorDetails(string id) returns error|model:Doctor|model:InternalError {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
-    map<json> filter = { "mobile": mobile };
-    model:Doctor|mongodb:Error? findResults =  check   doctorCollection->findOne(filter);
-    io:println("Find result",findResults);
-    
+    map<json> filter = {"_id": {"$oid": id}};
+
+    // Optional: You can specify which fields to retrieve in the projection
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "name":1,
+        "slmc":1,
+        "nic":1,
+        "education":1,
+        "mobile":1,
+        "specialization":1,
+        "email":1,
+        "category":1,
+        "availability":1,
+        "verified":1,
+        "patients":  [{"$toString": "$_id"}],
+        "medical_centers":  [{"$toString": "$_id"}],
+        "sessions":  [{"$toString": "$_id"}],
+        "channellings":  [{"$toString": "$_id"}],
+        "medical_records":  [{"$toString": "$_id"}],
+        "lab_reports":[{"$toString": "$_id"}],
+        "media_storage":1
+    };
+    model:Doctor|mongodb:Error? findResults =  check   doctorCollection->findOne(filter , {}, projection,model:Doctor);
+ 
     if findResults is model:Doctor {
-        return findResults.name;
+        return findResults;
     }
     else {
         model:ErrorDetails errorDetails = {
@@ -221,13 +242,26 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
     }
 }
 
-public function getPatientIdByRefNumber(string refNumber) returns string|model:InternalError|error {
+public function getPatientIdByRefNumber(string refNumber) 
+    returns string|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
     map<anydata>? appointment = check appointmentCollection->findOne({appointmentNumber: refNumber});
+    
     if appointment is map<anydata> {
-        return appointment["patientId"].toString();
+        anydata patientId = appointment["patientId"];
+        if patientId is string {
+            return patientId;
+        } else {
+            model:ErrorDetails errorDetails = {
+                message: "Patient ID is not a string in the database.",
+                details: "refNumber/" + refNumber,
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",
@@ -244,5 +278,13 @@ public function createPatientRecord(map<anydata> recordToStore) returns http:Cre
     mongodb:Collection recordBookCollection = check mediphixDb->getCollection("record_book");
 
     check recordBookCollection->insertOne(recordToStore);
+    return http:CREATED;
+}
+
+public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest  req) returns http:Created|error?{
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorRequestCollection = check mediphixDb->getCollection("doctor_join_request_to_mc");
+
+    check doctorRequestCollection->insertOne(req);
     return http:CREATED;
 }
