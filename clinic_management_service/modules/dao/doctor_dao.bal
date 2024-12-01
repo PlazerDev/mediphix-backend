@@ -242,13 +242,26 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
     }
 }
 
-public function getPatientIdByRefNumber(string refNumber) returns string|model:InternalError|error {
+public function getPatientIdByRefNumber(string refNumber) 
+    returns string|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
     map<anydata>? appointment = check appointmentCollection->findOne({appointmentNumber: refNumber});
+    
     if appointment is map<anydata> {
-        return appointment["patientId"].toString();
+        anydata patientId = appointment["patientId"];
+        if patientId is string {
+            return patientId;
+        } else {
+            model:ErrorDetails errorDetails = {
+                message: "Patient ID is not a string in the database.",
+                details: "refNumber/" + refNumber,
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",
