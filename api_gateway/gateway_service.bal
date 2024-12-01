@@ -681,4 +681,40 @@ service /media on httpListener {
         return response;
     }
 
+    resource function get images(http:Request request, string email, string userType, string uploadType) returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/media/[userType]/[uploadType]/[email];
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving images",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+        
+    }
+
+    resource function get imagelink(http:Request request, string userType, string uploadType) returns http:Response|error? {
+        string email = check getUserEmailByJWT(request);
+        http:Response|error? response = check clinicServiceEP->/medialink/[userType]/[uploadType]/[email];
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving images",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+    }
+
 }

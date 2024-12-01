@@ -130,7 +130,6 @@ public function uploadMedia(string userType, string uploadType, string email, by
         contentType: contentType
     };
 
-
     error? result = amazonS3Client->createObject(S3_BUCKET_NAME, fileNameNew, fileBytes, (), headers, metadata);
     if (result is error) {
         io:println("Error uploading media: ", result);
@@ -150,8 +149,74 @@ public function uploadMedia(string userType, string uploadType, string email, by
 
 public function getEmailHead(string email) returns string {
     string:RegExp emailHeadRegExp = re `@`;
-    string emailHead = emailHeadRegExp.split(email)[0];
+    string[] emailChunks = emailHeadRegExp.split(email);
+    string emailHead = string:'join("", ...emailChunks);
     return emailHead;
 }
 
+public function getMedia(string userType, string uploadType, string email) returns stream<byte[], io:Error?>|error? {
+    string emailHead = getEmailHead(email);
+    byte[] fileBytes = [];
+    string fileName = "other";
+    if (userType === "doctor" && uploadType === "idFrontImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "idFrontImage";
+    } else if (userType === "doctor" && uploadType === "idBackImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "idBackImage";
+    } else if (userType === "doctor" && uploadType === "medicalCertificates") {
+        fileName = "doctor-resources/" + emailHead + "/" + "medicalCertificates";
+    } else if (userType === "doctor" && uploadType === "profileImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "medicalCenter" && uploadType === "logo") {
+        fileName = "medical-center-resources/" + emailHead + "/" + "logo";
+    } else if (userType === "medicalCenter" && uploadType === "license") {
+        fileName = "medical-center-resources/" + emailHead + "/" + "license";
+    } else if (userType === "patient" && uploadType === "prescription") {
+        fileName = "patient-resources/" + emailHead + "/" + "prescription";
+    } else if (userType === "patient" && uploadType === "reports") {
+        fileName = "patient-resources/" + emailHead + "/" + "reports";
+    } else if (userType === "patient" && uploadType === "profileImage") {
+        fileName = "patient-resources/" + emailHead + "/" + "profileImage";
+    } else {
+        return error("Invalid upload type");
+    }
 
+    stream<byte[], io:Error?>|error objectStreamResult = amazonS3Client->getObject(S3_BUCKET_NAME, fileName);
+
+    if objectStreamResult is error {
+        io:println("Error retrieving object: ", objectStreamResult.message());
+        return error("Failed to retrieve object from S3");
+    }
+
+    // stream<byte[], io:Error?> objectStream = <stream<byte[], io:Error?>>objectStreamResult;
+
+    return objectStreamResult;
+}
+
+public function getMediaLink(string userType, string uploadType, string email) returns string|error?{
+    string emailHead = getEmailHead(email);
+    string fileName = "other";
+    string link = "";
+    if (userType === "doctor" && uploadType === "idFrontImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "idFrontImage";
+    } else if (userType === "doctor" && uploadType === "idBackImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "idBackImage";
+    } else if (userType === "doctor" && uploadType === "medicalCertificates") {
+        fileName = "doctor-resources/" + emailHead + "/" + "medicalCertificates";
+    } else if (userType === "doctor" && uploadType === "profileImage") {
+        fileName = "doctor-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "medicalCenter" && uploadType === "logo") {
+        fileName = "medical-center-resources/" + emailHead + "/" + "logo";
+    } else if (userType === "medicalCenter" && uploadType === "license") {
+        fileName = "medical-center-resources/" + emailHead + "/" + "license";
+    } else if (userType === "patient" && uploadType === "prescription") {
+        fileName = "patient-resources/" + emailHead + "/" + "prescription";
+    } else if (userType === "patient" && uploadType === "reports") {
+        fileName = "patient-resources/" + emailHead + "/" + "reports";
+    } else if (userType === "patient" && uploadType === "profileImage") {
+        fileName = "patient-resources/" + emailHead + "/" + "profileImage";
+    } else {
+        return error("Invalid upload type");
+    }
+
+    return fileName;
+}
