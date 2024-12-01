@@ -199,20 +199,23 @@ service / on new http:Listener(9090) {
 
 
     // Get doctor name by mobile  .................V..............................................
-    resource function get getDoctorName/[string mobile]() returns error|http:Response {
-        string|model:InternalError doctorName =  check 'service:getDoctorName(mobile.trim());
-
-        io:println(doctorName);
+    resource function get getDoctorDetails/[string id]() returns error|http:Response {
+        model:Doctor|model:InternalError doctorDetails =  check 'service:getDoctorDetails(id.trim());
+        
+        io:println(doctorDetails);
         http:Response response = new;
-        if (doctorName is string) {
+        if (doctorDetails is model:Doctor) {
             response.statusCode = 200;
-            response.setJsonPayload({doctorName: doctorName});
+            response.setJsonPayload(doctorDetails);
         } else {
             response.statusCode = 404;
             response.setJsonPayload({message: "Doctor not found"});
         }
         return response;
     }
+
+    //this function return doctor details
+    
 
     //submit patient record
     resource function post submitPatientRecord(model:PatientRecord patientRecord) returns http:Response|error {
@@ -244,6 +247,22 @@ service / on new http:Listener(9090) {
             }
             return response;
     }
+    resource  function post  setDoctorJoinRequest/[string userId]/[string medicalCenterId]() returns http:Response|error? {
+            model:DoctorMedicalCenterRequest request={
+                doctorId: userId,
+                medicalCenterId: medicalCenterId,
+                verified: false
+            };
+            http:Created|error? result = check 'service:setDoctorJoinRequest(request);
+            http:Response response = new;
+            if (result is http:Created){
+                response.statusCode=200;
+            }
+            else{
+                response.statusCode=500;
+            }
+           
+    }
 
     //get my medical centers
     resource function get getMyMedicalCenters/[string userId]() returns error|http:Response {
@@ -258,6 +277,9 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
+
+
+    
 
 
     // medical center staff controllers .......................................................................................

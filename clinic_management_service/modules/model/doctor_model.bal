@@ -103,3 +103,12 @@ public type AppointmentData record {|
     int queueNo;
     string startTime;
 |};
+
+
+public type DoctorMedicalCenterRequest record {|
+    string doctorId;
+    string medicalCenterId;
+    // string doctorName;
+    // string medicalCenterName;
+    boolean verified;
+|};

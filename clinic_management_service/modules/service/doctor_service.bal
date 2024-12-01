@@ -13,9 +13,13 @@ public function doctorIdByEmail(string email) returns error|string|model:Interna
     return result;
 }
 
-//get doctorname by mobile
-public function getDoctorName(string mobile) returns error|string|model:InternalError {
-    error|string|model:InternalError result = check dao:getDoctorName(mobile);
+//get doctorname by id
+public function getDoctorDetails(string id) returns error|model:Doctor|model:InternalError {
+    error|model:Doctor|model:InternalError result = check dao:getDoctorDetails(id);
+    return result;
+}
+public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
+     http:Created|error? result = check dao:setDoctorJoinRequest(req);
     return result;
 }
 
@@ -36,6 +40,7 @@ public function getMyMedicalCenters(string id) returns error|model:MedicalCenter
     model:InternalError|model:MedicalCenter[] result = check dao:getMyMedicalCenters(id);
     return result;
 }
+
 
 public function submitPatientRecord(model:PatientRecord patientRecord) returns http:Created|model:InternalError|error {
 
