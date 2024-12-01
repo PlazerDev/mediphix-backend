@@ -344,6 +344,74 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
+
+    resource function get getDoctorDetails(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post setDoctorJoinRequest(http:Request req,MedicalCenterId id) returns error?|http:Response {
+        do {
+
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+           
+            
+           
+            http:Response|error? response = check clinicServiceEP->/setDoctorJoinRequest/[userId]/[id.id].post(message = "");
+            return  response;
+            
+            
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post doctor/registration(string mobile) returns http:Response|error? {
+        // json|http:ClientError patient = request.getJsonPayload();
+        io:println("Inside getDoctorName in gateway");
+        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
+        return doctorName;
+
     resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
         io:println("Doctor data: ", data);
         http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
@@ -375,6 +443,7 @@ service /doctor on httpListener {
         return response;
         // string idFrontString = check clinicServiceEP->/upload/doctoridfront.post(idFront);
         // return idFrontString;
+
     }
 
     @http:ResourceConfig {
