@@ -261,8 +261,11 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function get getSessionDetails(string mobile) returns http:Response|error? {
-        http:Response|error? response = check clinicServiceEP->/getSessionDetails/[mobile];
+    resource function get getSessionDetailsByDoctorId(http:Request req) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+        http:Response|error? response = check clinicServiceEP->/getSessionDetailsByDoctorId/[userId];
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -406,11 +409,7 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function post doctor/registration(string mobile) returns http:Response|error? {
-        // json|http:ClientError patient = request.getJsonPayload();
-        io:println("Inside getDoctorName in gateway");
-        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-        return doctorName;
+
 
     resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
         io:println("Doctor data: ", data);

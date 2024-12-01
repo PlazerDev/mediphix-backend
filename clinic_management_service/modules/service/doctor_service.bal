@@ -35,8 +35,8 @@ public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) retur
     return result;
 }
 
-public function getSessionDetails(string mobile) returns error|model:Sessions[]|model:InternalError {
-    model:Sessions[]|model:InternalError result = check dao:getSessionDetails(mobile);
+public function getSessionDetailsByDoctorId(string doctorId) returns error|model:Session[]|model:InternalError {
+    model:Session[]|model:InternalError result = check dao:getSessionDetailsByDoctorId(doctorId);
     return result;
 
 }
