@@ -16,6 +16,7 @@ service / on new http:Listener(9090) {
 
     // registration
     resource function post signup/patient(model:PatientSignupData data) returns http:Response|model:ReturnMsg|error? {
+        io:println("Inside clinic controller", data); // comment
         model:ReturnMsg result = 'service:registerPatient(data);
 
         http:Response response = new;
