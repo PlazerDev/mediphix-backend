@@ -7,8 +7,6 @@ import ballerina/http;
 
 
 
-
-
 //get doctorId by email
 public function doctorIdByEmail(string email) returns string|error|model:InternalError {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
