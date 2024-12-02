@@ -145,7 +145,24 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+
     //Doctor Controllers 
+    
+    //Get all doctor details
+     resource function get getAllDoctors() returns http:Response|error? {
+        model:Doctor[]|model:InternalError doctorDetails = check 'service:getAllDoctors();
+        http:Response response = new;
+        if doctorDetails is model:Doctor[] {
+            response.statusCode = 200;
+            response.setJsonPayload(doctorDetails.toJson());
+        } else if doctorDetails is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(doctorDetails.body.toJson());
+        }
+        return response;
+    }
+
+  
 
     resource function get getSessionDetailsByDoctorId/[string doctorId]() returns http:Response|error? {
         model:Session[]|model:InternalError session = check 'service:getSessionDetailsByDoctorId(doctorId);
