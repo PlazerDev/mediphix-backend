@@ -130,3 +130,44 @@ public function getAppointments(string mobile) returns model:Appointment[]|error
 
 }
 
+public function getAllDoctors() returns error|model:Doctor[]|model:InternalError {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+    map<json> projection = {
+       "_id": {"$toString": "$_id"},
+        "name":1,
+        "slmc":1,
+        "nic":1,
+        "education":1,
+        "mobile":1,
+        "specialization":1,
+        "email":1,
+        "category":1,
+        "availability":1,
+        "verified":1,
+        "patients":  [{"$toString": "$_id"}],
+        "medical_centers":  [{"$toString": "$_id"}],
+        "sessions":  [{"$toString": "$_id"}],
+        "channellings":  [{"$toString": "$_id"}],
+        "medical_records":  [{"$toString": "$_id"}],
+        "lab_reports":[{"$toString": "$_id"}],
+        "media_storage":1
+    };
+
+    stream<model:Doctor, error?>|mongodb:Error? findResults =  check doctorCollection->find({},{},projection,model:Doctor);
+    if findResults is stream<model:Doctor, error?> {
+        model:Doctor[]|error doctors = from model:Doctor mc in findResults
+            select mc; 
+        return doctors;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving doctor details",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+}
