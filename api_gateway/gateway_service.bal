@@ -70,6 +70,7 @@ service /patient on httpListener {
         }
     }
     resource function post register/patient(PatientSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
 
         if (response is http:Response) {
@@ -114,6 +115,40 @@ service /patient on httpListener {
             errorResponse.setJsonPayload(errorDetails.toJson());
             return errorResponse;
         }
+    }
+
+    resource function get doctordata() returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/getAllDoctors;
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+     resource function get centerdata() returns http:Response|error? {
+        http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
     }
 
     @http:ResourceConfig {
@@ -261,8 +296,11 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function get getSessionDetails(string mobile) returns http:Response|error? {
-        http:Response|error? response = check clinicServiceEP->/getSessionDetails/[mobile];
+    resource function get getSessionDetailsByDoctorId(http:Request req) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+        http:Response|error? response = check clinicServiceEP->/getSessionDetailsByDoctorId/[userId];
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -366,25 +404,20 @@ service /doctor on httpListener {
         }
     }
 
-
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function post setDoctorJoinRequest(http:Request req,MedicalCenterId id) returns error?|http:Response {
+    resource function post setDoctorJoinRequest(http:Request req, MedicalCenterId id) returns error?|http:Response {
         do {
 
             string userEmail = check getUserEmailByJWT(req);
             string userType = "doctor";
             string userId = check getCachedUserId(userEmail, userType);
-           
-            
-           
+
             http:Response|error? response = check clinicServiceEP->/setDoctorJoinRequest/[userId]/[id.id].post(message = "");
-            return  response;
-            
-            
+            return response;
 
         } on fail {
             ErrorDetails errorDetails = {
@@ -399,18 +432,11 @@ service /doctor on httpListener {
         }
     }
 
-
-
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function post doctor/registration(string mobile) returns http:Response|error? {
-        // json|http:ClientError patient = request.getJsonPayload();
-        io:println("Inside getDoctorName in gateway");
-        http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[mobile];
-        return doctorName;
 
     resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
         io:println("Doctor data: ", data);
@@ -570,7 +596,7 @@ service /doctor on httpListener {
                     }
                 }
             },
-            scopes: ["update_appointment_status"]
+            scopes: ["check_patient"]
         }
     ]
 }
@@ -578,7 +604,38 @@ service /receptionist on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["update_appointment_status"]
+            scopes: ["check_patient"]
+        }
+    }
+    resource function get receptionistdata(http:Request request) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(request);
+            string userType = "receptionist";
+            string userId = check getCachedUserId(userEmail, userType);
+            Patient patient = check getPatientData(userId);
+
+            http:Response response = new;
+            response.setJsonPayload(patient.toJson());
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+
+    }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["check_patient"]
         }
     }
     resource function put appointment/status(string mobile, int appointmentNumber, AppointmentStatus status) returns http:Response|error {
@@ -696,7 +753,7 @@ service /media on httpListener {
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(internalError.body.toJson());
         return errorResponse;
-        
+
     }
 
     resource function get imagelink(http:Request request, string userType, string uploadType) returns http:Response|error? {

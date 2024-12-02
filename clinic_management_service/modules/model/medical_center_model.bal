@@ -1,3 +1,4 @@
+import ballerina/time;
 public type Medical_Center record {|
     string name;
     string address;
@@ -25,8 +26,6 @@ public type MedicalCenter record {|
 
 |};
 
-
-
 public type UnregisteredMedicalCEnter record {|
     string name;
     string address;
@@ -37,5 +36,30 @@ public type UnregisteredMedicalCEnter record {|
     string district;
     boolean verified;
     decimal fee;
-
 |};
+
+public type DoctorRequests record {
+    string session;
+    string sessionVacancyId;
+};
+
+
+public type SessionVacancy record {
+    string[] acceptedSessions;
+    string[] doctorRequets;
+    string category;
+    UnacceptedSession[] unacceptedSessions;
+    string note;
+    string mobile;
+    string medicalCenterId;
+    time:Date createdTime?;
+    time:Date modifiedTime?;
+};
+
+public type UnacceptedSession record{
+    time:Date startTime;
+    time:Date endTime;
+    time:DayOfWeek days;
+    boolean repeatStatus;
+    boolean accepted;
+};
