@@ -98,3 +98,8 @@ public function getAppointments(string mobile) returns model:ReturnResponse|mode
     }
 
 }
+
+public function getAllDoctors() returns error|model:Doctor[]|model:InternalError {
+    model:Doctor[]|model:InternalError result = check dao:getAllDoctors();
+    return result;
+}
