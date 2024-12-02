@@ -147,11 +147,11 @@ service / on new http:Listener(9090) {
 
     //Doctor Colnrollers ......................................................................................................................
 
-    resource function get getSessionDetails/[string mobile]() returns http:Response|error? {
-        model:Sessions[]|model:InternalError session = check 'service:getSessionDetails(mobile.trim());
+    resource function get getSessionDetailsByDoctorId/[string doctorId]() returns http:Response|error? {
+        model:Session[]|model:InternalError session = check 'service:getSessionDetailsByDoctorId(doctorId);
 
         http:Response response = new;
-        if session is model:Sessions[] {
+        if session is model:Session[] {
             response.statusCode = 200;
             response.setJsonPayload(session.toJson());
             io:println("Function responde successfully");
