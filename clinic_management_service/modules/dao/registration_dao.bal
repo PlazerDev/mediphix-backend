@@ -577,9 +577,9 @@ public function isMedicalCenterExist(string email) returns boolean|error? {
     map<json> filter = {"email": email};
 
     int|error? userResult = userCollection->countDocuments(filter, {});
-    int|error? medicalcenterResult = medicalCEnterCollection->countDocuments(filter, {});
+    int|error? medicalCenterResult = medicalCEnterCollection->countDocuments(filter, {});
 
-    if (userResult === 0 && medicalcenterResult === 0) {
+    if (userResult === 0 && medicalCenterResult === 0) {
         return false;
     }
     else {

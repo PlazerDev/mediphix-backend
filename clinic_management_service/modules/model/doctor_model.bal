@@ -34,9 +34,9 @@ public type Sessions record {
     string doctorName;
     string doctorMobile;
     string category;
-    string medicalcenterId;
-    string medicalcenterName;
-    string medicalcenterMobile;
+    string medicalCenterId;
+    string medicalCenterName;
+    string medicalCenterMobile;
     string doctorNote;
     string medicalCenterNote;
     string sessionDate;
@@ -47,6 +47,8 @@ public type Sessions record {
 };
 
 public enum SessionStatus {
+    UNACCEPTED,
+    ACCEPTED,
     ACTIVE,
     ONGOING,
     CANCELLED,

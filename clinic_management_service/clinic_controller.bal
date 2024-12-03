@@ -49,7 +49,7 @@ service / on new http:Listener(9090) {
         return (response);
     }
 
-    resource function post signup/medicalcenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/medicalCenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -149,7 +149,7 @@ service / on new http:Listener(9090) {
     //Doctor Controllers 
     
     //Get all doctor details
-     resource function get getAllDoctors() returns http:Response|error? {
+    resource function get getAllDoctors() returns http:Response|error? {
         model:Doctor[]|model:InternalError doctorDetails = check 'service:getAllDoctors();
         http:Response response = new;
         if doctorDetails is model:Doctor[] {
@@ -353,6 +353,7 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
+
 
 }
 
