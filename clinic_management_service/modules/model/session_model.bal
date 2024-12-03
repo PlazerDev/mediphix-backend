@@ -1,10 +1,11 @@
 import ballerina/time;
 
 public type Session record {
-    string sessionId;
-    string doctorId;
-    string doctorName;
-    string doctorMobile;
+    string sessionId?;
+    string doctorId?;
+    string vacancyId;
+    string doctorName?;
+    string doctorMobile?;
     string category;
     string medicalcenterId;
     string medicalcenterName;
@@ -15,7 +16,8 @@ public type Session record {
     SessionStatus sessionStatus;
     string location;
     decimal payment;
-    int patientCount;
+    int maxPatientCount;
+    int reservedPatientCount;
     string[] timeSlotId;
     string[] medicalStaffId;
 };

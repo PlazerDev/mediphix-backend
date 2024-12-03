@@ -53,44 +53,41 @@ public function doctorIdByEmail(string email) returns string|error|model:Interna
     }
 }
 
-public function getSessionDetails(string mobile) returns error|model:InternalError|model:Sessions[]{    
+public function getSessionDetailsByDoctorId(string doctorId) returns error|model:InternalError|model:Session[]{    
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
-    
-    // model:Sessions session = {
-    //     sessionId: "1",
-    //     doctorName: "Dr. John Doe",
-    //     doctorMobile: "94712345678",
-    //     category: "General",
-    //     medicalcenterId: "1",
-    //     medicalcenterName: "Asiri Medical Center",
-    //     medicalcenterMobile: "94712345678",
-    //     doctorNote: "Please be on time",
-    //     medicalCenterNote: "Please be on time",
-    //     sessionDate: "2021-09-01",
-    //     timeSlots: {
-    //         startTime: check time:utcToCivil(check time:utcFromString("2007-12-03T10:15:30.00Z")),
-    //         endTime:  check time:utcToCivil(check time:utcFromString("2007-12-04T10:15:30.00Z")),
-    //         patientCount: 10
-    //     },
-    //     sessionStatus: "ACTIVE",
-    //     location: "Colombo",
-    //     payment: 1000.00
-    // };
+    map<json> sessionProjection = {
+    "_id": {"$toString": "$_id"}, // Convert sessionId to string
+    "doctorId": {"$toString": "$doctorId"}, // Convert doctorId to string
+    "doctorName": 1, // Include doctorName as is
+    "doctorMobile": 1, // Include doctorMobile as is
+    "category": 1, // Include category as is
+    "medicalcenterId": {"$toString": "$medicalcenterId"}, // Convert medicalcenterId to string
+    "medicalcenterName": 1, // Include medicalcenterName as is
+    "medicalcenterMobile": 1, // Include medicalcenterMobile as is
+    "doctorNote": 1, // Include doctorNote as is
+    "medicalCenterNote": 1, // Include medicalCenterNote as is
+    "sessionDate": 1, // Include sessionDate as is
+    "sessionStatus": 1, // Include sessionStatus as is
+    "location": 1, // Include location as is
+    "payment": 1, // Include payment as is
+    "maxPatientCount": 1, // Include maxPatientCount as is
+    "reservedPatientCount": 1, // Include reservedPatientCount as is
+    "timeSlotId":[{"$toString": "$timeSlotId"}] ,
+    "medicalStaffId": [{"$toString": "$medicalStaffId"}]
+};
 
-    // mongodb:Error? postResult = check  sessionCollection->insertOne(session);
-
-    // time:Date date=check time:utcNow();
     
-    map<json> filter = { "doctorMobile": mobile };
-    stream<model:Sessions, error?>|mongodb:Error? findResults =  check sessionCollection->find(filter, {}, (),model:Sessions);
+    map<json> filter = {"_id": {"$oid": doctorId}};
+    stream<model:Session, error?>|mongodb:Error? findResults =  check sessionCollection->find(filter, {}, sessionProjection,model:Session);
     
-    if findResults is stream<model:Sessions, error?> {
-        model:Sessions[]|error Sessions = from model:Sessions ses in findResults
+    if findResults is stream<model:Session, error?> {
+        model:Session[]|error Session = from model:Session ses in findResults
             select ses;
-        return Sessions;
+            io:println("Session",Session);
+        return Session;
     }
     else {
         model:ErrorDetails errorDetails = {

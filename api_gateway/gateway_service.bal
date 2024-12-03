@@ -261,8 +261,37 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function get getSessionDetails(string mobile) returns http:Response|error? {
-        http:Response|error? response = check clinicServiceEP->/getSessionDetails/[mobile];
+    resource function get getSessionDetailsByDoctorId(http:Request req) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+        http:Response|error? response = check clinicServiceEP->/getSessionDetailsByDoctorId/[userId];
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post createSession(http:Request req ) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+        http:Response|error? response = check clinicServiceEP->/getSessionDetailsByDoctorId/[userId];
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
