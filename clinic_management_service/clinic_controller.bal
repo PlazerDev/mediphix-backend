@@ -146,7 +146,6 @@ service / on new http:Listener(9090) {
     }
 
 
-
     //Doctor Controllers 
     
     //Get all doctor details
