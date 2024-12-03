@@ -62,15 +62,9 @@ public function getSessionDetailsByDoctorId(string doctorId) returns error|model
     "doctorName": 1, // Include doctorName as is
     "doctorMobile": 1, // Include doctorMobile as is
     "category": 1, // Include category as is
-
-    "medicalcenterId": {"$toString": "$medicalcenterId"}, // Convert medicalcenterId to string
-    "medicalcenterName": 1, // Include medicalcenterName as is
-    "medicalcenterMobile": 1, // Include medicalcenterMobile as is
-
     "medicalCenterId": {"$toString": "$medicalCenterId"}, // Convert medicalCenterId to string
     "medicalCenterName": 1, // Include medicalCenterName as is
     "medicalCenterMobile": 1, // Include medicalCenterMobile as is
-
     "doctorNote": 1, // Include doctorNote as is
     "medicalCenterNote": 1, // Include medicalCenterNote as is
     "sessionDate": 1, // Include sessionDate as is
@@ -90,9 +84,6 @@ public function getSessionDetailsByDoctorId(string doctorId) returns error|model
     if findResults is stream<model:Session, error?> {
         model:Session[]|error Session = from model:Session ses in findResults
             select ses;
-
-            io:println("Session",Session);
-
         return Session;
     }
     else {
