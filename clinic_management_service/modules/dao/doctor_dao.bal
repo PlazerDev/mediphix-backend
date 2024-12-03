@@ -118,6 +118,7 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "email": 1,
         "district": 1,
         "verified": 1,
+        "profileImage": 1,
         "appointmentCategories": 1,
         "mediaStorage": 1,
         "specialNotes": 1,
@@ -172,6 +173,7 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
         "category":1,
         "availability":1,
         "verified":1,
+        "profileImage": 1,
         "patients":  [{"$toString": "$_id"}],
         "medical_centers":  [{"$toString": "$_id"}],
         "sessions":  [{"$toString": "$_id"}],
@@ -209,6 +211,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "email": 1,
         "district": 1,
         "verified": 1,
+        "profileImage": 1,
         "appointmentCategories": 1,
         "mediaStorage": 1,
         "specialNotes": 1,
@@ -218,8 +221,9 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "medicalCenterStaff":  [{"$toString": "$_id"}],
         "fee": 1
     };
-
+    io:println("debug");
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults =  check medicalCenterCollection->find({},{},projection,model:MedicalCenter);
+     io:println("debug");
     if findResults is stream<model:MedicalCenter, error?> {
         model:MedicalCenter[]|error medicalCenters = from model:MedicalCenter mc in findResults
             select mc; 
