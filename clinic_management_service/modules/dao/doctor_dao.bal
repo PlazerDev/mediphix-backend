@@ -62,9 +62,9 @@ public function getSessionDetailsByDoctorId(string doctorId) returns error|model
     "doctorName": 1, // Include doctorName as is
     "doctorMobile": 1, // Include doctorMobile as is
     "category": 1, // Include category as is
-    "medicalcenterId": {"$toString": "$medicalcenterId"}, // Convert medicalcenterId to string
-    "medicalcenterName": 1, // Include medicalcenterName as is
-    "medicalcenterMobile": 1, // Include medicalcenterMobile as is
+    "medicalCenterId": {"$toString": "$medicalCenterId"}, // Convert medicalCenterId to string
+    "medicalCenterName": 1, // Include medicalCenterName as is
+    "medicalCenterMobile": 1, // Include medicalCenterMobile as is
     "doctorNote": 1, // Include doctorNote as is
     "medicalCenterNote": 1, // Include medicalCenterNote as is
     "sessionDate": 1, // Include sessionDate as is
@@ -118,6 +118,7 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "email": 1,
         "district": 1,
         "verified": 1,
+        "profileImage": 1,
         "appointmentCategories": 1,
         "mediaStorage": 1,
         "specialNotes": 1,
@@ -172,6 +173,7 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
         "category":1,
         "availability":1,
         "verified":1,
+        "profileImage": 1,
         "patients":  [{"$toString": "$_id"}],
         "medical_centers":  [{"$toString": "$_id"}],
         "sessions":  [{"$toString": "$_id"}],
@@ -209,6 +211,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "email": 1,
         "district": 1,
         "verified": 1,
+        "profileImage": 1,
         "appointmentCategories": 1,
         "mediaStorage": 1,
         "specialNotes": 1,
@@ -218,8 +221,9 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "medicalCenterStaff":  [{"$toString": "$_id"}],
         "fee": 1
     };
-
+    io:println("debug");
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults =  check medicalCenterCollection->find({},{},projection,model:MedicalCenter);
+     io:println("debug");
     if findResults is stream<model:MedicalCenter, error?> {
         model:MedicalCenter[]|error medicalCenters = from model:MedicalCenter mc in findResults
             select mc; 
