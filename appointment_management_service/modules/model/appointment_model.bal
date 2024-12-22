@@ -134,8 +134,9 @@ public type AppointmentNumberCounter record {
 
 
 public type MedicalRecord record {
-    time:Date startTime;
-    time:Date endTime;
+    int apt_Number;
+    time:Date started_timestamp;
+    time:Date ended_timestamp;
     string[] symptoms;
     Diagnosis diagnosis;
     Treatment treatments;
@@ -163,11 +164,11 @@ public type ReportDetails record {
 
 public type Treatment record {
     string[] medications;
-    string description;    
+    string[] description;    
 };
 
 public type Diagnosis record {
     string[] category;
-    string description;
+    string[] description;
 };
 
