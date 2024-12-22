@@ -79,3 +79,9 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
     model:InternalError internalError = {body: errorDetails};
     return internalError;
 }
+
+
+public function getMcsIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:getMcsIdByEmail(email);
+    return result;
+}

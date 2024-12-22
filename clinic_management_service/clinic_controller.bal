@@ -261,7 +261,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    // medical center staff controllers
+    // MCS [START] ...............................................................
 
     // return initial informtion of a medical center staff member by userId
     resource function get mcsMember(string userId) returns http:Response|error? {
@@ -281,6 +281,19 @@ service / on new http:Listener(9090) {
         return response;
 
     }
+
+    //get the mcs userID by email
+    resource function get mcsIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError userId = 'service:getMcsIdByEmail(email.trim());
+        if userId is string {
+            return userId;
+        } else {
+            return error("Error occurred while retrieving MCS id number");
+        }
+    }
+
+    // MCS [END] ...............................................................
+
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");

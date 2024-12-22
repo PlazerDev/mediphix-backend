@@ -17,3 +17,7 @@ public type MCSwithMedicalCenter record {|
     string medical_center_mobile;
     string medical_center_email;    
 |};
+
+public type McsUserID record {|
+    string _id;
+|};

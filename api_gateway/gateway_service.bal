@@ -657,6 +657,48 @@ service /receptionist on httpListener {
 
 }
 
+// MCS [START] .......................................................................................
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /mcs on httpListener {
+
+    @http:ResourceConfig
+    resource function get upcomingClinicSessions(http:Request request) returns http:Response|error? {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            // get the {userID} from [user] by using {userEmail}
+            // get the list of {assignedSessions}
+            // filter the sessions that has {overallSessionStatus = ACTIVE}
+            // get the doctor details for each session 
+
+            string userEmail = "mcs1@nawaloka.lk";
+            string userID = check getCachedUserId(userEmail, "mcs");
+
+            http:Response response = new;
+            response.setJsonPayload({"hello": userID});
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+
+    }
+
+}
+// MCS [END] .......................................................................................
+
 public function getUserEmailByJWT(http:Request req) returns string|error {
     string authHeader = check req.getHeader("Authorization");
     string token = authHeader.substring(7);
@@ -678,9 +720,11 @@ public function getCachedUserId(string userEmail, string userType) returns strin
         string id = "";
         if (userType == "patient") {
             id = check clinicServiceEP->/patientIdByEmail/[userEmail];
-
         } else if (userType == "doctor") {
             id = check clinicServiceEP->/doctorIdByEmail/[userEmail];
+        } else if (userType == "mcs") {
+            io:print("about send to the clinic controller", userEmail, userType);
+            id = check clinicServiceEP->/mcsIdByEmail/[userEmail];
         }
         string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);
