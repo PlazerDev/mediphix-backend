@@ -132,3 +132,42 @@ public type AppointmentNumberCounter record {
     int sequence_value;
 };
 
+
+public type MedicalRecord record {
+    time:Date startTime;
+    time:Date endTime;
+    string[] symptoms;
+    Diagnosis diagnosis;
+    Treatment treatments;
+    string note_to_patient?;
+    boolean is_lab_report_required;
+    LabReport? lab_report;
+};
+
+public type LabReport record {
+    time:Date requested_timestamp;
+    boolean is_high_prioritize;
+    string test_type;
+    string test_name;
+    string note_to_lab_staff;
+    int status;
+    ReportDetails report_details;
+};
+
+public type ReportDetails record {  
+    time:Date test_started_timestamp;
+    time:Date test_ended_timestamp; 
+    string? additional_note;
+    string[]? result_files;
+};
+
+public type Treatment record {
+    string[] medications;
+    string description;    
+};
+
+public type Diagnosis record {
+    string[] category;
+    string description;
+};
+
