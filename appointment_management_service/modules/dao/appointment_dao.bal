@@ -206,6 +206,58 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
+public function updateMedicalRecord(model:MedicalRecord medicalRecord) 
+    returns http:Ok|model:InternalError|model:NotFoundError|error? {
+
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    int aptNumber = medicalRecord.apt_Number;
+    map<json> filter = {"apt_Number": aptNumber};
+    
+    json medicalRecordJson = medicalRecord.toJson();
+
+    mongodb:Update update = {"$set": {"medical_record": medicalRecordJson}};
+
+    // Define options for the update operation
+    mongodb:UpdateOptions options = {};
+
+    mongodb:UpdateResult|error result = appointmentCollection->updateOne(filter, update, options);
+
+    if (result is mongodb:UpdateResult) {
+        if (result.matchedCount == 0) {
+            log:printError("No appointment found for the given apt_Number: " + aptNumber.toString());
+            model:ErrorDetails errorDetails = {
+                message: "Appointment not found for the given apt_Number",
+                details: string `appointment/${aptNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:NotFoundError notFoundError = {body: errorDetails};
+            return notFoundError;
+        } else if (result.modifiedCount == 0) {
+            log:printError("Failed to update the medical record for apt_Number: " + aptNumber.toString());
+            model:ErrorDetails errorDetails = {
+                message: "Failed to update the medical record",
+                details: string `appointment/${aptNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
+        log:printInfo("Successfully updated the medical record for apt_Number: " + aptNumber.toString());
+        return http:OK;
+    } else {
+        log:printError("Error occurred while updating the medical record", result);
+        model:ErrorDetails errorDetails = {
+            message: "An error occurred while updating the medical record",
+            details: string `appointment/${aptNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
 public function getOngoingAppointmentsByMobile(string mobile) returns model:Appointment[]|model:InternalError|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");

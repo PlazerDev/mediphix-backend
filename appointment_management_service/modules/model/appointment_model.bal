@@ -132,6 +132,19 @@ public type AppointmentNumberCounter record {
     int sequence_value;
 };
 
+//new appointment record for reviva
+public type AppointmentRecord record {
+    string _id;
+    int apt_Number;
+    string session_id;
+    int time_slot;
+    time:Date apt_created_timestamp;
+    AppointmentStatus apt_status;
+    string patient;
+    boolean is_paid;
+    int queue_number;
+    MedicalRecord medical_record;
+};
 
 public type MedicalRecord record {
     int apt_Number;
