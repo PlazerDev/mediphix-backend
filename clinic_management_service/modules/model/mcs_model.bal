@@ -1,23 +1,34 @@
-public type MCS record {|
-    string user_id;
-    string first_name;
-    string last_name;
-    string nic;
-    string medical_center_id;
-|};
-
-public type MCSwithMedicalCenter record {|
-    string user_id;
-    string first_name;
-    string last_name;
-    string nic;
-    string medical_center_id;
-    string medical_center_name;
-    string medical_center_address;
-    string medical_center_mobile;
-    string medical_center_email;    
-|};
+import ballerina/time;
 
 public type McsUserID record {|
     string _id;
+|};
+
+public type McsAssignedSessionIdList record {|
+    string[] assignedSessions;
+|};
+
+public type McsAssignedSession record {|
+    time:Date endTimestamp;
+    time:Date startTimestamp;
+    string doctorId;
+    string hallNumber;
+    string noteFromCenter;
+    string noteFromDoctor;
+|};
+
+public type McsAssignedSessionWithDoctorDetails record {|
+    time:Date endTimestamp;
+    time:Date startTimestamp;
+    McsDoctorDetails doctorDetails;
+    string hallNumber;
+    string noteFromCenter;
+    string noteFromDoctor;
+|};
+
+public type McsDoctorDetails record {|
+    string name;
+    string profilePhoto;
+    string[] education;
+    string[] specialization;
 |};

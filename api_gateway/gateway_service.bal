@@ -666,26 +666,18 @@ service /receptionist on httpListener {
 service /mcs on httpListener {
 
     @http:ResourceConfig
-    resource function get upcomingClinicSessions(http:Request request) returns http:Response|error? {
+    resource function get upcomingClinicSessions(http:Request request) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            // get the {userID} from [user] by using {userEmail}
-            // get the list of {assignedSessions}
-            // filter the sessions that has {overallSessionStatus = ACTIVE}
-            // get the doctor details for each session 
-
             string userEmail = "mcs1@nawaloka.lk";
-            string userID = check getCachedUserId(userEmail, "mcs");
+            string userId = check getCachedUserId(userEmail, "mcs");
 
-            http:Response response = new;
-            response.setJsonPayload({"hello": userID});
-            response.statusCode = 200;
+            http:Response response = check clinicServiceEP->/mcsUpcomingClinicSessions/[userId];
             return response;
-
         } on fail {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving patient details",
+                details: "Error occurred",
                 timeStamp: time:utcNow()
             };
             http:Response errorResponse = new;
@@ -693,7 +685,6 @@ service /mcs on httpListener {
             errorResponse.setJsonPayload(errorDetails.toJson());
             return errorResponse;
         }
-
     }
 
 }

@@ -263,28 +263,10 @@ service / on new http:Listener(9090) {
 
     // MCS [START] ...............................................................
 
-    // return initial informtion of a medical center staff member by userId
-    resource function get mcsMember(string userId) returns http:Response|error? {
 
-        model:MCSwithMedicalCenter|model:NotFoundError|model:InternalError result = 'service:getMCSMemberInformationService(userId.trim());
-        http:Response response = new;
-        if result is model:MCSwithMedicalCenter {
-            response.statusCode = 200;
-            response.setJsonPayload(result.toJson());
-        } else if result is model:NotFoundError {
-            response.statusCode = 404;
-            response.setJsonPayload(result.body.toJson());
-        } else if result is model:InternalError {
-            response.statusCode = 500;
-            response.setJsonPayload(result.body.toJson());
-        }
-        return response;
-
-    }
-
-    //get the mcs userID by email
+    // #### GET USERID BY EMAIL OF THE MCS ####################
     resource function get mcsIdByEmail/[string email]() returns string|error? {
-        error|string|model:InternalError userId = 'service:getMcsIdByEmail(email.trim());
+        error|string|model:InternalError userId = 'service:mcsGetUserIdByEmail(email.trim());
         if userId is string {
             return userId;
         } else {
@@ -292,7 +274,26 @@ service / on new http:Listener(9090) {
         }
     }
 
-    // MCS [END] ...............................................................
+    // #### VIEW ALL ASSIGNED UPOMMING SESSIONS OF THE MCS ####
+    resource function get mcsUpcomingClinicSessions/[string userId]() returns http:Response|error {
+
+        model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] result = check 'service:mcsGetUpcomingSessionList(userId);
+
+        http:Response response = new;
+
+        if (result is model:McsAssignedSessionWithDoctorDetails[]) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+
+    // MCS [END]  ...............................................................
 
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {

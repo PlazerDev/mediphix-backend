@@ -4,48 +4,6 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/time;
 
-public function getMCSMemberInformationService(string userId) returns model:MCSwithMedicalCenter|model:NotFoundError|model:InternalError {
-    model:MCS|model:NotFoundError|error? mcsData = dao:getMCSInfoByUserID(userId);
-    if mcsData is model:MCS {
-        model:MedicalCenter|model:NotFoundError|error? medicalCenterData = dao:getMedicalCenterInfoByID(mcsData.medical_center_id, userId);
-        if medicalCenterData is model:MedicalCenter {
-            model:MCSwithMedicalCenter mcsWithMedicalCenter = {
-                user_id: mcsData.user_id,
-                first_name: mcsData.first_name,
-                last_name: mcsData.last_name,
-                nic: mcsData.nic,
-                medical_center_id: mcsData.medical_center_id,
-                medical_center_name: medicalCenterData.name,
-                medical_center_address: medicalCenterData.address,
-                medical_center_mobile: medicalCenterData.mobile,
-                medical_center_email: medicalCenterData.email
-            };
-            return mcsWithMedicalCenter;
-        }
-        else if medicalCenterData is model:NotFoundError {
-            return medicalCenterData;
-        } else {
-            model:ErrorDetails errorDetails = {
-                message: "Unexpected internal error occurred, please retry!",
-                details: string `mcs/${userId}`,
-                timeStamp: time:utcNow()
-            };
-            model:InternalError internalError = {body: errorDetails};
-            return internalError;
-        }
-    } else if mcsData is model:NotFoundError {
-        return mcsData;
-    }
-    else {
-        model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry!",
-            details: string `mcs/${userId}`,
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-}
 
 public function createSessionVacancy(model:SessionVacancy sessionVacancy) returns http:Created|model:InternalError|error? {
     http:Created|error? vacancyResult = dao:createSessionVacancy(sessionVacancy);
@@ -80,8 +38,47 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
     return internalError;
 }
 
-
-public function getMcsIdByEmail(string email) returns error|string|model:InternalError {
-    error|string|model:InternalError result = check dao:getMcsIdByEmail(email);
+public function mcsGetUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:mcsGetUserIdByEmail(email);
     return result;
+}
+
+public function mcsGetUpcomingSessionList(string userId) returns error|model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] {
+    // get the assigned session id list
+    // get the sessoions which are {overallSessionStatus = ACTIVE}
+    // get the doctor details as well
+
+    model:McsAssignedSessionWithDoctorDetails[] finalResult = [];    
+    string[]|model:NotFoundError sessionIdList = check dao:mcsGetAssignedSessionIdList(userId);
+
+    if (sessionIdList is string[]) {
+        foreach string sessionId in sessionIdList {
+            
+            model:McsAssignedSession|model:NotFoundError sessionDetails = check dao:mcsGetAssignedSessionDetails(sessionId);
+            
+            if (sessionDetails is model:McsAssignedSession) {
+
+                model:McsDoctorDetails|model:NotFoundError doctorDetails = check dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
+
+                if doctorDetails is model:McsDoctorDetails {
+                    model:McsAssignedSessionWithDoctorDetails temp = {
+                        endTimestamp: sessionDetails.endTimestamp,
+                        startTimestamp: sessionDetails.startTimestamp,
+                        doctorDetails: doctorDetails,
+                        hallNumber: sessionDetails.hallNumber,
+                        noteFromCenter: sessionDetails.noteFromCenter,
+                        noteFromDoctor: sessionDetails.noteFromDoctor
+                    };
+                    finalResult.push(temp);
+                }else if doctorDetails is model:NotFoundError{
+                    return doctorDetails;
+                }
+            } else if sessionDetails is model:NotFoundError{
+                return sessionDetails;
+            }
+        }
+        return finalResult;
+    } else {
+        return sessionIdList;
+    }
 }
