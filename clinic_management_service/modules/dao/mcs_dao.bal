@@ -64,7 +64,7 @@ public function mcsGetAssignedSessionIdList(string userId) returns error|string[
     }
 }
 
-public function mcsGetAssignedSessionDetails(string sessionId) returns error|model:McsAssignedSession|model:NotFoundError {
+public function mcsGetAssignedSessionDetails(string sessionId) returns error?|model:McsAssignedSession|mongodb:Error {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
@@ -86,19 +86,7 @@ public function mcsGetAssignedSessionDetails(string sessionId) returns error|mod
 
     model:McsAssignedSession|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
 
-    if result is model:McsAssignedSession {
-        return result;
-    }else if result is mongodb:Error {
-        return result;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Internal Error",
-            details: "Not Found",
-            timeStamp: time:utcNow()
-        };
-        model:NotFoundError notFound = {body: errorDetails};
-        return notFound;
-    }
+    return result;
 }
 
 public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctorDetails|error|model:NotFoundError{
@@ -133,4 +121,51 @@ public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctor
         model:NotFoundError notFound = {body: errorDetails};
         return notFound;
     }
+}
+
+public function mcsGetOngoingSessionDetails(string sessionId) returns error?|model:McsAssignedSession|mongodb:Error {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+
+    // Get the current timestamp
+    time:Utc currentTimeStamp = time:utcNow();
+
+    json currentTimeJson = time:utcToCivil(currentTimeStamp).toJson();
+    json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStamp, 3600)).toJson();
+
+    // Filter for the session based on the given criteria
+    map<json> filter = {
+        "_id": {"$oid": sessionId},
+        "$or": [
+            {"overallSessionStatus": "ONGOING"},
+            {
+                "$and": [
+                    {"startTimestamp": {"$lte": currentTimeJson}},
+                    {"endTimestamp": {"$gte": currentTimeJson}}
+                ]
+            },
+            {
+                "startTimestamp": {
+                    "$lte": hourAfterTimeJson
+                }
+            }
+        ]
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1
+    };
+
+    model:McsAssignedSession|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
+    io:println("RESULT: ", result);
+
+    return result;
 }

@@ -15,6 +15,7 @@ public type McsAssignedSession record {|
     string hallNumber;
     string noteFromCenter;
     string noteFromDoctor;
+    string overallSessionStatus?;
 |};
 
 public type McsAssignedSessionWithDoctorDetails record {|
@@ -24,6 +25,7 @@ public type McsAssignedSessionWithDoctorDetails record {|
     string hallNumber;
     string noteFromCenter;
     string noteFromDoctor;
+    string overallSessionStatus?;
 |};
 
 public type McsDoctorDetails record {|

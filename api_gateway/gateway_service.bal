@@ -687,6 +687,28 @@ service /mcs on httpListener {
         }
     }
 
+    @http:ResourceConfig
+    resource function get ongoingClinicSessions(http:Request request) returns http:Response{
+         do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = "mcs1@nawaloka.lk";
+            string userId = check getCachedUserId(userEmail, "mcs");
+
+            http:Response response = check clinicServiceEP->/mcsOngoingClinicSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
 }
 // MCS [END] .......................................................................................
 
