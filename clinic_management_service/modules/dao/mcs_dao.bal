@@ -4,6 +4,8 @@ import ballerinax/mongodb;
 import ballerina/io;
 
 
+
+
 public function mcsGetUserIdByEmail(string email) returns string|error|model:InternalError {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -34,10 +36,8 @@ public function mcsGetUserIdByEmail(string email) returns string|error|model:Int
     }
 }
 
-public function mcsGetAssignedSessionIdList(string userId) returns error|string[]|model:NotFoundError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection mcsCollection = check mediphixDb->getCollection("medical_center_staff");
+public function mcsGetAssignedSessionIdList(string userId) returns model:McsAssignedSessionIdList|mongodb:Error ? {    
+    mongodb:Collection mcsCollection = check initDatabaseConnection("medical_center_staff");
 
     map<json> filter = {"userId": userId};
     map<json> projection = {
@@ -45,29 +45,12 @@ public function mcsGetAssignedSessionIdList(string userId) returns error|string[
         "_id": 0 
     };
 
-    model:McsAssignedSessionIdList|mongodb:Error? findResult = mcsCollection->findOne(filter, {}, projection);
-
-    // Handle the result or errors
-    if findResult is model:McsAssignedSessionIdList {
-        return findResult.assignedSessions;
-    } else if findResult is mongodb:Error {
-        return findResult; // Return the MongoDB error
-    } else {
-
-        model:ErrorDetails errorDetails = {
-            message: "Internal Error",
-            details: "Not Found",
-            timeStamp: time:utcNow()
-        };
-        model:NotFoundError notFound = {body: errorDetails};
-        return notFound;
-    }
+    model:McsAssignedSessionIdList ? result = check mcsCollection->findOne(filter, {}, projection);
+    return result;
 }
 
-public function mcsGetAssignedSessionDetails(string sessionId) returns error?|model:McsAssignedSession|mongodb:Error {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+public function mcsGetAssignedSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
 
     map<json> filter = {
         "_id": {"$oid": sessionId },
@@ -84,15 +67,12 @@ public function mcsGetAssignedSessionDetails(string sessionId) returns error?|mo
         "noteFromDoctor": 1
     };
 
-    model:McsAssignedSession|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
-
+    model:McsAssignedSession ? result = check sessionCollection->findOne(filter, {}, projection);
     return result;
 }
 
-public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctorDetails|error|model:NotFoundError{
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctorDetails|mongodb:Error ?{
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
 
     map<json> filter = {
         "_id": {"$oid": doctorId }
@@ -106,35 +86,59 @@ public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctor
         "specialization": 1
     };
 
-    model:McsDoctorDetails|mongodb:Error? result = doctorCollection->findOne(filter, {}, projection);
-
-    if result is model:McsDoctorDetails {
-        return result;
-    }else if result is mongodb:Error {
-        return result;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Internal Error",
-            details: "Not Found",
-            timeStamp: time:utcNow()
-        };
-        model:NotFoundError notFound = {body: errorDetails};
-        return notFound;
-    }
+    model:McsDoctorDetails ? result = check doctorCollection->findOne(filter, {}, projection);
+    return result;
 }
 
-public function mcsGetOngoingSessionDetails(string sessionId) returns error?|model:McsAssignedSession|mongodb:Error {
+public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = initOngoingSessionFilter(sessionId);
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1
+    };
+
+    model:McsAssignedSession ? result = check sessionCollection->findOne(filter, {}, projection);
+    return result;
+}
+
+public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {    
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = initOngoingSessionFilter(sessionId);
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1
+    };
+
+    model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
+    return result;
+}
+
+
+// HELPERS ............................................................................................................
+public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+    mongodb:Collection collection = check mediphixDb->getCollection(collectionName);
+    return collection;
+}
 
-    // Get the current timestamp
+public function initOngoingSessionFilter(string sessionId) returns map<json> {
     time:Utc currentTimeStamp = time:utcNow();
 
     json currentTimeJson = time:utcToCivil(currentTimeStamp).toJson();
     json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStamp, 3600)).toJson();
 
-    // Filter for the session based on the given criteria
     map<json> filter = {
         "_id": {"$oid": sessionId},
         "$or": [
@@ -154,39 +158,5 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns error?|mod
         ]
     };
 
-    map<json> projection = {
-        "_id": {"$toString": "$_id"},
-        "endTimestamp": 1,
-        "startTimestamp": 1,
-        "doctorId": 1,
-        "hallNumber": 1,
-        "noteFromCenter": 1,
-        "noteFromDoctor": 1,
-        "overallSessionStatus": 1
-    };
-
-    model:McsAssignedSession|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
-    io:println("RESULT: ", result);
-
-    return result;
-}
-
-public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
-
-    map<json> filter = {
-        "_id": {"$oid": sessionId}
-    };
-
-    map<json> projection = {
-        "_id": 0,
-        "timeSlot": 1
-    };
-
-    model:McsTimeSlotList|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
-    io:println("RESULT: ", result);
-
-    return result;
+    return filter;
 }
