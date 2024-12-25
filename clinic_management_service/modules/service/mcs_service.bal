@@ -50,12 +50,12 @@ public function mcsGetUpcomingSessionList(string userId) returns error|model:Not
     // get the doctor details as well
 
     model:McsAssignedSessionWithDoctorDetails[] finalResult = [];    
-    string[]|model:NotFoundError sessionIdList = check dao:mcsGetAssignedSessionIdList(userId);
+    model:McsAssignedSessionIdList|mongodb:Error ? sessionIdList = dao:mcsGetAssignedSessionIdList(userId);
 
-    if (sessionIdList is string[]) {
-        foreach string sessionId in sessionIdList {
+    if (sessionIdList is model:McsAssignedSessionIdList) {
+        foreach string sessionId in sessionIdList.assignedSessions {
             
-            model:McsAssignedSession|mongodb:Error|error? sessionDetails = dao:mcsGetAssignedSessionDetails(sessionId);
+            model:McsAssignedSession|mongodb:Error ? sessionDetails = dao:mcsGetAssignedSessionDetails(sessionId);
             
             if(sessionDetails is mongodb:Error){
                 return error("Database Error!");
@@ -63,7 +63,7 @@ public function mcsGetUpcomingSessionList(string userId) returns error|model:Not
             
             if (sessionDetails is model:McsAssignedSession) {
 
-                model:McsDoctorDetails|model:NotFoundError doctorDetails = check dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
+                model:McsDoctorDetails|mongodb:Error ? doctorDetails = dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
 
                 if doctorDetails is model:McsDoctorDetails {
                     model:McsAssignedSessionWithDoctorDetails temp = {
@@ -75,42 +75,39 @@ public function mcsGetUpcomingSessionList(string userId) returns error|model:Not
                         noteFromDoctor: sessionDetails.noteFromDoctor
                     };
                     finalResult.push(temp);
-                }else if doctorDetails is model:NotFoundError{
-                    return doctorDetails;
+                }else if doctorDetails is mongodb:Error{
+                    return error("Database Error: ", doctorDetails);
+                }else {
+                    return initNotFoundError("No matching doctor data for the provided session ID.");
                 }
             } 
         }
         if (finalResult.length() == 0){
-            model:ErrorDetails errorDetails = {
-                message: "Session not found",
-                details: "No matching upcomming session found for the provided session ID.",
-                timeStamp: time:utcNow()
-            };
-            model:NotFoundError notFound = {body: errorDetails};
-            return notFound;
+            return initNotFoundError("No matching upcomming sessions found");
         }
         return finalResult;
-    } else {
-        return sessionIdList;
+    } else if sessionIdList is mongodb:Error{
+        return error("Database Error: ", sessionIdList);
+    }else {
+        return initNotFoundError("No assigned sessions found");
     }
 }
 
 public function mcsGetOngoingSessionList(string userId) returns error|model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] {
     
     model:McsAssignedSessionWithDoctorDetails[] finalResult = [];    
-    string[]|model:NotFoundError sessionIdList = check dao:mcsGetAssignedSessionIdList(userId);
+    model:McsAssignedSessionIdList|mongodb:Error ? sessionIdList = dao:mcsGetAssignedSessionIdList(userId);
 
-    if (sessionIdList is string[]) {
-        foreach string sessionId in sessionIdList {
+    if (sessionIdList is model:McsAssignedSessionIdList) {
+        foreach string sessionId in sessionIdList.assignedSessions {
             
-            model:McsAssignedSession|error?|mongodb:Error sessionDetails = dao:mcsGetOngoingSessionDetails(sessionId);
+            model:McsAssignedSession|mongodb:Error ? sessionDetails = dao:mcsGetOngoingSessionDetails(sessionId);
             if(sessionDetails is mongodb:Error){
-                return error("Database Error!");
+                return error("Database Error!: ", sessionDetails);
             }
             
             if (sessionDetails is model:McsAssignedSession) {
-
-                model:McsDoctorDetails|model:NotFoundError doctorDetails = check dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
+                model:McsDoctorDetails|mongodb:Error ? doctorDetails = dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
 
                 if doctorDetails is model:McsDoctorDetails {
                     model:McsAssignedSessionWithDoctorDetails temp = {
@@ -120,25 +117,49 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
                         hallNumber: sessionDetails.hallNumber,
                         noteFromCenter: sessionDetails.noteFromCenter,
                         noteFromDoctor: sessionDetails.noteFromDoctor,
-                        overallSessionStatus: sessionDetails.overallSessionStatus
+                        overallSessionStatus: sessionDetails.overallSessionStatus,
+                        _id: sessionDetails._id
                     };
                     finalResult.push(temp);
-                }else if doctorDetails is model:NotFoundError{
-                    return doctorDetails;
+                }else if doctorDetails is mongodb:Error{
+                    return error("Database Error: ", doctorDetails);
+                }else {
+                    return initNotFoundError("No matching doctor data for the provided session ID.");
                 }
             }
         }
         if (finalResult.length() == 0){
-            model:ErrorDetails errorDetails = {
-                message: "Session not found",
-                details: "No matching ongoing session found for the provided session ID.",
-                timeStamp: time:utcNow()
-            };
-            model:NotFoundError notFound = {body: errorDetails};
-            return notFound;
+            return initNotFoundError("No matching ongoing sessions found");
         }
         return finalResult;
-    } else {
-        return sessionIdList;
+    } else if sessionIdList is mongodb:Error{
+        return error("Database Error: ", sessionIdList);
+    }else {
+        return initNotFoundError("No assigned sessions found");
     }
+}
+
+public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns error|model:NotFoundError|model:McsTimeSlotList {
+    model:McsTimeSlotList|mongodb:Error ? result = dao:mcsGetOngoingSessionTimeSlotDetails(sessionId);
+
+    if result is null {
+        return initNotFoundError("Time slot data not found!");
+    } else if result is mongodb:Error {
+            return error("Database Error!");
+    } else {
+        return result;
+    }    
+}
+
+
+// HELPERS ............................................................................................................
+
+public function initNotFoundError(string details) returns model:NotFoundError {
+    model:ErrorDetails errorDetails = {
+        message: "Not Found Error",
+        details: details,
+        timeStamp: time:utcNow()
+    };
+    model:NotFoundError notFound = {body: errorDetails};
+    return notFound;
 }

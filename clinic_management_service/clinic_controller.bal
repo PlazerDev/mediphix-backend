@@ -313,6 +313,24 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    // #### VIEW ALL ASSIGNED Ongoing TIME SLOT DATA OF THE MCS #####
+    resource function get mcsOngoingClinicSessionTimeSlots/[string sessionId]() returns http:Response|error {
+        
+        model:NotFoundError|model:McsTimeSlotList result = check 'service:mcsGetOngoingSessionTimeSlotDetails(sessionId);
+
+        http:Response response = new;
+
+        if (result is model:McsTimeSlotList) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
 
     // MCS [END]  ...............................................................
 
