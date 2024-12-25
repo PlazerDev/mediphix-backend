@@ -120,7 +120,8 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
                         hallNumber: sessionDetails.hallNumber,
                         noteFromCenter: sessionDetails.noteFromCenter,
                         noteFromDoctor: sessionDetails.noteFromDoctor,
-                        overallSessionStatus: sessionDetails.overallSessionStatus
+                        overallSessionStatus: sessionDetails.overallSessionStatus,
+                        _id: sessionDetails._id
                     };
                     finalResult.push(temp);
                 }else if doctorDetails is model:NotFoundError{
@@ -141,4 +142,22 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
     } else {
         return sessionIdList;
     }
+}
+
+public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns error|model:NotFoundError|model:McsTimeSlotList {
+    model:McsTimeSlotList|mongodb:Error ? result = dao:mcsGetOngoingSessionTimeSlotDetails(sessionId);
+
+    if result is null {
+        model:ErrorDetails errorDetails = {
+                message: "Timeslot data not found",
+                details: "No matching timeslot data for the provided session ID.",
+                timeStamp: time:utcNow()
+            };
+        model:NotFoundError notFound = {body: errorDetails};
+        return notFound;
+    } else if result is mongodb:Error {
+            return error("Database Error!");
+    } else {
+        return result;
+    }    
 }

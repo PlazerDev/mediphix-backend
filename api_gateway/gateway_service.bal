@@ -709,6 +709,24 @@ service /mcs on httpListener {
         }
     }
 
+    @http:ResourceConfig
+    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response{
+         do {
+            http:Response response = check clinicServiceEP->/mcsOngoingClinicSessionTimeSlots/[sessionId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
 }
 // MCS [END] .......................................................................................
 

@@ -146,15 +146,16 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns error?|mod
                 ]
             },
             {
-                "startTimestamp": {
-                    "$lte": hourAfterTimeJson
-                }
+                "$and": [
+                    {"startTimestamp": {"$lte": hourAfterTimeJson}},
+                    {"endTimestamp": {"$gte": hourAfterTimeJson}}
+                ]
             }
         ]
     };
 
     map<json> projection = {
-        "_id": 0,
+        "_id": {"$toString": "$_id"},
         "endTimestamp": 1,
         "startTimestamp": 1,
         "doctorId": 1,
@@ -165,6 +166,26 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns error?|mod
     };
 
     model:McsAssignedSession|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
+    io:println("RESULT: ", result);
+
+    return result;
+}
+
+public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1
+    };
+
+    model:McsTimeSlotList|mongodb:Error? result = sessionCollection->findOne(filter, {}, projection);
     io:println("RESULT: ", result);
 
     return result;
