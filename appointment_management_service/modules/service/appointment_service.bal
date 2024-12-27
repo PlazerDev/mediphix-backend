@@ -212,3 +212,23 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
         return internalError;
     }
 }
+
+public function updateMedicalRecord(model:MedicalRecord medicalRecord) 
+returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
+
+    http:Ok|model:InternalError|model:NotFoundError|error? updateResult = dao:updateMedicalRecord(medicalRecord);
+
+    if updateResult is http:Ok {
+        return http:OK;
+    } else if updateResult is model:InternalError|model:NotFoundError {
+        return updateResult;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `Failed to update medical record for appointment/${medicalRecord.apt_Number}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
