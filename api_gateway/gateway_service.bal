@@ -497,6 +497,140 @@ service /doctor on httpListener {
         return errorResponse;
     }
 
+    resource function post updateMedicalRecord(MedicalRecord medicalRecord) 
+    returns http:Response|error? {
+        http:Response|error? response = check appointmentServiceEP->/updateMedicalRecord.post(medicalRecord);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while updating medical record",
+            timeStamp: time:utcNow()
+        };
+        InternalError internalError = {body: errorDetails};
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(internalError.body.toJson());
+        return errorResponse;
+    }
+
+resource function patch appointments/[int aptNumber]/medicalRecord(http:Request request) 
+    returns http:Response|error {
+    
+    // Extract and validate JSON payload
+    json|http:ClientError jsonPayload = request.getJsonPayload();
+    
+    if jsonPayload is http:ClientError {
+        ErrorDetails errorDetails = {
+            message: "Invalid JSON payload",
+            details: jsonPayload.message(),
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+
+    // Convert to MedicalRecord type
+    MedicalRecord|error payload = jsonPayload.fromJsonWithType(MedicalRecord);
+    
+    if payload is error {
+        ErrorDetails errorDetails = {
+            message: "Invalid medical record format",
+            details: payload.message(),
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+
+    // Validate appointment number consistency
+    if payload.apt_Number != aptNumber {
+        ErrorDetails errorDetails = {
+            message: "Invalid appointment number",
+            details: "Appointment number in URL must match the medical record",
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+
+    // Call service endpoint
+    http:Response|error? response = check appointmentServiceEP->/appointments/[aptNumber]/medicalRecord.patch(payload);
+
+    if (response is http:Response) {
+        return response;
+    }
+    
+    ErrorDetails errorDetails = {
+        message: "Internal server error",
+        details: "Error occurred while updating medical record",
+        timeStamp: time:utcNow()
+    };
+    return createResponse(500, errorDetails);
+}
+
+resource function put appointments/[int aptNumber]/medicalRecord(http:Request request) 
+    returns http:Response|error {
+    
+    // First extract the JSON payload with proper error handling
+    json|http:ClientError jsonPayload = request.getJsonPayload();
+    
+    if jsonPayload is http:ClientError {
+        ErrorDetails errorDetails = {
+            message: "Invalid JSON payload",
+            details: jsonPayload.message(),
+            timeStamp: time:utcNow()
+        };
+        http:Response response = new;
+        response.statusCode = 400;
+        response.setJsonPayload(errorDetails.toJson());
+        return response;
+    }
+
+    // Then convert JSON to MedicalRecord type
+    MedicalRecord|error payload = jsonPayload.fromJsonWithType(MedicalRecord);
+    
+    if payload is error {
+        ErrorDetails errorDetails = {
+            message: "Invalid medical record format",
+            details: payload.message(),
+            timeStamp: time:utcNow()
+        };
+        http:Response response = new;
+        response.statusCode = 400;
+        response.setJsonPayload(errorDetails.toJson());
+        return response;
+    }
+
+    // Validate that URL aptNumber matches payload aptNumber
+    if payload.apt_Number != aptNumber {
+        ErrorDetails errorDetails = {
+            message: "Path parameter does not match payload",
+            details: "Appointment number in URL must match the one in request body",
+            timeStamp: time:utcNow()
+        };
+        http:Response response = new;
+        response.statusCode = 400;
+        response.setJsonPayload(errorDetails.toJson());
+        return response;
+    }
+
+    http:Response|error? response = check appointmentServiceEP->/appointments/[aptNumber]/medicalRecord.put(payload);
+
+    if (response is http:Response) {
+        return response;
+    }
+    
+    ErrorDetails errorDetails = {
+        message: "Internal server error",
+        details: "Error occurred while updating medical record",
+        timeStamp: time:utcNow()
+    };
+    http:Response errorResponse = new;
+    errorResponse.statusCode = 500;
+    errorResponse.setJsonPayload(errorDetails.toJson());
+    return errorResponse;
+}
+
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
@@ -780,6 +914,14 @@ public function getAppointments(string userId) returns Appointment[]|error? {
 public function getAppointmentsForDoctor(string userId) returns Appointment[]|error? {
     Appointment[] appointments = check appointmentServiceEP->/appointmentsByDoctorId/[userId];
     return appointments;
+}
+
+// Helper function to create consistent responses
+public function createResponse(int statusCode, ErrorDetails payload) returns http:Response {
+    http:Response response = new;
+    response.statusCode = statusCode;
+    response.setJsonPayload(payload.toJson());
+    return response;
 }
 
 @http:ServiceConfig {
