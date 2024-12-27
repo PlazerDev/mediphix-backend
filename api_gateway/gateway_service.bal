@@ -657,6 +657,79 @@ service /receptionist on httpListener {
 
 }
 
+// MCS [START] .......................................................................................
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /mcs on httpListener {
+
+    @http:ResourceConfig
+    resource function get upcomingClinicSessions(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = "mcs1@nawaloka.lk";
+            string userId = check getCachedUserId(userEmail, "mcs");
+
+            http:Response response = check clinicServiceEP->/mcsUpcomingClinicSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig
+    resource function get ongoingClinicSessions(http:Request request) returns http:Response{
+         do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = "mcs1@nawaloka.lk";
+            string userId = check getCachedUserId(userEmail, "mcs");
+
+            http:Response response = check clinicServiceEP->/mcsOngoingClinicSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig
+    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response{
+         do {
+            http:Response response = check clinicServiceEP->/mcsOngoingClinicSessionTimeSlots/[sessionId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+}
+// MCS [END] .......................................................................................
+
 public function getUserEmailByJWT(http:Request req) returns string|error {
     string authHeader = check req.getHeader("Authorization");
     string token = authHeader.substring(7);
@@ -678,9 +751,11 @@ public function getCachedUserId(string userEmail, string userType) returns strin
         string id = "";
         if (userType == "patient") {
             id = check clinicServiceEP->/patientIdByEmail/[userEmail];
-
         } else if (userType == "doctor") {
             id = check clinicServiceEP->/doctorIdByEmail/[userEmail];
+        } else if (userType == "mcs") {
+            io:print("about send to the clinic controller", userEmail, userType);
+            id = check clinicServiceEP->/mcsIdByEmail/[userEmail];
         }
         string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);
