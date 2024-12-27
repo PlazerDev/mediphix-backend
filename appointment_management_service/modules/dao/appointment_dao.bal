@@ -26,7 +26,7 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
     map<json> filter = {"_id": "appointmentNumber"};
 
     mongodb:Update update = {
-        inc: {sequence_value: 1}
+        inc: {sequenceValue: 1}
     };
 
     mongodb:UpdateOptions options = {upsert: true};
@@ -50,7 +50,7 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
     model:AppointmentNumberCounter|error? findResults = check counterCollection->findOne(filter, {}, (), model:AppointmentNumberCounter);
 
     if findResults is model:AppointmentNumberCounter {
-        return findResults.sequence_value;
+        return findResults.sequenceValue;
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment number counter",

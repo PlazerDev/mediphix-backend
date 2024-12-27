@@ -129,6 +129,6 @@ public type Appointment record {|
 
 public type AppointmentNumberCounter record {
     string _id;
-    int sequence_value;
+    int sequenceValue;
 };
 
