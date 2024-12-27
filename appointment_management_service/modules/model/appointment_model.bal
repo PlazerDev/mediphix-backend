@@ -90,7 +90,7 @@ public type NewAppointment record {
     boolean isPaid;
     decimal payment;
     AppointmentStatus status;
-    string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00Z
+    string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00+05:30
 };
 
 public type Appointment record {|
@@ -127,7 +127,7 @@ public type Appointment record {|
 //     time:Date lastModifiedTime;
 // |};
 
-public type AppointmentNumberCounter record {
+public type Counter record {
     string _id;
     int sequenceValue;
 };

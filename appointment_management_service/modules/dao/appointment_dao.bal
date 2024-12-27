@@ -47,9 +47,9 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
         return internalError;
     }
 
-    model:AppointmentNumberCounter|error? findResults = check counterCollection->findOne(filter, {}, (), model:AppointmentNumberCounter);
+    model:Counter|error? findResults = check counterCollection->findOne(filter, {}, (), model:Counter);
 
-    if findResults is model:AppointmentNumberCounter {
+    if findResults is model:Counter {
         return findResults.sequenceValue;
     } else {
         model:ErrorDetails errorDetails = {

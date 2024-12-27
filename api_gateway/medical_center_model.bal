@@ -1,40 +1,17 @@
 import ballerina/time;
 
 
-public type MedicalCenter record {|
+public type NewSessionVacancy record {
     string _id?;
-    string name;
-    string address;
+    DoctorResponse[] responses?;
+    string[] aptCategories;
+    string medicalCenterId;
+    string mobileNumber;
+    string vacancyNoteToDoctors;
     string mobile;
-    string email;
-    string district;
-    boolean verified;
-    string[] appointmentCategories?;
-    string profileImage;
-    string mediaStorage?;
-    string specialNotes?;
-    string[] doctors?;
-    string[] appointments?;
-    string[] patients?;
-    string[] medicalCenterStaff?;
-    string description;
-|};
-
-public type UnregisteredMedicalCEnter record {|
-    string name;
-    string address;
-    string mobile;
-    string email;
-    byte idfront;
-    byte idback;
-    string district;
-    boolean verified;
-    decimal fee;
-|};
-
-public type DoctorRequests record {
-    string session;
-    string sessionVacancyId;
+    NewOpenSession[] openSessions;
+    time:Date? vacancyOpenedTimestamp;
+    time:Date? vacancyClosedTimestamp;
 };
 
 public type SessionVacancy record {
@@ -50,7 +27,6 @@ public type SessionVacancy record {
     time:Date? vacancyClosedTimestamp;
 };
 
-//This model is used by doctor to respond to a session vacancy
 public type DoctorResponse record {
     int responseId;
     time:Date submittedTimestamp;
@@ -61,10 +37,19 @@ public type DoctorResponse record {
     boolean isCompletelyRejected;
 };
 
+public type NewOpenSession record {
+    int sessionId?;
+    string startTime;  // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string rangeStartTimestamp;
+    string rangeEndTimestamp;
+    Repetition repetition;
+};
+
 public type OpenSession record {
-    int sessionId;
-    time:Date startTime;
-    time:Date endTime;
+    int sessionId?;
+    time:Date startTime;  
+    time:Date endTime;    
     time:Date rangeStartTimestamp;
     time:Date rangeEndTimestamp;
     Repetition repetition;
@@ -86,9 +71,4 @@ public type DoctorResponseApplication record {
 public type PatientCountPerTimeSlot record {
     int slotNumber;
     int maxNumOfPatients;
-};
-
-public type Counter record {
-    string _id;
-    int sequenceValue;
 };
