@@ -39,30 +39,15 @@ public type DoctorRequests record {
 
 public type SessionVacancy record {
     string _id?;
-    string[] acceptedSessions?;
-    string[] doctorRequests;
-    string[] categories;
-    Session[] sessions;
-    string note;
-    string mobile;
+    Response[] responses?;
+    string[] aptCategories;
     string medicalCenterId;
-    time:Date? createdTime;
-    time:Date? modifiedTime;
-};
-
-public type Session record {
-    int sessionId;
-    string startTime;
-    string endTime;
-    time:Date rangeStartTimestamp;
-    time:Date rangeEndTimestamp;
-    Repetition repetition;
-};
-
-public type Repetition record {
-    boolean isRepeat;
-    string[] days;
-    time:Date? noRepeatDateTimestamp;
+    string mobileNumber;
+    string vacancyNoteToDoctors;
+    string mobile;
+    OpenSession[] openSessions;
+    time:Date? vacancyOpenedTimestamp;
+    time:Date? vacancyClosedTimestamp;
 };
 
 public type Response record {
@@ -75,19 +60,34 @@ public type Response record {
     boolean isCompletelyRejected;
 };
 
+public type OpenSession record {
+    int sessionId;
+    time:Date startTime;
+    time:Date endTime;
+    time:Date rangeStartTimestamp;
+    time:Date rangeEndTimestamp;
+    Repetition repetition;
+};
+
+public type Repetition record {
+    boolean isRepeat;
+    string[] days;
+    time:Date? noRepeatDateTimestamp;
+};
+
 public type ResponseApplication record {
     int appliedVacancySessionId;
     boolean isAccepted;
     decimal expectedPaymentAmount;
-    TimeSlot[] noPatientsToTimeSlot;
+    PatientCountPerTimeSlot[] numberOfPatientsPerTimeSlot;
 };
 
-public type TimeSlot record {
+public type PatientCountPerTimeSlot record {
     int slotNumber;
-    int maxNoPatients;
+    int maxNumOfPatients;
 };
 
 public type TimeslotNumberCounter record {
     string _id;
-    int sequence_value;
+    int sequenceValue;
 };

@@ -84,7 +84,7 @@ public function getNextTimeSlotNumber() returns int|model:InternalError|error {
     map<json> filter = {"_id": "timeSlotNumber"};
 
     mongodb:Update update = {
-        inc: {sequence_value: 1}
+        inc: {sequenceValue: 1}
     };
 
     mongodb:UpdateOptions options = {upsert: true};
@@ -108,7 +108,7 @@ public function getNextTimeSlotNumber() returns int|model:InternalError|error {
     model:TimeslotNumberCounter|error? findResults = check counterCollection->findOne(filter, {}, (), model:TimeslotNumberCounter);
 
     if findResults is model:TimeslotNumberCounter {
-        return findResults.sequence_value;
+        return findResults.sequenceValue;
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the timeslot number counter",
