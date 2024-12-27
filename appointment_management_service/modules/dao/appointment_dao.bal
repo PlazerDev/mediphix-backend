@@ -212,7 +212,7 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
-    int aptNumber = medicalRecord.apt_Number;
+    int aptNumber = medicalRecord.aptNumber;
     map<json> filter = {"apt_Number": aptNumber};
     
     json medicalRecordJson = medicalRecord.toJson();

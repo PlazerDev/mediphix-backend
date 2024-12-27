@@ -225,7 +225,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
     } else {
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
-            details: string `Failed to update medical record for appointment/${medicalRecord.apt_Number}`,
+            details: string `Failed to update medical record for appointment/${medicalRecord.aptNumber}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
