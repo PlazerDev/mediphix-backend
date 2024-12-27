@@ -127,7 +127,7 @@ public type Appointment record {|
 //     time:Date lastModifiedTime;
 // |};
 
-public type AppointmentNumberCounter record {
+public type Counter record {
     string _id;
     int sequenceValue;
 };

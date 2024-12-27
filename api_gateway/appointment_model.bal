@@ -67,7 +67,7 @@ public type Appointment record {|
 |};
 
 
-public type AppointmentNumberCounter record {
+public type Counter record {
     string _id;
     int sequenceValue;
 };

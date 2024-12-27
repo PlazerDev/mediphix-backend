@@ -1,42 +1,5 @@
 import ballerina/time;
 
-
-public type MedicalCenter record {|
-    string _id?;
-    string name;
-    string address;
-    string mobile;
-    string email;
-    string district;
-    boolean verified;
-    string[] appointmentCategories?;
-    string profileImage;
-    string mediaStorage?;
-    string specialNotes?;
-    string[] doctors?;
-    string[] appointments?;
-    string[] patients?;
-    string[] medicalCenterStaff?;
-    string description;
-|};
-
-public type UnregisteredMedicalCEnter record {|
-    string name;
-    string address;
-    string mobile;
-    string email;
-    byte idfront;
-    byte idback;
-    string district;
-    boolean verified;
-    decimal fee;
-|};
-
-public type DoctorRequests record {
-    string session;
-    string sessionVacancyId;
-};
-
 public type SessionVacancy record {
     string _id?;
     DoctorResponse[] responses?;
@@ -50,7 +13,6 @@ public type SessionVacancy record {
     time:Date? vacancyClosedTimestamp;
 };
 
-//This model is used by doctor to respond to a session vacancy
 public type DoctorResponse record {
     int responseId;
     time:Date submittedTimestamp;
@@ -86,9 +48,4 @@ public type DoctorResponseApplication record {
 public type PatientCountPerTimeSlot record {
     int slotNumber;
     int maxNumOfPatients;
-};
-
-public type Counter record {
-    string _id;
-    int sequenceValue;
 };
