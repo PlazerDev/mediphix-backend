@@ -29,6 +29,16 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("session_vacancy");
 
+    foreach model:OpenSession session in sessionVacancy.openSessions {
+        int|model:InternalError|error nextOpenSessionId = getNextOpenSessionId();
+        if !(nextOpenSessionId is int) {
+            return error("Failed to get next open session id");
+        }
+        if (session.sessionId === 0) {
+            session.sessionId = nextOpenSessionId;
+        }
+    }
+
     mongodb:Error? result = check sessionVacancyCollection->insertOne(sessionVacancy);
 
     return http:CREATED;
@@ -37,20 +47,14 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
 public function createSessions(model:SessionVacancy sessionVacancy) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
-    model:TimeSlot[] emptyTimeSlots = [];
+
     model:MedicalCenter|model:NotFoundError|error? medicalCenter = getMedicalCenterInfoByID(sessionVacancy.medicalCenterId, "");
 
     if (!(medicalCenter is model:MedicalCenter)) {
         return error("Medical center not found");
     }
 
-    foreach model:OpenSession session in sessionVacancy.openSessions {
-        int|model:InternalError|error nextOpenSessionId = getNextOpenSessionId();
-        if !(nextOpenSessionId is int) {
-            return error("Failed to get next open session id");
-        }
-
-    }
+    
     return http:CREATED;
 }
 

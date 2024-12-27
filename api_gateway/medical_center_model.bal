@@ -1,5 +1,19 @@
 import ballerina/time;
 
+
+public type NewSessionVacancy record {
+    string _id?;
+    DoctorResponse[] responses?;
+    string[] aptCategories;
+    string medicalCenterId;
+    string mobileNumber;
+    string vacancyNoteToDoctors;
+    string mobile;
+    NewOpenSession[] openSessions;
+    time:Date? vacancyOpenedTimestamp;
+    time:Date? vacancyClosedTimestamp;
+};
+
 public type SessionVacancy record {
     string _id?;
     DoctorResponse[] responses?;
@@ -23,10 +37,19 @@ public type DoctorResponse record {
     boolean isCompletelyRejected;
 };
 
+public type NewOpenSession record {
+    int sessionId?;
+    string startTime;  // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string rangeStartTimestamp;
+    string rangeEndTimestamp;
+    Repetition repetition;
+};
+
 public type OpenSession record {
-    int sessionId;
-    time:Date startTime;
-    time:Date endTime;
+    int sessionId?;
+    time:Date startTime;  
+    time:Date endTime;    
     time:Date rangeStartTimestamp;
     time:Date rangeEndTimestamp;
     Repetition repetition;

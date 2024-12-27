@@ -134,7 +134,7 @@ service /patient on httpListener {
         return response;
     }
 
-     resource function get centerdata() returns http:Response|error? {
+    resource function get centerdata() returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
@@ -688,8 +688,8 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function get ongoingClinicSessions(http:Request request) returns http:Response{
-         do {
+    resource function get ongoingClinicSessions(http:Request request) returns http:Response {
+        do {
             // TODO :: get the {userEmail} from JWT
             string userEmail = "mcs1@nawaloka.lk";
             string userId = check getCachedUserId(userEmail, "mcs");
@@ -710,8 +710,8 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response{
-         do {
+    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response {
+        do {
             http:Response response = check clinicServiceEP->/mcsOngoingClinicSessionTimeSlots/[sessionId];
             return response;
         } on fail {
@@ -728,7 +728,47 @@ service /mcs on httpListener {
     }
 
 }
+
 // MCS [END] .......................................................................................
+
+//Medical center admin
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /mca on httpListener {
+
+    @http:ResourceConfig
+    resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
+        foreach NewOpenSession newOpenSession in newSessionVacancy.openSessions {
+            OpenSession openSession = {
+                sessionId: 0,
+                startTime: check time:civilFromString(newOpenSession.startTime),
+                endTime: check time:civilFromString(newOpenSession.endTime),
+                rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
+                rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
+                repetition: newOpenSession.repetition
+            };
+            // reminder to implement the rest of the logic here to create session vacancy properly
+        }
+        http:Response|error response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating session vacancy",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
+}
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
     string authHeader = check req.getHeader("Authorization");

@@ -41,7 +41,7 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         isPaid: newAppointment.isPaid,
         payment: newAppointment.payment,
         status: appointmentStatus,
-        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00Z
+        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00+05:30
         createdTime: time:utcToCivil(time:utcNow()),
         lastModifiedTime: time:utcToCivil(time:utcNow())
     };
