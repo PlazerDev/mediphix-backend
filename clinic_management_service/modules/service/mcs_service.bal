@@ -4,6 +4,7 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 
 public function createSessionVacancy(model:SessionVacancy sessionVacancy) returns http:Created|model:InternalError|error? {
@@ -190,9 +191,9 @@ public function mcsStartAppointment(string sessionId, int slotId) returns error|
                     mongodb:UpdateResult|mongodb:Error updateAptStatusResult = dao:mcsUpdateAptStatus(aptNumber, "ONGOING", "INQUEUE");
                     if updateAptStatusResult is mongodb:UpdateResult {
                         if updateAptStatusResult.modifiedCount != 0 {
-                            // update has been made successfully | Apt set to ONGOING | No error should happen this point onward
-                            // then do the queue operations 
-                            // send the slot details as the response
+                            // update has been made successfully | Apt has set to ONGOING | No error should happen this point onward
+                            model:McsQueueOperations newQueueOps = startNextAppointmentQueueHandler(timeslotResult.queue.appointments.length(), timeslotResult.queue.queueOperations);
+                            timeslotResult.queue.queueOperations = newQueueOps;
                             return timeslotResult;
                         }else{
                             return initNotFoundError("Appointment status update failed");
@@ -218,8 +219,7 @@ public function initNotFoundError(string details) returns model:NotFoundError {
     return notFound;
 }
 
-
-public function startNextAppointmentQueueHandler(int queueLength, model:McsQueueOperations mcsQueueOperations){
+public function startNextAppointmentQueueHandler(int queueLength, model:McsQueueOperations mcsQueueOperations) returns model:McsQueueOperations{
     model:McsQueueOperations temp = mcsQueueOperations.clone();
     
     // update the ongoing
@@ -228,11 +228,12 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
 
     int ? nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
     if nextAvilableQueueNumber is null {
-        // INFO:: no theoritical way to happen this since the newly ongoing patient is avilable anyway
+        // INFO:: no theoritical way to happen this since the newly ongoing patient is avilable in case
+        io:println("WARNING! 233 on mcs_bal");
     }else {
         if nextAvilableQueueNumber == temp.ongoing {
             // update the defaultIncrementQueueNumber
-            temp.defaultIncrementQueueNumber = temp.ongoing;
+            temp.defaultIncrementQueueNumber = nextAvilableQueueNumber;
         }
     }
 
@@ -243,7 +244,8 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
         nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
          if nextAvilableQueueNumber is null {
             // update nextPatient2
-            temp.nextPatient2 = -1;
+            // this also therotically no way to happen since you had a nextPatient2
+            io:println("WARNING! 249 on mcs_bal");
         }else {
             if nextAvilableQueueNumber == temp.nextPatient1 {
                 nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.nextPatient1 + 1, queueLength, mcsQueueOperations);
@@ -265,21 +267,7 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
         // update nextPatient1
         temp.nextPatient1 = -1;
     }
-
-
-
-
-
-
-
-    
-
-
-  
-
-
-    
-
+    return temp;
 }
 
 public function getNextAvailablePatientQueueNumber(int fromQueueNumber, int queueLength, model:McsQueueOperations mcsQueueOperations) returns int ? {

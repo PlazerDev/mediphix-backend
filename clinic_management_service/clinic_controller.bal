@@ -333,7 +333,7 @@ service / on new http:Listener(9090) {
 
     resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber) returns http:Response|error {
         io:println(sessionId, slotId, aptNumber);
-        model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, aptNumber);
+        model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId);
 
         http:Response response = new;
 
