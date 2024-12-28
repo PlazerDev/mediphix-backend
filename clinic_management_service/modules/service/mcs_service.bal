@@ -152,10 +152,12 @@ public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns er
     }    
 }
 
-public function mcsStartAppointment(string sessionId, int slotId) returns error|model:NotFoundError|model:McsTimeSlot {
+public function mcsStartAppointment(string sessionId, int slotId, string userId) returns error|model:NotFoundError|model:McsTimeSlot {
     
     // TODO :: check sessionId is assigned to the mcs user id
-    
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
     
     // get all the session details
     model:McsAssignedSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionDetails(sessionId);
@@ -165,7 +167,7 @@ public function mcsStartAppointment(string sessionId, int slotId) returns error|
         return initNotFoundError("Session Details Not Found !");
     } else if sessionResult is mongodb:Error {
         return error("Database Error: ", sessionResult);
-    } else if timeslotResult is null {
+    } else if timeslotResult is null{
         return initNotFoundError("Time slot data not found!");
     } else if timeslotResult is mongodb:Error {
         return error("Database Error: ", timeslotResult);
@@ -193,8 +195,19 @@ public function mcsStartAppointment(string sessionId, int slotId) returns error|
                         if updateAptStatusResult.modifiedCount != 0 {
                             // update has been made successfully | Apt has set to ONGOING | No error should happen this point onward
                             model:McsQueueOperations newQueueOps = startNextAppointmentQueueHandler(timeslotResult.queue.appointments.length(), timeslotResult.queue.queueOperations);
+                            sessionResult.timeSlot[slotId-1].queue.queueOperations = newQueueOps;
                             timeslotResult.queue.queueOperations = newQueueOps;
-                            return timeslotResult;
+                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateQueueOperations(sessionId, slotId, sessionResult.timeSlot);
+                            if(result is mongodb:Error){
+                                return error("Databse error occured!");
+                            }else {
+                                if result.modifiedCount == 1 {
+                                    return timeslotResult;
+                                }else {
+                                    // mongodb:UpdateResult|mongodb:Error rollbackAptStatus = dao:mcsUpdateAptStatus(aptNumber, "INQUEUE", "ONGOING");
+                                    return error("Update Unsuccessfull!");
+                                }
+                            }
                         }else{
                             return initNotFoundError("Appointment status update failed");
                         }
@@ -243,7 +256,6 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
         // have to check this new next patient one is the supposed one
         nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
          if nextAvilableQueueNumber is null {
-            // update nextPatient2
             // this also therotically no way to happen since you had a nextPatient2
             io:println("WARNING! 249 on mcs_bal");
         }else {
@@ -255,12 +267,7 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
                     temp.nextPatient2 = nextAvilableQueueNumber;
                 }
             }else {
-                nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
-                if nextAvilableQueueNumber is null {
-                    temp.nextPatient2 = -1;
-                }else {
-                    temp.nextPatient2 = nextAvilableQueueNumber;
-                }
+                temp.nextPatient2 = nextAvilableQueueNumber;
             }
         }
     }else {
@@ -299,3 +306,14 @@ public function isMarkedAsFinished(int queueNumber, model:McsQueueOperations mcs
         return false;
     }
 }
+
+public function isSessionAssigned(string sessionId, string userId) returns boolean {
+    model:McsAssignedSessionIdList|mongodb:Error ? sessionIdList = dao:mcsGetAssignedSessionIdList(userId);
+
+    if (sessionIdList is model:McsAssignedSessionIdList) {
+        if sessionIdList.assignedSessions.indexOf(sessionId) != null {return true;} else {return false;}
+    }else {
+        return false;
+    }
+}
+

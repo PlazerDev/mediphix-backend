@@ -261,10 +261,9 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    // MCS [START] ...............................................................
+    // MCS [START] ###################################################################
 
-
-    // #### GET USERID BY EMAIL OF THE MCS ####################
+    // #### GET USERID BY EMAIL OF THE MCS 
     resource function get mcsIdByEmail/[string email]() returns string|error? {
         error|string|model:InternalError userId = 'service:mcsGetUserIdByEmail(email.trim());
         if userId is string {
@@ -274,7 +273,7 @@ service / on new http:Listener(9090) {
         }
     }
 
-    // #### VIEW ALL ASSIGNED UPOMMING SESSIONS OF THE MCS ####
+    // #### VIEW ALL ASSIGNED UPOMMING SESSIONS OF THE MCS 
     resource function get mcsUpcomingClinicSessions/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] result = check 'service:mcsGetUpcomingSessionList(userId);
@@ -292,7 +291,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    // #### VIEW ALL ASSIGNED Ongoing SESSIONS OF THE MCS #####
+    // #### VIEW ALL ASSIGNED Ongoing SESSIONS OF THE MCS 
     resource function get mcsOngoingClinicSessions/[string userId]() returns http:Response|error {
         
         // within start time & end time
@@ -313,7 +312,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    // #### VIEW ALL ASSIGNED Ongoing TIME SLOT DATA OF THE MCS #####
+    // #### VIEW ALL ASSIGNED Ongoing TIME SLOT DATA OF THE MCS 
     resource function get mcsOngoingClinicSessionTimeSlots/[string sessionId]() returns http:Response|error {
         
         model:NotFoundError|model:McsTimeSlotList result = check 'service:mcsGetOngoingSessionTimeSlotDetails(sessionId);
@@ -331,9 +330,9 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber) returns http:Response|error {
+    resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
         io:println(sessionId, slotId, aptNumber);
-        model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId);
+        model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
         http:Response response = new;
 
@@ -348,8 +347,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-
-    // MCS [END]  ...............................................................
+    // MCS [END]  ###################################################################
 
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {

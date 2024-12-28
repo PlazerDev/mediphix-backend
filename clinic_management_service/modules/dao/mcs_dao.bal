@@ -166,7 +166,7 @@ public function mcsGetAllSessionDetails(string sessionId) returns model:McsAssig
     return result;
 }
 
-// ### Update the appointment status by the {aptNumber} - Also check the prevStatus is there ###
+// Update the appointment status by the {aptNumber} - Also check the prevStatus is there 
 public function mcsUpdateAptStatus(int aptNumber, string newStatus, string preStatus) returns mongodb:Error|mongodb:UpdateResult{
     mongodb:Collection appointmentCollection = check initDatabaseConnection("appointment");
 
@@ -182,6 +182,24 @@ public function mcsUpdateAptStatus(int aptNumber, string newStatus, string preSt
     mongodb:UpdateOptions options = {};    
 
     mongodb:UpdateResult|mongodb:Error result = check appointmentCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the {queueOperations} by the {sessionId} and {slotID}
+public function mcsUpdateQueueOperations(string sessionId, int slotId, model:McsTimeSlot[]? data) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    io:println("This is data:", data);
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": data }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
     return result;
 }
 
