@@ -235,23 +235,131 @@ public function mcsStartTimeSlot(string sessionId, string userId) returns error|
             }else {
                 return error("Database Error");
             }
-
-           
-
         }else {
             return error("Session is either cancelled or over");
         }
     }
+}
 
-    // // get the list of time slot
-    // model:McsTimeSlotList|mongodb:Error ? timeSlotResult = dao:mcsGetAllTimeSlotList(sessionId);
-
-
-
-
-    // }
+public function mcsEndTimeSlot(string sessionId, string userId) returns error|model:NotFoundError ? {
     
-  
+    // check :: session is assigned to the correct user
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
+
+    model:McsSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionData(sessionId);
+
+    // check :: session is in ongoing Status
+    if sessionResult is mongodb:Error {
+        return error("Database Error");
+    }else if sessionResult is null {
+        return initNotFoundError("Session Data Not Found");
+    }else {
+        if sessionResult.overallSessionStatus == "ONGOING" {
+            
+            if sessionResult.timeSlot is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+                int slotInStarted = findSlotInStarted(timeSlotResult);
+
+                // check :: no active slots
+                if slotInStarted < 0 {
+                    return error("No active time slot found!");
+                }else{
+                    if timeSlotResult[slotInStarted - 1].queue.queueOperations.ongoing == -1 {
+                        int ? nextAvlQueueNumber = getNextAvailablePatientQueueNumber(1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
+                        if nextAvlQueueNumber is null {
+                            // update the timeslot status to FINISHED
+                            timeSlotResult[slotInStarted - 1].status = "FINISHED";
+                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateTimeSlotStatus(sessionId, timeSlotResult);
+                            if result is mongodb:Error {
+                                return error("Database error, while updating the time slot status");
+                            }else {
+                                if result.modifiedCount == 1 {
+                                    return null;
+                                }else {
+                                    return initNotFoundError("Session data not found, Update Failed");
+                                }
+                            }
+                        }else {
+                            return error("Action Failed, available appointment(s) found in the queue " + nextAvlQueueNumber.toString());
+                        }
+                        
+                    }else {
+                        return error("Action Failed, active appointment found!");
+                    }
+                }
+            }else {
+                return error("Database Error");
+            }
+        }else {
+            return error("Session is not in ONGOING status");
+        }
+    }
+}
+
+public function mcsEndLastTimeSlot(string sessionId, string userId) returns error|model:NotFoundError ? {
+    
+    // check :: session is assigned to the correct user
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
+
+    model:McsSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionData(sessionId);
+
+    // check :: session is in ongoing Status
+    if sessionResult is mongodb:Error {
+        return error("Database Error");
+    }else if sessionResult is null {
+        return initNotFoundError("Session Data Not Found");
+    }else {
+        if sessionResult.overallSessionStatus == "ONGOING" {
+            
+            if sessionResult.timeSlot is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+                int slotInStarted = findSlotInStarted(timeSlotResult);
+
+                // check :: no active slots
+                if slotInStarted < 0 {
+                    return error("No active time slot found!");
+                }else{
+                    if slotInStarted == timeSlotResult.length() {
+                    if timeSlotResult[slotInStarted - 1].queue.queueOperations.ongoing == -1 {
+                        int ? nextAvlQueueNumber = getNextAvailablePatientQueueNumber(1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
+                        if nextAvlQueueNumber is null {
+                            // update the timeslot status to FINISHED
+                            timeSlotResult[slotInStarted - 1].status = "FINISHED";
+                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateSessionToEndAppointment(sessionId, timeSlotResult);
+                            if result is mongodb:Error {
+                                return error("Database error, while updating the time slot status");
+                            }else {
+                                if result.modifiedCount == 1 {
+                                    return null;
+                                }else {
+                                    return initNotFoundError("Session data not found, Update Failed");
+                                }
+                            }
+                        }else {
+                            return error("Action Failed, available appointment(s) found in the queue " + nextAvlQueueNumber.toString());
+                        }
+                        
+                    }else {
+                        return error("Action Failed, active appointment found!");
+                    }
+                    }else{
+                        return error("Active slot is not the last one");
+                    }
+
+
+                    
+                }
+            }else {
+                return error("Database Error");
+            }
+        }else {
+            return error("Session is not in ONGOING status");
+        }
+    }
 }
 
 // HELPERS ............................................................................................................
@@ -322,7 +430,7 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
 
 public function getNextAvailablePatientQueueNumber(int fromQueueNumber, int queueLength, model:McsQueueOperations mcsQueueOperations) returns int ? {
     int i = fromQueueNumber;
-    while fromQueueNumber <= queueLength {
+    while i <= queueLength {
         if isMarkedAsAbsent(i, mcsQueueOperations) || isMarkedAsFinished(i, mcsQueueOperations) {
             i += 1;
         } else {
@@ -378,3 +486,17 @@ public function findSlotToBeStarted(model:McsTimeSlot[] data) returns int {
     return slotId;
 }
 
+public function findSlotInStarted(model:McsTimeSlot[] data) returns int {
+    
+    int slotId = 1;
+
+    foreach model:McsTimeSlot slot in data {
+        if slot.status == "STARTED" {
+            return slotId;
+        }else {
+            slotId += 1;
+        }
+    }
+
+    return -999;
+}

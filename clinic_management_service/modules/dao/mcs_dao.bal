@@ -287,7 +287,41 @@ public function mcsUpdateAptListStatus(int[] aptList, string status) returns mon
     return result;
 }
 
+// update the status of the timeslot
+public function mcsUpdateTimeSlotStatus(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
 
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the {overallSessionStatus, status} to "OVER" , "FINISHED"
+public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot, "overallSessionStatus": "OVER" }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
 
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
