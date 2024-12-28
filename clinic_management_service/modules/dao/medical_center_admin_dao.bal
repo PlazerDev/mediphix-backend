@@ -30,11 +30,11 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("session_vacancy");
 
     foreach model:OpenSession session in sessionVacancy.openSessions {
-        int|model:InternalError|error nextOpenSessionId = getNextOpenSessionId();
-        if !(nextOpenSessionId is int) {
-            return error("Failed to get next open session id");
-        }
         if (session.sessionId === 0) {
+            int|model:InternalError|error nextOpenSessionId = getNextOpenSessionId();
+            if !(nextOpenSessionId is int) {
+                return error("Failed to get next open session id");
+            }
             session.sessionId = nextOpenSessionId;
         }
     }
@@ -54,7 +54,6 @@ public function createSessions(model:SessionVacancy sessionVacancy) returns http
         return error("Medical center not found");
     }
 
-    
     return http:CREATED;
 }
 
