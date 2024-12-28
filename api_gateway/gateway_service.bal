@@ -830,17 +830,7 @@ service /mca on httpListener {
 
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
-        foreach NewOpenSession newOpenSession in newSessionVacancy.openSessions {
-            OpenSession openSession = {
-                sessionId: 0,
-                startTime: check time:civilFromString(newOpenSession.startTime),
-                endTime: check time:civilFromString(newOpenSession.endTime),
-                rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
-                rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
-                repetition: newOpenSession.repetition
-            };
-            // reminder to implement the rest of the logic here to create session vacancy properly
-        }
+        
         http:Response|error response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
         if response is http:Response {
             return response;

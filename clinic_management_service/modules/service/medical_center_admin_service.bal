@@ -1,9 +1,32 @@
-import clinic_management_service.model;
 import clinic_management_service.dao;
+import clinic_management_service.model;
+
 import ballerina/http;
 import ballerina/time;
 
-public function createSessionVacancy(model:SessionVacancy sessionVacancy) returns http:Created|model:InternalError|error? {
+public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Created|model:InternalError|error? {
+    model:SessionVacancy sessionVacancy = {
+        // initialize with required fields
+        responses: [],
+        aptCategories: newSessionVacancy.aptCategories,
+        medicalCenterId: newSessionVacancy.medicalCenterId,
+        mobileNumber: newSessionVacancy.mobileNumber,
+        vacancyNoteToDoctors: newSessionVacancy.vacancyNoteToDoctors,
+        openSessions: [],
+        vacancyOpenedTimestamp: time:utcToCivil(time:utcNow())
+    };
+    foreach model:NewOpenSession newOpenSession in newSessionVacancy.openSessions {
+        model:OpenSession openSession = {
+            sessionId: 0,
+            startTime: check time:civilFromString(newOpenSession.startTime),
+            endTime: check time:civilFromString(newOpenSession.endTime),
+            rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
+            rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
+            repetition: newOpenSession.repetition
+        };
+        sessionVacancy.openSessions.push(openSession);
+    }
+
     http:Created|error? vacancyResult = dao:createSessionVacancy(sessionVacancy);
     if (vacancyResult is http:Created) {
         return vacancyResult;

@@ -37,6 +37,14 @@ public type DoctorRequests record {
     string sessionVacancyId;
 };
 
+public type NewSessionVacancy record {
+    string[] aptCategories;
+    string medicalCenterId;
+    string mobileNumber;
+    string vacancyNoteToDoctors;
+    NewOpenSession[] openSessions;
+};
+
 public type SessionVacancy record {
     string _id?;
     DoctorResponse[] responses?;
@@ -44,10 +52,9 @@ public type SessionVacancy record {
     string medicalCenterId;
     string mobileNumber;
     string vacancyNoteToDoctors;
-    string mobile;
     OpenSession[] openSessions;
-    time:Date? vacancyOpenedTimestamp;
-    time:Date? vacancyClosedTimestamp;
+    time:Date vacancyOpenedTimestamp;
+    time:Date vacancyClosedTimestamp?;
 };
 
 //This model is used by doctor to respond to a session vacancy
@@ -59,6 +66,15 @@ public type DoctorResponse record {
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
     boolean isCompletelyRejected;
+};
+
+public type NewOpenSession record {
+    int sessionId?;
+    string startTime;  // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string rangeStartTimestamp;
+    string rangeEndTimestamp;
+    Repetition repetition;
 };
 
 public type OpenSession record {
