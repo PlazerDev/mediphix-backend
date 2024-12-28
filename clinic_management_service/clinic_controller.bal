@@ -364,6 +364,23 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    resource function put mcsEndTimeSlot(string sessionId, string userId) returns http:Response|error {
+       
+        model:NotFoundError ? result = check 'service:mcsEndTimeSlot(sessionId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200; 
+            response.setJsonPayload({"status": "sucess"});
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
     // MCS [END]  ###################################################################
 
 
