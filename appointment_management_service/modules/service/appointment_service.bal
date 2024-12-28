@@ -213,13 +213,79 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
-public function updateMedicalRecord(model:MedicalRecord medicalRecord) 
+public function updateMedicalRecord(int aptNumber, model:TempMedicalRecord tempRecord) 
 returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
+
+    // Create final MedicalRecord with converted timestamps
+    model:MedicalRecord medicalRecord = {
+        aptNumber: tempRecord.aptNumber,
+        startedTimestamp: check time:civilFromString(tempRecord.startedTimestamp),
+        endedTimestamp: check time:civilFromString(tempRecord.endedTimestamp),
+        symptoms: tempRecord.symptoms,
+        diagnosis: tempRecord.diagnosis,
+        treatments: tempRecord.treatments,
+        noteToPatient: tempRecord.noteToPatient,
+        isLabReportRequired: tempRecord.isLabReportRequired,
+        labReport: () 
+    };
+    // Handle optional labReport and its optional reportDetails
+    // if tempRecord.labReport != () {
+    //     // Create initial LabReport without reportDetails
+    //     LabReport labReport = {
+    //         requestedTimestamp: check time:civilFromString(tempRecord.labReport.requestedTimestamp),
+    //         isHighPrioritize: tempRecord.labReport.isHighPrioritize,
+    //         testType: tempRecord.labReport.testType,
+    //         testName: tempRecord.labReport.testName,
+    //         noteToLabStaff: tempRecord.labReport.noteToLabStaff,
+    //         status: tempRecord.labReport.status,
+    //         reportDetails: () // Initialize as nil
+    //     };
+
+    //     // Handle optional reportDetails if present
+    //     if tempRecord.labReport.reportDetails != () {
+    //         labReport.reportDetails = {
+    //             testStartedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testStartedTimestamp),
+    //             testEndedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testEndedTimestamp),
+    //             additionalNote: tempRecord.labReport.reportDetails.additionalNote,
+    //             resultFiles: tempRecord.labReport.reportDetails.resultFiles
+    //         };
+    //     }
+
+    //     medicalRecord.labReport = labReport;
+    // }
+
+   if tempRecord.aptNumber != aptNumber {
+        model:ErrorDetails errorDetails = {
+            message: "Invalid appointment number",
+            details: "Appointment number in URL must match the medical record",
+            timeStamp: time:utcNow()
+        };
+        model:ValueError valueError = {body: errorDetails};
+        return valueError;
+    }
 
     http:Ok|model:InternalError|model:NotFoundError|error? updateResult = dao:updateMedicalRecord(medicalRecord);
 
     if updateResult is http:Ok {
         return http:OK;
+        
+        // http:Ok|model:InternalError|model:NotFoundError|error? appendQueueNoResult = dao:appendQueueNoToFinishedArray(aptNumber);
+        // if appendQueueNoResult is http:Ok {
+        //     return http:OK;
+        // }
+        // else if appendQueueNoResult is model:InternalError|model:NotFoundError {
+        //     return appendQueueNoResult;
+        // }
+        // else {
+        //     model:ErrorDetails errorDetails = {
+        //         message: "Unexpected internal error occurred, please retry!",
+        //         details: string `Failed to update medical record for appointment/${medicalRecord.aptNumber}`,
+        //         timeStamp: time:utcNow()
+        //     };
+        //     model:InternalError internalError = {body: errorDetails};
+        //     return internalError;
+        // }
+        
     } else if updateResult is model:InternalError|model:NotFoundError {
         return updateResult;
     } else {
