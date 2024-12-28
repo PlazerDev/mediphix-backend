@@ -390,8 +390,8 @@ service / on new http:Listener(9090) {
         }
     }
 
-    resource function post createSessionVacancy(model:SessionVacancy sessionVacancy) returns http:Response {
-        http:Created|model:InternalError|error? result = 'service:createSessionVacancy(sessionVacancy);
+    resource function post createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Response {
+        http:Created|model:InternalError|error? result = 'service:createSessionVacancy(newSessionVacancy);
 
         http:Response response = new;
         if (result is http:Created) {

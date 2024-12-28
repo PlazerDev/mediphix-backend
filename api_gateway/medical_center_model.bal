@@ -2,16 +2,11 @@ import ballerina/time;
 
 
 public type NewSessionVacancy record {
-    string _id?;
-    DoctorResponse[] responses?;
     string[] aptCategories;
     string medicalCenterId;
     string mobileNumber;
     string vacancyNoteToDoctors;
-    string mobile;
     NewOpenSession[] openSessions;
-    time:Date? vacancyOpenedTimestamp;
-    time:Date? vacancyClosedTimestamp;
 };
 
 public type SessionVacancy record {
@@ -21,10 +16,9 @@ public type SessionVacancy record {
     string medicalCenterId;
     string mobileNumber;
     string vacancyNoteToDoctors;
-    string mobile;
     OpenSession[] openSessions;
-    time:Date? vacancyOpenedTimestamp;
-    time:Date? vacancyClosedTimestamp;
+    time:Date vacancyOpenedTimestamp;
+    time:Date vacancyClosedTimestamp?;
 };
 
 public type DoctorResponse record {
