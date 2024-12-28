@@ -4,6 +4,7 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 configurable string username = ?;
 configurable string password = ?;
@@ -26,7 +27,7 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
     map<json> filter = {"_id": "appointmentNumber"};
 
     mongodb:Update update = {
-        inc: {sequence_value: 1}
+        inc: {sequenceValue: 1}
     };
 
     mongodb:UpdateOptions options = {upsert: true};
@@ -47,10 +48,10 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
         return internalError;
     }
 
-    model:AppointmentNumberCounter|error? findResults = check counterCollection->findOne(filter, {}, (), model:AppointmentNumberCounter);
+    model:Counter|error? findResults = check counterCollection->findOne(filter, {}, (), model:Counter);
 
-    if findResults is model:AppointmentNumberCounter {
-        return findResults.sequence_value;
+    if findResults is model:Counter {
+        return findResults.sequenceValue;
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment number counter",
@@ -199,6 +200,63 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
         model:ErrorDetails errorDetails = {
             message: "Failed to update the appointment status",
             details: string `appointment/${mobile}/${appointmentNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
+public function updateMedicalRecord(model:MedicalRecord medicalRecord)
+    returns http:Ok|model:InternalError|model:NotFoundError|error? {
+
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    int aptNumber = medicalRecord.aptNumber;
+    map<json> filter = {"aptNumber": aptNumber};
+    io:println("Filter for update: " + filter.toString());
+
+    json medicalRecordJson = medicalRecord.toJson();
+
+    io:println("medicalRecordJson: " + medicalRecordJson.toJsonString());
+
+    mongodb:Update update = {"$set": {"medicalRecord": medicalRecordJson}};
+    io:println("Update object: " + update.toJsonString());
+
+    // Define options for the update operation
+    mongodb:UpdateOptions options = {};
+
+    mongodb:UpdateResult|error result = appointmentCollection->updateOne(filter, update, options);
+ 
+    if (result is mongodb:UpdateResult) {
+        if (result.matchedCount == 0) {
+            log:printError("No appointment found for the given aptNumber: " + aptNumber.toString());
+            model:ErrorDetails errorDetails = {
+                message: "Appointment not found for the given aptNumber",
+                details: string `appointment/${aptNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:NotFoundError notFoundError = {body: errorDetails};
+            return notFoundError;
+        } else if (result.modifiedCount == 0) {
+            log:printError("Failed to update the medical record for aptNumber: " + aptNumber.toString());
+            model:ErrorDetails errorDetails = {
+                message: "Failed to update the medical record",
+                details: string `appointment/${aptNumber}`,
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
+        log:printInfo("Successfully updated the medical record for aptNumber: " + aptNumber.toString());
+        return http:OK;
+    } else {
+        io:println("Error occurred while updating the medical record", result);
+        
+        model:ErrorDetails errorDetails = {
+            message: "An error occurred while updating the medical record",
+            details: string `appointment/${aptNumber}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};

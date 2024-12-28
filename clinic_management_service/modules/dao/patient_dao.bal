@@ -42,7 +42,7 @@ public function getPatientById(string userId) returns model:Patient|model:NotFou
         "last_name": 1,
         "nic": 1,
         "birthday": 1,
-        "doctors": [{"$toString": "$_id"}],
+        "doctors": 1,
         "gender": 1,
         "email": 1,
         "address": 1,

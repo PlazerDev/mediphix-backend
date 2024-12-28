@@ -67,9 +67,9 @@ public type Appointment record {|
 |};
 
 
-public type AppointmentNumberCounter record {
+public type Counter record {
     string _id;
-    int sequence_value;
+    int sequenceValue;
 };
 
 public  type Session record {
@@ -82,3 +82,81 @@ public  type Session record {
     AppointmentCategory category;
     string medicalCenterMobile;
 };
+
+//new appointment record for reviva
+public type AppointmentRecord record {
+    string _id;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    time:Date aptCreatedTimestamp;
+    AppointmentStatus aptStatus;
+    string patient;
+    boolean isPayed;
+    int queueNumber;
+    MedicalRecord medicalRecord;
+};
+
+public type MedicalRecord record {
+    int aptNumber;
+    time:Date startedTimestamp;
+    time:Date endedTimestamp;
+    string[] symptoms;
+    Diagnosis diagnosis;
+    Treatment treatments;
+    string noteToPatient?;
+    boolean isLabReportRequired;
+    LabReport? labReport;
+};
+
+public type LabReport record {
+    time:Date requestedTimestamp;
+    boolean isHighPrioritize;
+    string testType;
+    string testName;
+    string noteToLabStaff;
+    int status;
+    ReportDetails? reportDetails;
+};
+
+public type ReportDetails record {  
+    time:Date testStartedTimestamp;
+    time:Date testEndedTimestamp; 
+    string? additionalNote;
+    string[]? resultFiles;
+};
+
+public type Treatment record {
+    string[] medications;
+    string[] description;    
+};
+
+public type Diagnosis record {
+    string[] category;
+    string[] description;
+};
+
+  public type TempMedicalRecord record {|
+        int aptNumber;
+        string startedTimestamp;
+        string endedTimestamp;
+        string[] symptoms;
+        Diagnosis diagnosis;
+        Treatment treatments;
+        string noteToPatient?;
+        boolean isLabReportRequired;
+        record {|
+            string requestedTimestamp;
+            boolean isHighPrioritize;
+            string testType;
+            string testName;
+            string noteToLabStaff;
+            int status;
+            record {|
+                string testStartedTimestamp;
+                string testEndedTimestamp;
+                string? additionalNote;
+                string[]? resultFiles;
+           |}? reportDetails;
+        |}? labReport;
+    |};
