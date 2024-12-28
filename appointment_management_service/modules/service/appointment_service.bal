@@ -41,7 +41,7 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         isPaid: newAppointment.isPaid,
         payment: newAppointment.payment,
         status: appointmentStatus,
-        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00Z
+        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00+05:30
         createdTime: time:utcToCivil(time:utcNow()),
         lastModifiedTime: time:utcToCivil(time:utcNow())
     };
@@ -206,6 +206,26 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
         model:ErrorDetails errorDetails = {
             message: "Unexpected internal error occurred, please retry!",
             details: string `appointment/${mobile}/${appointmentNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
+public function updateMedicalRecord(model:MedicalRecord medicalRecord) 
+returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
+
+    http:Ok|model:InternalError|model:NotFoundError|error? updateResult = dao:updateMedicalRecord(medicalRecord);
+
+    if updateResult is http:Ok {
+        return http:OK;
+    } else if updateResult is model:InternalError|model:NotFoundError {
+        return updateResult;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `Failed to update medical record for appointment/${medicalRecord.aptNumber}`,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
