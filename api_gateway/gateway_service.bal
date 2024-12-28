@@ -795,6 +795,29 @@ service /mcs on httpListener {
             return errorResponse;
         }
     }
+
+    @http:ResourceConfig
+    resource function put endLastTimeSlot (string sessionId) returns http:Response{
+        do {
+            string userEmail = "mcs1@nawaloka.lk";
+            string userId = check getCachedUserId(userEmail, "mcs");
+
+            string url = string `/mcsEndLastTimeSlot?sessionId=${sessionId}&userId=${userId}`;
+
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
 }
 // MCS [END] .......................................................................................
 
