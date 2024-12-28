@@ -103,4 +103,24 @@ public type medicalCenterStaffData record {
     string password;
 };
 
+public type medicalCenterReceptionistSignupData record {
+    string name;
+    string nic;
+    string email;
+    string mobile;
+    string centerId;
+    string empId;
+    string password;
+};
+
+public type medicalCenterLabStaffSignupData record {
+    string name;
+    string nic;
+    string email;
+    string mobile;
+    string centerId;
+    string empId;
+    string password;
+};
+
 

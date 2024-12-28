@@ -26,3 +26,25 @@ public type medicalCenterStaff record {
     string userId;
     string[] assignedSessions?;
 };
+
+public type medicalCenterReceptionist record {
+    string _id?;
+    string name;
+    string nic;
+    string mobile;
+    string empId;
+    string centerId;
+    string profileImage?;
+    string userId;
+};
+
+public type medicalCenterLabStaff record {
+    string _id?;
+    string name;
+    string nic;
+    string mobile;
+    string empId;
+    string centerId;
+    string profileImage?;
+    string userId;
+};

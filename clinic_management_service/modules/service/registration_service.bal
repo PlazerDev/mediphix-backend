@@ -142,7 +142,39 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
             return returnMsg;
         }
         else {
-            returnMsg.message = "Medical Center Registered Successfully";
+            returnMsg.message = "Medical Center Staff Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+}
+
+public function registerMedicalCenterReceptionist(model:medicalCenterStaffData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenterReceptionist = dao:registerMedicalCenterReceptionist(data);
+        if addMedicalCenterReceptionist is error {
+            returnMsg.message = addMedicalCenterReceptionist.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Receptionist Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+}
+
+public function registerMedicalCenterLabStaff(model:medicalCenterLabStaffSignupData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenterReceptionist = dao:registerMedicalCenterLabStaff(data);
+        if addMedicalCenterReceptionist is error {
+            returnMsg.message = addMedicalCenterReceptionist.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Lab Staff Registered Successfully";
             returnMsg.statusCode = 200;
             return returnMsg;
         }

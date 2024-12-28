@@ -81,7 +81,43 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({message: result.message});
         } else {
             response.statusCode = 200;
-            response.setJsonPayload({message: "Medical Center Staff Successfully"});
+            response.setJsonPayload({message: "Medical Center Staff Registered  Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/registerMedicalCenterReceptionist(model:medicalCenterReceptionistSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        model:ReturnMsg result = 'service:registerMedicalCenterReceptionist(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Receptionist Registered Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/registerMedicalCenterLabStaff(model:medicalCenterLabStaffSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        model:ReturnMsg result = 'service:registerMedicalCenterLabStaff(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Lab Staff Registered Successfully"});
         }
 
         io:println(result);
