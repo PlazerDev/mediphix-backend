@@ -95,4 +95,29 @@ service / on new http:Listener(9091) {
 
         return response;
     }
+
+    resource function patch appointments/[int aptNumber]/medicalRecord(model:MedicalRecord medicalRecord)
+     returns http:Response|error {
+        http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error? result = 'service:updateMedicalRecord(medicalRecord);
+
+        http:Response response = new;
+        if result is http:Ok {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Appointment medical record updated successfully"});
+        } else if result is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        } else if result is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        } else if result is model:ValueError {
+            response.statusCode = 406;
+            response.setJsonPayload(result.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error"});
+        }
+
+        return response;
+    }
 }

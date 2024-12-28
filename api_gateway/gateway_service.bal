@@ -134,7 +134,7 @@ service /patient on httpListener {
         return response;
     }
 
-     resource function get centerdata() returns http:Response|error? {
+    resource function get centerdata() returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
@@ -497,6 +497,95 @@ service /doctor on httpListener {
         return errorResponse;
     }
 
+resource function patch appointments/[int aptNumber]/medicalRecord(http:Request request) 
+    returns http:Response|error {
+    
+    // Extract and validate JSON payload
+    json|http:ClientError jsonPayload = request.getJsonPayload();
+    
+    if jsonPayload is http:ClientError {
+        ErrorDetails errorDetails = {
+            message: "Invalid JSON payload",
+            details: jsonPayload.message(),
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+
+    // First convert to temporary record
+    TempMedicalRecord|error tempRecord = jsonPayload.fromJsonWithType(TempMedicalRecord);
+    if tempRecord is error {
+        ErrorDetails errorDetails = {
+            message: "Invalid medical record format",
+            details: tempRecord.message(),
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+    
+    // Create final MedicalRecord with converted timestamps
+    MedicalRecord medicalRecord = {
+        aptNumber: tempRecord.aptNumber,
+        startedTimestamp: check time:civilFromString(tempRecord.startedTimestamp),
+        endedTimestamp: check time:civilFromString(tempRecord.endedTimestamp),
+        symptoms: tempRecord.symptoms,
+        diagnosis: tempRecord.diagnosis,
+        treatments: tempRecord.treatments,
+        noteToPatient: tempRecord.noteToPatient,
+        isLabReportRequired: tempRecord.isLabReportRequired,
+        labReport: () 
+    };
+    // Handle optional labReport and its optional reportDetails
+    // if tempRecord.labReport != () {
+    //     // Create initial LabReport without reportDetails
+    //     LabReport labReport = {
+    //         requestedTimestamp: check time:civilFromString(tempRecord.labReport.requestedTimestamp),
+    //         isHighPrioritize: tempRecord.labReport.isHighPrioritize,
+    //         testType: tempRecord.labReport.testType,
+    //         testName: tempRecord.labReport.testName,
+    //         noteToLabStaff: tempRecord.labReport.noteToLabStaff,
+    //         status: tempRecord.labReport.status,
+    //         reportDetails: () // Initialize as nil
+    //     };
+
+    //     // Handle optional reportDetails if present
+    //     if tempRecord.labReport.reportDetails != () {
+    //         labReport.reportDetails = {
+    //             testStartedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testStartedTimestamp),
+    //             testEndedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testEndedTimestamp),
+    //             additionalNote: tempRecord.labReport.reportDetails.additionalNote,
+    //             resultFiles: tempRecord.labReport.reportDetails.resultFiles
+    //         };
+    //     }
+
+    //     medicalRecord.labReport = labReport;
+    // }
+
+    // Validate appointment number consistency
+    if medicalRecord.aptNumber != aptNumber {
+        ErrorDetails errorDetails = {
+            message: "Invalid appointment number",
+            details: "Appointment number in URL must match the medical record",
+            timeStamp: time:utcNow()
+        };
+        return createResponse(400, errorDetails);
+    }
+
+    // Call service endpoint
+    http:Response|error? response = check appointmentServiceEP->/appointments/[aptNumber]/medicalRecord.patch(medicalRecord);
+
+    if (response is http:Response) {
+        return response;
+    }
+    
+    ErrorDetails errorDetails = {
+        message: "Internal server error",
+        details: "Error occurred while updating medical record",
+        timeStamp: time:utcNow()
+    };
+    return createResponse(500, errorDetails);
+}
+
     @http:ResourceConfig {
         auth: {
             scopes: ["retrive_appoinments"]
@@ -688,8 +777,8 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function get ongoingClinicSessions(http:Request request) returns http:Response{
-         do {
+    resource function get ongoingClinicSessions(http:Request request) returns http:Response {
+        do {
             // TODO :: get the {userEmail} from JWT
             string userEmail = "mcs1@nawaloka.lk";
             string userId = check getCachedUserId(userEmail, "mcs");
@@ -710,8 +799,8 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response{
-         do {
+    resource function get ongoingClinicSessions/[string sessionId](http:Request request) returns http:Response {
+        do {
             http:Response response = check clinicServiceEP->/mcsOngoingClinicSessionTimeSlots/[sessionId];
             return response;
         } on fail {
@@ -773,7 +862,37 @@ service /mcs on httpListener {
         }
     }
 }
+
 // MCS [END] .......................................................................................
+
+//Medical center admin
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    }
+}
+service /mca on httpListener {
+
+    @http:ResourceConfig
+    resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
+        
+        http:Response|error response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating session vacancy",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
+}
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
     string authHeader = check req.getHeader("Authorization");
@@ -825,6 +944,14 @@ public function getAppointments(string userId) returns Appointment[]|error? {
 public function getAppointmentsForDoctor(string userId) returns Appointment[]|error? {
     Appointment[] appointments = check appointmentServiceEP->/appointmentsByDoctorId/[userId];
     return appointments;
+}
+
+// Helper function to create consistent responses
+public function createResponse(int statusCode, ErrorDetails payload) returns http:Response {
+    http:Response response = new;
+    response.statusCode = statusCode;
+    response.setJsonPayload(payload.toJson());
+    return response;
 }
 
 @http:ServiceConfig {
