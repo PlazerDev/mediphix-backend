@@ -371,7 +371,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     }
 }
 
-public function medicalCenterRegistration(model:medicalCenterSignupData data) returns error? {
+public function registerMedicalCenter(model:medicalCenterSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
@@ -403,7 +403,7 @@ public function medicalCenterRegistration(model:medicalCenterSignupData data) re
             model:medicalCenterAdmin medicalCenterAdmin = {
                 name: data.mcaData.name,
                 nic: data.mcaData.nic,
-                mobileNumber: data.mcaData.mobile,
+                mobile: data.mcaData.mobile,
                 profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mca-resources/" + emaiHead + "/profileImage",
                 medicalCenterEmail: data.mcData.email,
                 userId: <string>userId
@@ -469,7 +469,12 @@ public function medicalCenterRegistration(model:medicalCenterSignupData data) re
             verified: false,
             district: data.mcData.district,
             specialNotes: data.mcData.specialNotes,
-            profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mc-resources/" + emaiHead + "/profileImage"
+            profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mc-resources/" + emaiHead + "/profileImage",
+            appointmentCategories: [],
+            doctors: [],
+            appointments: [],
+            patients: [],
+            medicalCenterStaff: []
         };
         error? insertedMC = check medicalCenterCollection->insertOne(medicalCenter);
         if (insertedMC is error) {
@@ -477,6 +482,102 @@ public function medicalCenterRegistration(model:medicalCenterSignupData data) re
         }
         else {
             return ();
+        }
+
+    }
+
+}
+
+public function registerMedicalCenterStaff(model:medicalCenterStaffData data) returns error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection userCollection = check mediphixDb->getCollection("user");
+    mongodb:Collection medicalCenterStaffCollection = check mediphixDb->getCollection("medical_center_staff");
+    string emaiHead = getEmailHead(data.email);
+
+    model:User mcUser = {
+        email: data.email,
+        role: "MCS"
+    };
+
+    error? insertedUser = check userCollection->insertOne(mcUser);
+    if (insertedUser is error) {
+        return insertedUser;
+    }
+    else{
+        map<json> filter = {"email": data.email};
+        map<json>  projection ={
+             "_id": {"$toString": "$_id"},
+                "email": 1,
+                "role": 1
+        };
+        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter,{}, projection);
+        if createdUser is mongodb:Error {
+            return createdUser;
+        }
+        if(createdUser is model:User){
+            string? userId = createdUser._id;
+            model:medicalCenterStaff medicalCenterStaff = {
+                name: data.name,
+                nic: data.nic,
+                mobile: data.mobile,
+                profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mcs-resources/" + emaiHead + "/profileImage",
+                userId: <string>userId,
+                empId: data.empId,
+                centerId: data.centerId
+            };
+            error? insertedMCS = check medicalCenterStaffCollection->insertOne(medicalCenterStaff);
+            if (insertedMCS is error) {
+                return insertedMCS;
+            }
+            else {
+                string bToken = check fetchBeareToken(bearerTokenEndpoint, clientId, clientSecret);
+                json userData = {
+                    "schemas": [],
+                    "name": {
+                        "givenName": data.name
+
+                    },
+                    "userName": "DEFAULT/" + data.email,
+                    "password": data.password,
+                    "emails": [
+                        {
+                            "value": data.email,
+                            "primary": true
+                        }
+                    ],
+                    "phoneNumbers": [
+                        {
+                            "type": "mobile",
+                            "value": data.mobile
+                        }
+                    ],
+                    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                        "manager": {
+                            "value": ""
+                        }
+                    },
+                    "urn:scim:wso2:schema": {
+                        "verifyEmail": false
+                    }
+                };
+                string RoleID = check searchRole(bToken, "Medical Center Staff");
+                json|error? resp = addUser(endPoint, bToken, userData);
+                if resp is error {
+                    return resp;
+                }
+                else {
+                    string addedUserId = check searchUser(endPoint, bToken, data.email);
+                    json|error? roleUpdateResponse = updateRole(bToken, addedUserId, RoleID);
+                    if roleUpdateResponse is error {
+                        return roleUpdateResponse;
+                    }
+                    else {
+                        return ();
+                    }
+                
+                }
+            
+            }
         }
 
     }

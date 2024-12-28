@@ -683,6 +683,24 @@ service /registration on httpListener {
         return errorResponse;
     }
 
+    resource function post medicalCenterStaff(medicalCenterStaffData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
+        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center Staff",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
 }
 
 public function getUserEmailByJWT(http:Request req) returns string|error {

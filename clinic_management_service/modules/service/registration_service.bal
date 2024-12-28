@@ -119,7 +119,7 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
 
 public function registerMedicalCenter(model:medicalCenterSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
-        error? addMedicalCenter = dao:medicalCenterRegistration(data);
+        error? addMedicalCenter = dao:registerMedicalCenter(data);
         if addMedicalCenter is error {
             returnMsg.message = addMedicalCenter.message();
             returnMsg.statusCode = 500;
@@ -131,7 +131,22 @@ public function registerMedicalCenter(model:medicalCenterSignupData data) return
             return returnMsg;
         }
         
+}
 
+public function registerMedicalCenterStaff(model:medicalCenterStaffData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenter = dao:registerMedicalCenterStaff(data);
+        if addMedicalCenter is error {
+            returnMsg.message = addMedicalCenter.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
 }
 public function registerLaboratary(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};

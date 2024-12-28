@@ -69,6 +69,26 @@ service / on new http:Listener(9090) {
 
     }
 
+    resource function post signup/medicalCenterStaff(model:medicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
+
+        io:println("Hello this is Medical Center");
+
+        model:ReturnMsg result = 'service:registerMedicalCenterStaff(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Staff Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
     resource function post signup/laboratary(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Laboratary");

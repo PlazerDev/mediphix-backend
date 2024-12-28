@@ -93,4 +93,14 @@ public type medicalCenterSignupData record {
     registereMcData mcData;
 };
 
+public type medicalCenterStaffData record {
+    string name;
+    string nic;
+    string email;
+    string mobile;
+    string centerId;
+    string empId;
+    string password;
+};
+
 
