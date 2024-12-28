@@ -86,44 +86,44 @@ public  type Session record {
 //new appointment record for reviva
 public type AppointmentRecord record {
     string _id;
-    int apt_Number;
-    string session_id;
-    int time_slot;
-    time:Date apt_created_timestamp;
-    AppointmentStatus apt_status;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    time:Date aptCreatedTimestamp;
+    AppointmentStatus aptStatus;
     string patient;
-    boolean is_paid;
-    int queue_number;
-    MedicalRecord medical_record;
+    boolean isPayed;
+    int queueNumber;
+    MedicalRecord medicalRecord;
 };
 
 public type MedicalRecord record {
-    int apt_Number;
-    time:Date started_timestamp;
-    time:Date ended_timestamp;
+    int aptNumber;
+    time:Date startedTimestamp;
+    time:Date endedTimestamp;
     string[] symptoms;
     Diagnosis diagnosis;
     Treatment treatments;
-    string note_to_patient?;
-    boolean is_lab_report_required;
-    LabReport? lab_report;
+    string noteToPatient?;
+    boolean isLabReportRequired;
+    LabReport? labReport;
 };
 
 public type LabReport record {
-    time:Date requested_timestamp;
-    boolean is_high_prioritize;
-    string test_type;
-    string test_name;
-    string note_to_lab_staff;
+    time:Date requestedTimestamp;
+    boolean isHighPrioritize;
+    string testType;
+    string testName;
+    string noteToLabStaff;
     int status;
-    ReportDetails report_details;
+    ReportDetails? reportDetails;
 };
 
 public type ReportDetails record {  
-    time:Date test_started_timestamp;
-    time:Date test_ended_timestamp; 
-    string? additional_note;
-    string[]? result_files;
+    time:Date testStartedTimestamp;
+    time:Date testEndedTimestamp; 
+    string? additionalNote;
+    string[]? resultFiles;
 };
 
 public type Treatment record {
@@ -135,3 +135,28 @@ public type Diagnosis record {
     string[] category;
     string[] description;
 };
+
+  public type TempMedicalRecord record {|
+        int aptNumber;
+        string startedTimestamp;
+        string endedTimestamp;
+        string[] symptoms;
+        Diagnosis diagnosis;
+        Treatment treatments;
+        string noteToPatient?;
+        boolean isLabReportRequired;
+        record {|
+            string requestedTimestamp;
+            boolean isHighPrioritize;
+            string testType;
+            string testName;
+            string noteToLabStaff;
+            int status;
+            record {|
+                string testStartedTimestamp;
+                string testEndedTimestamp;
+                string? additionalNote;
+                string[]? resultFiles;
+           |}? reportDetails;
+        |}? labReport;
+    |};
