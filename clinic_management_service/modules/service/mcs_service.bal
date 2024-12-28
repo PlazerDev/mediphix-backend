@@ -316,7 +316,7 @@ public function mcsEndTimeSlot(string sessionId, string userId) returns error|mo
                                 }
                             }
                         }else {
-                            return error("Action Failed, available appointment(s) found in the queue");
+                            return error("Action Failed, available appointment(s) found in the queue " + nextAvlQueueNumber.toString());
                         }
                         
                     }else {
@@ -400,7 +400,7 @@ public function startNextAppointmentQueueHandler(int queueLength, model:McsQueue
 
 public function getNextAvailablePatientQueueNumber(int fromQueueNumber, int queueLength, model:McsQueueOperations mcsQueueOperations) returns int ? {
     int i = fromQueueNumber;
-    while fromQueueNumber <= queueLength {
+    while i <= queueLength {
         if isMarkedAsAbsent(i, mcsQueueOperations) || isMarkedAsFinished(i, mcsQueueOperations) {
             i += 1;
         } else {
