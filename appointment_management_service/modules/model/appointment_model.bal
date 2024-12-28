@@ -165,7 +165,7 @@ public type LabReport record {
     string testName;
     string noteToLabStaff;
     int status;
-    ReportDetails reportDetails;
+    ReportDetails? reportDetails;
 };
 
 public type ReportDetails record {  

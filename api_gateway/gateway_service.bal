@@ -512,20 +512,57 @@ resource function patch appointments/[int aptNumber]/medicalRecord(http:Request 
         return createResponse(400, errorDetails);
     }
 
-    // Convert to MedicalRecord type
-    MedicalRecord|error payload = jsonPayload.fromJsonWithType(MedicalRecord);
-    
-    if payload is error {
+    // First convert to temporary record
+    TempMedicalRecord|error tempRecord = jsonPayload.fromJsonWithType(TempMedicalRecord);
+    if tempRecord is error {
         ErrorDetails errorDetails = {
             message: "Invalid medical record format",
-            details: payload.message(),
+            details: tempRecord.message(),
             timeStamp: time:utcNow()
         };
         return createResponse(400, errorDetails);
     }
+    
+    // Create final MedicalRecord with converted timestamps
+    MedicalRecord medicalRecord = {
+        aptNumber: tempRecord.aptNumber,
+        startedTimestamp: check time:civilFromString(tempRecord.startedTimestamp),
+        endedTimestamp: check time:civilFromString(tempRecord.endedTimestamp),
+        symptoms: tempRecord.symptoms,
+        diagnosis: tempRecord.diagnosis,
+        treatments: tempRecord.treatments,
+        noteToPatient: tempRecord.noteToPatient,
+        isLabReportRequired: tempRecord.isLabReportRequired,
+        labReport: () 
+    };
+    // Handle optional labReport and its optional reportDetails
+    // if tempRecord.labReport != () {
+    //     // Create initial LabReport without reportDetails
+    //     LabReport labReport = {
+    //         requestedTimestamp: check time:civilFromString(tempRecord.labReport.requestedTimestamp),
+    //         isHighPrioritize: tempRecord.labReport.isHighPrioritize,
+    //         testType: tempRecord.labReport.testType,
+    //         testName: tempRecord.labReport.testName,
+    //         noteToLabStaff: tempRecord.labReport.noteToLabStaff,
+    //         status: tempRecord.labReport.status,
+    //         reportDetails: () // Initialize as nil
+    //     };
+
+    //     // Handle optional reportDetails if present
+    //     if tempRecord.labReport.reportDetails != () {
+    //         labReport.reportDetails = {
+    //             testStartedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testStartedTimestamp),
+    //             testEndedTimestamp: check time:civilFromString(tempRecord.labReport.reportDetails.testEndedTimestamp),
+    //             additionalNote: tempRecord.labReport.reportDetails.additionalNote,
+    //             resultFiles: tempRecord.labReport.reportDetails.resultFiles
+    //         };
+    //     }
+
+    //     medicalRecord.labReport = labReport;
+    // }
 
     // Validate appointment number consistency
-    if payload.apt_Number != aptNumber {
+    if medicalRecord.aptNumber != aptNumber {
         ErrorDetails errorDetails = {
             message: "Invalid appointment number",
             details: "Appointment number in URL must match the medical record",
@@ -535,7 +572,7 @@ resource function patch appointments/[int aptNumber]/medicalRecord(http:Request 
     }
 
     // Call service endpoint
-    http:Response|error? response = check appointmentServiceEP->/appointments/[aptNumber]/medicalRecord.patch(payload);
+    http:Response|error? response = check appointmentServiceEP->/appointments/[aptNumber]/medicalRecord.patch(medicalRecord);
 
     if (response is http:Response) {
         return response;
