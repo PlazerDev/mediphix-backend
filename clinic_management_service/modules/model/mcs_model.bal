@@ -17,6 +17,7 @@ public type McsAssignedSession record {|
     string noteFromCenter;
     string noteFromDoctor;
     string overallSessionStatus?;
+    McsTimeSlot[] timeSlot?;
 |};
 
 public type McsAssignedSessionWithDoctorDetails record {|

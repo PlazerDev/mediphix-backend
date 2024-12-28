@@ -124,6 +124,66 @@ public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns mo
     return result;
 }
 
+public function mcsGetTimeSlot(string sessionId, int slotId) returns model:McsTimeSlot|mongodb:Error ?{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1
+    };
+
+    model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result is null ? result : ((result.timeSlot.length() > slotId && slotId >= 0) ? result.timeSlot[slotId] : null);
+}
+
+public function mcsGetAllSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1
+    };
+
+    model:McsAssignedSession ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+// ### Update the appointment status by the {aptNumber} - Also check the prevStatus is there ###
+public function mcsUpdateAptStatus(int aptNumber, string newStatus, string preStatus) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection appointmentCollection = check initDatabaseConnection("appointment");
+
+    map<json> filter = {
+        "aptNumber": aptNumber,
+        "aptStatus": preStatus
+    };
+
+    mongodb:Update update = {
+        "set": { "aptStatus": newStatus }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check appointmentCollection->updateOne(filter, update, options);
+    return result;
+}
 
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {

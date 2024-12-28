@@ -727,6 +727,26 @@ service /mcs on httpListener {
         }
     }
 
+    @http:ResourceConfig
+    resource function put startAppointment (string sessionId, int slotId, int aptNumber) returns http:Response{
+        
+        string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}`;
+
+        do {
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
 }
 // MCS [END] .......................................................................................
 

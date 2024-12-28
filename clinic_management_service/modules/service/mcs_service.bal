@@ -145,12 +145,66 @@ public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns er
     if result is null {
         return initNotFoundError("Time slot data not found!");
     } else if result is mongodb:Error {
-            return error("Database Error!");
+            return error("Database Error: ", result);
     } else {
         return result;
     }    
 }
 
+public function mcsStartAppointment(string sessionId, int slotId) returns error|model:NotFoundError|model:McsTimeSlot {
+    
+    // TODO :: check sessionId is assigned to the mcs user id
+    
+    
+    // get all the session details
+    model:McsAssignedSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionDetails(sessionId);
+    model:McsTimeSlot|mongodb:Error ? timeslotResult = dao:mcsGetTimeSlot(sessionId, slotId-1);
+
+    if sessionResult is null {
+        return initNotFoundError("Session Details Not Found !");
+    } else if sessionResult is mongodb:Error {
+        return error("Database Error: ", sessionResult);
+    } else if timeslotResult is null {
+        return initNotFoundError("Time slot data not found!");
+    } else if timeslotResult is mongodb:Error {
+        return error("Database Error: ", timeslotResult);
+    } else{
+        // check the overallsession is ONGOING and timeslot is STARTED
+        if sessionResult.overallSessionStatus != "ONGOING" || timeslotResult.status != "STARTED" {
+            return error("Invalid Operation");
+        }else {
+            // check whether their is a nextPatient1 or not
+            int queueNumberOfNextPatient = timeslotResult.queue.queueOperations.nextPatient1;
+
+            if (queueNumberOfNextPatient == -1) {
+                return error("There is no next patient");
+            }else {
+                int aptNumber = timeslotResult.queue.appointments[queueNumberOfNextPatient-1];
+
+                // check there is no ongoing appointment {ongoing == -1}
+                if timeslotResult.queue.queueOperations.ongoing != -1 {
+                    return error("There is a session ongoing!");
+                }else {
+                    // at this level all checks are passed in [session]
+                    // if so change the {aptStatus} in [appointment] from "INQUEUE" to "ONGOING" using {aptNumber}
+                    mongodb:UpdateResult|mongodb:Error updateAptStatusResult = dao:mcsUpdateAptStatus(aptNumber, "ONGOING", "INQUEUE");
+                    if updateAptStatusResult is mongodb:UpdateResult {
+                        if updateAptStatusResult.modifiedCount != 0 {
+                            // update has been made successfully | Apt set to ONGOING | No error should happen this point onward
+                            // then do the queue operations 
+                            // send the slot details as the response
+                            return timeslotResult;
+                        }else{
+                            return initNotFoundError("Appointment status update failed");
+                        }
+                    }else{
+                        return error("Database Error: ", updateAptStatusResult);
+                    }
+                }
+            }
+        }
+    }
+}
 
 // HELPERS ............................................................................................................
 
@@ -162,4 +216,98 @@ public function initNotFoundError(string details) returns model:NotFoundError {
     };
     model:NotFoundError notFound = {body: errorDetails};
     return notFound;
+}
+
+
+public function startNextAppointmentQueueHandler(int queueLength, model:McsQueueOperations mcsQueueOperations){
+    model:McsQueueOperations temp = mcsQueueOperations.clone();
+    
+    // update the ongoing
+    temp.ongoing = temp.nextPatient1;
+
+
+    int ? nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
+    if nextAvilableQueueNumber is null {
+        // INFO:: no theoritical way to happen this since the newly ongoing patient is avilable anyway
+    }else {
+        if nextAvilableQueueNumber == temp.ongoing {
+            // update the defaultIncrementQueueNumber
+            temp.defaultIncrementQueueNumber = temp.ongoing;
+        }
+    }
+
+    if temp.nextPatient2 != -1 {
+        // update nextPatient1
+        temp.nextPatient1 = temp.nextPatient2;
+        // have to check this new next patient one is the supposed one
+        nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
+         if nextAvilableQueueNumber is null {
+            // update nextPatient2
+            temp.nextPatient2 = -1;
+        }else {
+            if nextAvilableQueueNumber == temp.nextPatient1 {
+                nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.nextPatient1 + 1, queueLength, mcsQueueOperations);
+                if nextAvilableQueueNumber is null {
+                    temp.nextPatient2 = -1;
+                }else {
+                    temp.nextPatient2 = nextAvilableQueueNumber;
+                }
+            }else {
+                nextAvilableQueueNumber = getNextAvailablePatientQueueNumber(temp.defaultIncrementQueueNumber + 1, queueLength, mcsQueueOperations);
+                if nextAvilableQueueNumber is null {
+                    temp.nextPatient2 = -1;
+                }else {
+                    temp.nextPatient2 = nextAvilableQueueNumber;
+                }
+            }
+        }
+    }else {
+        // update nextPatient1
+        temp.nextPatient1 = -1;
+    }
+
+
+
+
+
+
+
+    
+
+
+  
+
+
+    
+
+}
+
+public function getNextAvailablePatientQueueNumber(int fromQueueNumber, int queueLength, model:McsQueueOperations mcsQueueOperations) returns int ? {
+    int i = fromQueueNumber;
+    while fromQueueNumber <= queueLength {
+        if isMarkedAsAbsent(i, mcsQueueOperations) || isMarkedAsFinished(i, mcsQueueOperations) {
+            i += 1;
+        } else {
+            return i;
+        }
+    }
+    return null;
+}
+
+public function isMarkedAsAbsent(int queueNumber, model:McsQueueOperations mcsQueueOperations) returns boolean {
+    boolean result = mcsQueueOperations.absent.indexOf(queueNumber) != null;
+    if result {
+        return true;
+    }else {
+        return false;
+    }
+}
+
+public function isMarkedAsFinished(int queueNumber, model:McsQueueOperations mcsQueueOperations) returns boolean {
+    boolean result = mcsQueueOperations.finished.indexOf(queueNumber) != null;
+    if result {
+        return true;
+    }else {
+        return false;
+    }
 }
