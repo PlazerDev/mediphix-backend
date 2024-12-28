@@ -4,6 +4,20 @@ public type McsUserID record {|
     string _id;
 |};
 
+public type McsSession record {|
+    time:Date endTimestamp?;
+    time:Date startTimestamp?;
+    string doctorId?;
+    string medicalCenterId?;
+    string[] aptCategories?;
+    int payment?;
+    string hallNumber?;
+    string noteFromCenter?;
+    string noteFromDoctor?;
+    string overallSessionStatus?;
+    McsTimeSlot[] timeSlot?;
+|};
+
 public type McsAssignedSessionIdList record {|
     string[] assignedSessions;
 |};
@@ -17,6 +31,7 @@ public type McsAssignedSession record {|
     string noteFromCenter;
     string noteFromDoctor;
     string overallSessionStatus?;
+    McsTimeSlot[] timeSlot?;
 |};
 
 public type McsAssignedSessionWithDoctorDetails record {|
@@ -53,7 +68,6 @@ public type McsQueue record {|
     int[] appointments;
     McsQueueOperations queueOperations;
 |};
-
 
 public type McsQueueOperations record {|
     int defaultIncrementQueueNumber;
