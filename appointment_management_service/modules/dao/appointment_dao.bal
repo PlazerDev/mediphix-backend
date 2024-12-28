@@ -207,6 +207,8 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
+
+
 public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     returns http:Ok|model:InternalError|model:NotFoundError|error? {
 
@@ -221,7 +223,7 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     io:println("medicalRecordJson: " + medicalRecordJson.toJsonString());
 
-    mongodb:Update update = {"$set": {"medicalRecord": medicalRecordJson}};
+    mongodb:Update update = {"set": {"medicalRecord": medicalRecordJson}};
     io:println("Update object: " + update.toJsonString());
 
     // Define options for the update operation

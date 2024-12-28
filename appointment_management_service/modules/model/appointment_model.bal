@@ -185,3 +185,27 @@ public type Diagnosis record {
     string[] description;
 };
 
+public type TempMedicalRecord record {|
+        int aptNumber;
+        string startedTimestamp;
+        string endedTimestamp;
+        string[] symptoms;
+        Diagnosis diagnosis;
+        Treatment treatments;
+        string noteToPatient?;
+        boolean isLabReportRequired;
+        record {|
+            string requestedTimestamp;
+            boolean isHighPrioritize;
+            string testType;
+            string testName;
+            string noteToLabStaff;
+            int status;
+            record {|
+                string testStartedTimestamp;
+                string testEndedTimestamp;
+                string? additionalNote;
+                string[]? resultFiles;
+           |}? reportDetails;
+        |}? labReport;
+    |};
