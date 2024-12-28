@@ -331,7 +331,7 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
-        io:println(sessionId, slotId, aptNumber);
+       
         model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
         http:Response response = new;
@@ -339,6 +339,23 @@ service / on new http:Listener(9090) {
         if (result is model:McsTimeSlot) {
             response.statusCode = 200; 
             response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsStartTimeSlot(string sessionId, string userId) returns http:Response|error {
+       
+        model:NotFoundError ? result = check 'service:mcsStartTimeSlot(sessionId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200; 
+            response.setJsonPayload({"status": "sucess"});
         } else if (result is model:NotFoundError) {
             response.statusCode = 404; 
             response.setJsonPayload(result.body.toJson());

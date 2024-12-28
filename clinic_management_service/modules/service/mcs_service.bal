@@ -220,6 +220,74 @@ public function mcsStartAppointment(string sessionId, int slotId, string userId)
     }
 }
 
+public function mcsStartTimeSlot(string sessionId, string userId) returns error|model:NotFoundError ? {
+    
+    // check :: session is assigned to the correct user
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
+
+    model:McsSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionData(sessionId);
+
+    // check :: session is in ongoing Status
+    if sessionResult is mongodb:Error {
+        return error("Database Error");
+    }else if sessionResult is null {
+        return initNotFoundError("Session Data Not Found");
+    }else {
+        if sessionResult.overallSessionStatus == "ACTIVE" || sessionResult.overallSessionStatus == "ONGOING" {
+            
+            if sessionResult.timeSlot is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+                int slotIdToBeStarted = findSlotToBeStarted(timeSlotResult);
+
+                // check :: no active slots
+                if slotIdToBeStarted < 0 {
+                    return error("Active time slot found!");
+                }else{
+                    timeSlotResult[slotIdToBeStarted - 1].status = "STARTED";
+                    // upadte the session and slot status
+                    mongodb:Error|mongodb:UpdateResult updateResult = dao:mcsUpdateSessionToStartAppointment(sessionId, timeSlotResult);   
+                    if updateResult is mongodb:Error {
+                        return error("Database Error");
+                    }else {
+                        if updateResult.modifiedCount == 1 {
+                            // get all the appointments           
+                            int[] aptList = <int[]> timeSlotResult[slotIdToBeStarted - 1].queue.appointments;
+                            
+                            updateResult= dao:mcsUpdateAptListStatus(aptList, "INQUEUE");
+                            if updateResult is mongodb:Error {
+                                return error("Database Error in updating appointment status");
+                            }else {
+                                return null;       
+                            }
+                        }else {
+                            return initNotFoundError("Session Not Found to Update, Update Failed");
+                        }
+                    }
+                }
+            }else {
+                return error("Database Error");
+            }
+
+           
+
+        }else {
+            return error("Session is either cancelled or over");
+        }
+    }
+
+    // // get the list of time slot
+    // model:McsTimeSlotList|mongodb:Error ? timeSlotResult = dao:mcsGetAllTimeSlotList(sessionId);
+
+
+
+
+    // }
+    
+  
+}
+
 // HELPERS ............................................................................................................
 
 public function initNotFoundError(string details) returns model:NotFoundError {
@@ -234,6 +302,15 @@ public function initNotFoundError(string details) returns model:NotFoundError {
 
 public function startNextAppointmentQueueHandler(int queueLength, model:McsQueueOperations mcsQueueOperations) returns model:McsQueueOperations{
     model:McsQueueOperations temp = mcsQueueOperations.clone();
+
+    // exceptional case - where it only has 1 appointment and its being the first appointment 
+    if queueLength == 1 {
+        temp.nextPatient1 = -1;
+        temp.nextPatient2 = -1;
+        temp.ongoing = 1;
+        temp.defaultIncrementQueueNumber = 1;
+        return temp;
+    }
     
     // update the ongoing
     temp.ongoing = temp.nextPatient1;
@@ -315,5 +392,23 @@ public function isSessionAssigned(string sessionId, string userId) returns boole
     }else {
         return false;
     }
+}
+
+public function findSlotToBeStarted(model:McsTimeSlot[] data) returns int {
+    
+    int slotId = 1;
+
+    foreach model:McsTimeSlot slot in data {
+        if slot.status == "NOT_STARTED" {
+            break;
+        } else if slot.status == "STARTED" {
+            slotId = -999;
+            break;
+        }else {
+            slotId += 1;
+        }
+    }
+
+    return slotId;
 }
 
