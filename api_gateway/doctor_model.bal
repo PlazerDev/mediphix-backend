@@ -23,7 +23,7 @@ public type Procedure record {|
     string procedure;
 |};
 
-public type LabReport record {|
+public type LabReportData record {|
     string test_type;
     string test_name;
     string priority_level;

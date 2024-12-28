@@ -90,7 +90,7 @@ public type NewAppointment record {
     boolean isPaid;
     decimal payment;
     AppointmentStatus status;
-    string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00Z
+    string appointmentTime;  // accepted format -> 2024-10-03T10:15:30.00+05:30
 };
 
 public type Appointment record {|
@@ -127,8 +127,61 @@ public type Appointment record {|
 //     time:Date lastModifiedTime;
 // |};
 
-public type AppointmentNumberCounter record {
+public type Counter record {
     string _id;
     int sequenceValue;
+};
+
+//new appointment record for reviva
+public type AppointmentRecord record {
+    string _id;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    time:Date aptCreatedTimestamp;
+    AppointmentStatus aptStatus;
+    string patient;
+    boolean isPayed;
+    int queueNumber;
+    MedicalRecord medicalRecord;
+};
+
+public type MedicalRecord record {
+    int aptNumber;
+    time:Date startedTimestamp;
+    time:Date endedTimestamp;
+    string[] symptoms;
+    Diagnosis diagnosis;
+    Treatment treatments;
+    string noteToPatient?;
+    boolean isLabReportRequired;
+    LabReport? labReport;
+};
+
+public type LabReport record {
+    time:Date requestedTimestamp;
+    boolean isHighPrioritize;
+    string testType;
+    string testName;
+    string noteToLabStaff;
+    int status;
+    ReportDetails? reportDetails;
+};
+
+public type ReportDetails record {  
+    time:Date testStartedTimestamp;
+    time:Date testEndedTimestamp; 
+    string? additionalNote;
+    string[]? resultFiles;
+};
+
+public type Treatment record {
+    string[] medications;
+    string[] description;    
+};
+
+public type Diagnosis record {
+    string[] category;
+    string[] description;
 };
 
