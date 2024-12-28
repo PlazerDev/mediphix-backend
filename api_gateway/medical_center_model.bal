@@ -49,10 +49,16 @@ public type OpenSession record {
     Repetition repetition;
 };
 
+public type NewRepetition record {
+    boolean isRepeat;
+    string[] days;
+    string noRepeatDateTimestamp?;
+};
+
 public type Repetition record {
     boolean isRepeat;
     string[] days;
-    time:Date? noRepeatDateTimestamp;
+    time:Date noRepeatDateTimestamp?;
 };
 
 public type DoctorResponseApplication record {
