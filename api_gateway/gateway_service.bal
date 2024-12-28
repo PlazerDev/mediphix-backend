@@ -657,6 +657,34 @@ service /receptionist on httpListener {
 
 }
 
+
+    @http:ServiceConfig {
+        cors: {
+            allowOrigins: ["*"]
+        }
+    }
+service /registration on httpListener {
+
+    resource function post medicalCenter(medicalCenterSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
+        http:Response|error? response = check clinicServiceEP->/signup/medicalCenter.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
+}
+
 public function getUserEmailByJWT(http:Request req) returns string|error {
     string authHeader = check req.getHeader("Authorization");
     string token = authHeader.substring(7);

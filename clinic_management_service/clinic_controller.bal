@@ -49,7 +49,7 @@ service / on new http:Listener(9090) {
         return (response);
     }
 
-    resource function post signup/medicalCenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/medicalCenter(model:medicalCenterSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -88,6 +88,26 @@ service / on new http:Listener(9090) {
         return (response);
 
     }
+
+    // resource function post signup/medicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+    //     io:println("Hello this is Medical Center");
+
+    //     model:ReturnMsg result = 'service:registerMedicalCenter(data);
+
+    //     http:Response response = new;
+    //     if (result.statusCode == 500 || result.statusCode == 400) {
+    //         response.statusCode = result.statusCode;
+    //         response.setJsonPayload({message: result.message});
+    //     } else {
+    //         response.statusCode = 200;
+    //         response.setJsonPayload({message: "Medical Center Registered Successfully"});
+    //     }
+
+    //     io:println(result);
+    //     return (response);
+
+    // }
 
     // Get patient with user id
     resource function get patient/[string userId]() returns http:Response|error? {
