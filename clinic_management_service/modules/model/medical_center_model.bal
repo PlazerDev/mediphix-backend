@@ -17,7 +17,7 @@ public type MedicalCenter record {|
     string[] appointments?;
     string[] patients?;
     string[] medicalCenterStaff?;
-    string description;
+    string description?;
 |};
 
 public type UnregisteredMedicalCEnter record {|

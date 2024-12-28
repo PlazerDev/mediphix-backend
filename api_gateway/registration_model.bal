@@ -93,7 +93,7 @@ public type medicalCenterSignupData record {
     registereMcData mcData;
 };
 
-public type medicalCenterStaffData record {
+public type medicalCenterStaffSignupData record {
     string name;
     string nic;
     string email;
@@ -122,5 +122,3 @@ public type medicalCenterLabStaffSignupData record {
     string empId;
     string password;
 };
-
-

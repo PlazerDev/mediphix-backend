@@ -19,20 +19,6 @@ public type Patient record {|
     string[] lab_reports?;
 |};
 
-public type PatientSignupData record {|
-    string fname;
-    string lname;
-    string mobile;
-    string dob;
-    string email;
-    string nationality;
-    string nic;
-    string gender;
-    string address;
-    string password;
-    string confirmPassword;
-|};
-
 
 public type JWTPayload record {
     string iss; // Issuer of the token

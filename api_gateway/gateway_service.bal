@@ -911,6 +911,88 @@ service /mcs on httpListener {
 
 // MCS [END] .......................................................................................
 
+
+/// Registration Listener...........................................................................
+    @http:ServiceConfig {
+        cors: {
+            allowOrigins: ["*"]
+        }
+    }
+service /registration on httpListener {
+
+    resource function post medicalCenter(medicalCenterSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
+        http:Response|error? response = check clinicServiceEP->/signup/medicalCenter.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
+    resource function post medicalCenterStaff(medicalCenterStaffSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
+        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center Staff",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+    resource function post registerMedicalCenterReceptionist(medicalCenterReceptionistSignupData data) returns http:Response|error? {
+        io:println("Inside Gateway Service", data); // COMMENT
+        http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterReceptionist.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center Receptionist",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
+    resource function post registerMedicalCenterLabStaff(medicalCenterLabStaffSignupData data) returns http:Response|error? {
+
+        http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterLabStaff.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering medical center Lab Staff",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+}
+    
+
 //Medical center admin
 @http:ServiceConfig {
     cors: {

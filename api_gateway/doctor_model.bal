@@ -62,19 +62,5 @@ public type MedicalCenterId record {
 
 };
 
-public type DoctorSignupData record {|
-    string name;
-    string slmc;
-    string nic;
-    string[] education;
-    string mobile;
-    string[] specialization?;
-    string email;
-    string password;
-    string confirmPassword;
-    string profileImage?;
-    byte[] profileImageFile?;
-    byte[] idFront?;
-    byte[] idBack?;
-|};
+
 
