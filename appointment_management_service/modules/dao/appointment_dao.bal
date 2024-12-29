@@ -223,10 +223,13 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     io:println("medicalRecordJson: " + medicalRecordJson.toJsonString());
 
-    mongodb:Update update = {"set": {"medicalRecord": medicalRecordJson}};
+    mongodb:Update update = {
+        "set": {"medicalRecord": medicalRecordJson,
+            "aptStatus": "OVER"
+        }
+    };
     io:println("Update object: " + update.toJsonString());
 
-    // Define options for the update operation
     mongodb:UpdateOptions options = {};
 
     mongodb:UpdateResult|error result = appointmentCollection->updateOne(filter, update, options);
@@ -251,7 +254,7 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
             model:InternalError internalError = {body: errorDetails};
             return internalError;
         }
-        log:printInfo("Successfully updated the medical record for aptNumber: " + aptNumber.toString());
+        log:printInfo("Successfully updated the medical record and appointment status for aptNumber: " + aptNumber.toString());
         return http:OK;
     } else {
         io:println("Error occurred while updating the medical record", result);

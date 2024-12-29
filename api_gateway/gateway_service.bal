@@ -764,182 +764,9 @@ service /mcs on httpListener {
         }
     }
 
-    @http:ResourceConfig
-    resource function put startAppointment (string sessionId, int slotId, int aptNumber) returns http:Response{
-        do {
-            string userEmail = "mcs1@nawaloka.lk";
-            string userId = check getCachedUserId(userEmail, "mcs");
-
-            string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
-
-            http:Response response = check clinicServiceEP->put(url, {});
-            return response;
-        } on fail {
-            ErrorDetails errorDetails = {
-                message: "Internal server error",
-                details: "Error occurred",
-                timeStamp: time:utcNow()
-            };
-            http:Response errorResponse = new;
-            errorResponse.statusCode = 500;
-            errorResponse.setJsonPayload(errorDetails.toJson());
-            return errorResponse;
-        }
-    }
-
-    @http:ResourceConfig
-    resource function put startTimeSlot (string sessionId) returns http:Response{
-        do {
-            string userEmail = "mcs1@nawaloka.lk";
-            string userId = check getCachedUserId(userEmail, "mcs");
-
-            string url = string `/mcsStartTimeSlot?sessionId=${sessionId}&userId=${userId}`;
-
-            http:Response response = check clinicServiceEP->put(url, {});
-            return response;
-        } on fail {
-            ErrorDetails errorDetails = {
-                message: "Internal server error",
-                details: "Error occurred",
-                timeStamp: time:utcNow()
-            };
-            http:Response errorResponse = new;
-            errorResponse.statusCode = 500;
-            errorResponse.setJsonPayload(errorDetails.toJson());
-            return errorResponse;
-        }
-    }
-
-    @http:ResourceConfig
-    resource function put endTimeSlot (string sessionId) returns http:Response{
-        do {
-            string userEmail = "mcs1@nawaloka.lk";
-            string userId = check getCachedUserId(userEmail, "mcs");
-
-            string url = string `/mcsEndTimeSlot?sessionId=${sessionId}&userId=${userId}`;
-
-            http:Response response = check clinicServiceEP->put(url, {});
-            return response;
-        } on fail {
-            ErrorDetails errorDetails = {
-                message: "Internal server error",
-                details: "Error occurred",
-                timeStamp: time:utcNow()
-            };
-            http:Response errorResponse = new;
-            errorResponse.statusCode = 500;
-            errorResponse.setJsonPayload(errorDetails.toJson());
-            return errorResponse;
-        }
-    }
-
-    @http:ResourceConfig
-    resource function put endLastTimeSlot (string sessionId) returns http:Response{
-        do {
-            string userEmail = "mcs1@nawaloka.lk";
-            string userId = check getCachedUserId(userEmail, "mcs");
-
-            string url = string `/mcsEndLastTimeSlot?sessionId=${sessionId}&userId=${userId}`;
-
-            http:Response response = check clinicServiceEP->put(url, {});
-            return response;
-        } on fail {
-            ErrorDetails errorDetails = {
-                message: "Internal server error",
-                details: "Error occurred",
-                timeStamp: time:utcNow()
-            };
-            http:Response errorResponse = new;
-            errorResponse.statusCode = 500;
-            errorResponse.setJsonPayload(errorDetails.toJson());
-            return errorResponse;
-        }
-    }
 }
 
 // MCS [END] .......................................................................................
-
-
-/// Registration Listener...........................................................................
-    @http:ServiceConfig {
-        cors: {
-            allowOrigins: ["*"]
-        }
-    }
-service /registration on httpListener {
-
-    resource function post medicalCenter(medicalCenterSignupData data) returns http:Response|error? {
-        io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/medicalCenter.post(data);
-
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while registering medical center",
-            timeStamp: time:utcNow()
-        };
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
-    }
-
-    resource function post medicalCenterStaff(medicalCenterStaffSignupData data) returns http:Response|error? {
-        io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
-
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while registering medical center Staff",
-            timeStamp: time:utcNow()
-        };
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
-    }
-    resource function post registerMedicalCenterReceptionist(medicalCenterReceptionistSignupData data) returns http:Response|error? {
-        io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterReceptionist.post(data);
-
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while registering medical center Receptionist",
-            timeStamp: time:utcNow()
-        };
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
-    }
-
-    resource function post registerMedicalCenterLabStaff(medicalCenterLabStaffSignupData data) returns http:Response|error? {
-
-        http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterLabStaff.post(data);
-
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while registering medical center Lab Staff",
-            timeStamp: time:utcNow()
-        };
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
-    }
-}
-    
 
 //Medical center admin
 @http:ServiceConfig {
@@ -951,7 +778,17 @@ service /mca on httpListener {
 
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
-        
+        foreach NewOpenSession newOpenSession in newSessionVacancy.openSessions {
+            OpenSession openSession = {
+                sessionId: 0,
+                startTime: check time:civilFromString(newOpenSession.startTime),
+                endTime: check time:civilFromString(newOpenSession.endTime),
+                rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
+                rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
+                repetition: newOpenSession.repetition
+            };
+            // reminder to implement the rest of the logic here to create session vacancy properly
+        }
         http:Response|error response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
         if response is http:Response {
             return response;
