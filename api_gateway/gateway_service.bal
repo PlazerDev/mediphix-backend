@@ -339,7 +339,7 @@ service /doctor on httpListener {
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving appointments",
+                details: "Error occurred while retrieving medical centers",
                 timeStamp: time:utcNow()
             };
             InternalError internalError = {body: errorDetails};
@@ -367,7 +367,7 @@ service /doctor on httpListener {
         } on fail {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving patient details",
+                details: "Error occurred while retrieving medical center details",
                 timeStamp: time:utcNow()
             };
             http:Response errorResponse = new;
