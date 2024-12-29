@@ -10,7 +10,7 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
         responses: [],
         aptCategories: newSessionVacancy.aptCategories,
         medicalCenterId: newSessionVacancy.medicalCenterId,
-        mobileNumber: newSessionVacancy.mobileNumber,
+        mobile: newSessionVacancy.mobile,
         vacancyNoteToDoctors: newSessionVacancy.vacancyNoteToDoctors,
         openSessions: [],
         vacancyOpenedTimestamp: time:utcToCivil(time:utcNow())

@@ -40,7 +40,7 @@ public type DoctorRequests record {
 public type NewSessionVacancy record {
     string[] aptCategories;
     string medicalCenterId;
-    string mobileNumber;
+    string mobile;
     string vacancyNoteToDoctors;
     NewOpenSession[] openSessions;
 };
@@ -50,7 +50,7 @@ public type SessionVacancy record {
     DoctorResponse[] responses?;
     string[] aptCategories;
     string medicalCenterId;
-    string mobileNumber;
+    string mobile;
     string vacancyNoteToDoctors;
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
