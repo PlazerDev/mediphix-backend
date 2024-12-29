@@ -456,23 +456,21 @@ service / on new http:Listener(9090) {
         }
     }
 
-    resource function post createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Response {
-        http:Created|model:InternalError|error? result = 'service:createSessionVacancy(newSessionVacancy);
+    // resource function post createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Response {
+    //     http:Created|model:InternalError|error? result = 'service:createSessionVacancy(newSessionVacancy);
 
-        http:Response response = new;
-        if (result is http:Created) {
-            response.statusCode = 200;
-            response.setJsonPayload({"message": "Session vacancy created"});
-        } else if (result is model:InternalError) {
-            response.statusCode = 500;
-            response.setJsonPayload(result.body.toJson());
-        } else {
-            response.statusCode = 500;
-            response.setJsonPayload({"message": "Internal server error!"});
-        }
-        return response;
-    }
-
-
+    //     http:Response response = new;
+    //     if (result is http:Created) {
+    //         response.statusCode = 200;
+    //         response.setJsonPayload({"message": "Session vacancy created"});
+    //     } else if (result is model:InternalError) {
+    //         response.statusCode = 500;
+    //         response.setJsonPayload(result.body.toJson());
+    //     } else {
+    //         response.statusCode = 500;
+    //         response.setJsonPayload({"message": "Internal server error!"});
+    //     }
+    //     return response;
+    // }
 }
 
