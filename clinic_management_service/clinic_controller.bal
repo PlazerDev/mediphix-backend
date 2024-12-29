@@ -49,7 +49,7 @@ service / on new http:Listener(9090) {
         return (response);
     }
 
-    resource function post signup/medicalCenter(model:medicalCenterSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/medicalCenter(model:MedicalCenterSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -89,7 +89,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    resource function post signup/registerMedicalCenterReceptionist(model:medicalCenterReceptionistSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/registerMedicalCenterReceptionist(model:MedicalCenterReceptionistSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         model:ReturnMsg result = 'service:registerMedicalCenterReceptionist(data);
 
@@ -107,7 +107,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    resource function post signup/registerMedicalCenterLabStaff(model:medicalCenterLabStaffSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         model:ReturnMsg result = 'service:registerMedicalCenterLabStaff(data);
 

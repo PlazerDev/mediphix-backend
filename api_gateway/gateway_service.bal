@@ -868,7 +868,7 @@ service /mcs on httpListener {
     }
 service /registration on httpListener {
 
-    resource function post medicalCenter(medicalCenterSignupData data) returns http:Response|error? {
+    resource function post medicalCenter(MedicalCenterSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/medicalCenter.post(data);
 
@@ -886,7 +886,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post medicalCenterStaff(medicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
 
@@ -903,7 +903,7 @@ service /registration on httpListener {
         errorResponse.setJsonPayload(errorDetails.toJson());
         return errorResponse;
     }
-    resource function post registerMedicalCenterReceptionist(medicalCenterReceptionistSignupData data) returns http:Response|error? {
+    resource function post registerMedicalCenterReceptionist(MedicalCenterReceptionistSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterReceptionist.post(data);
 
@@ -921,7 +921,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post registerMedicalCenterLabStaff(medicalCenterLabStaffSignupData data) returns http:Response|error? {
+    resource function post registerMedicalCenterLabStaff(MedicalCenterLabStaffSignupData data) returns http:Response|error? {
 
         http:Response|error? response = check clinicServiceEP->/signup/registerMedicalCenterLabStaff.post(data);
 

@@ -117,7 +117,7 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
 
 
 
-public function registerMedicalCenter(model:medicalCenterSignupData data) returns model:ReturnMsg {
+public function registerMedicalCenter(model:MedicalCenterSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
         error? addMedicalCenter = dao:registerMedicalCenter(data);
         if addMedicalCenter is error {
@@ -165,7 +165,7 @@ public function registerMedicalCenterReceptionist(model:medicalCenterStaffData d
         
 }
 
-public function registerMedicalCenterLabStaff(model:medicalCenterLabStaffSignupData data) returns model:ReturnMsg {
+public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
         error? addMedicalCenterReceptionist = dao:registerMedicalCenterLabStaff(data);
         if addMedicalCenterReceptionist is error {
