@@ -53,6 +53,10 @@ public function getMyMedicalCenters(string id) returns error|model:MedicalCenter
     return result;
 }
 
+public function getDoctorSessionVacancies(string doctorId) returns error|model:SessionVacancy[]|model:InternalError {
+    model:SessionVacancy[]|model:InternalError result = check dao:getDoctorSessionVacancies(doctorId);
+    return result;
+}
 
 public function submitPatientRecord(model:PatientRecord patientRecord) returns http:Created|model:InternalError|error {
 

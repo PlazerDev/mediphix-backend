@@ -337,6 +337,19 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    resource function get getDoctorSessionVacancies/[string userId]() returns error|http:Response {
+        model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getDoctorSessionVacancies(userId.trim());
+        http:Response response = new;
+        if sessionVacancies is model:SessionVacancy[] {
+            response.statusCode = 200;
+            response.setJsonPayload(sessionVacancies.toJson());
+        } else if sessionVacancies is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(sessionVacancies.body.toJson());
+        }
+        return response;
+    }
+
     // MCS [START] ###################################################################
 
     // #### GET USERID BY EMAIL OF THE MCS 
