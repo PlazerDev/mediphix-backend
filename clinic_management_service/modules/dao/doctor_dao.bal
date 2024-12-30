@@ -1,5 +1,4 @@
 import clinic_management_service.model;
-
 import ballerina/http;
 import ballerina/time;
 import ballerinax/mongodb;
