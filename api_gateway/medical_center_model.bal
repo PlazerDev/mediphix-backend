@@ -37,7 +37,7 @@ public type NewOpenSession record {
     string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
     string rangeStartTimestamp;
     string rangeEndTimestamp;
-    Repetition repetition;
+    NewRepetition repetition;
 };
 
 public type OpenSession record {

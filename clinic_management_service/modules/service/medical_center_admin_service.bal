@@ -16,13 +16,19 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
         vacancyOpenedTimestamp: time:utcToCivil(time:utcNow())
     };
     foreach model:NewOpenSession newOpenSession in newSessionVacancy.openSessions {
+        model:Repetition repetition = {
+            isRepeat: newOpenSession.repetition.isRepeat,
+            days: newOpenSession.repetition.days,
+            noRepeatDateTimestamp: check time:civilFromString(newOpenSession.repetition.noRepeatDateTimestamp ?: "2000-10-03T10:15:30.00+05:30")
+        };
+
         model:OpenSession openSession = {
             sessionId: 0,
             startTime: check time:civilFromString(newOpenSession.startTime),
             endTime: check time:civilFromString(newOpenSession.endTime),
             rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
             rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
-            repetition: newOpenSession.repetition
+            repetition: repetition
         };
         sessionVacancy.openSessions.push(openSession);
     }
