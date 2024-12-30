@@ -117,8 +117,9 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "appointments": 1,
         "patients": 1,
         "medicalCenterStaff": 1,
-        "fee": 1
+        "description": 1
     };
+
 
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults = check medicalCenterCollection->find(filter, {}, projection, model:MedicalCenter);
     if findResults is stream<model:MedicalCenter, error?> {
@@ -255,7 +256,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "appointments": [{"$toString": "$_id"}],
         "patients": [{"$toString": "$_id"}],
         "medicalCenterStaff": [{"$toString": "$_id"}],
-        "fee": 1
+        "description": 1
     };
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults = check medicalCenterCollection->find({}, {}, projection, model:MedicalCenter);
     if findResults is stream<model:MedicalCenter, error?> {
