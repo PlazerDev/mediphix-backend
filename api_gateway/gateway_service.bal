@@ -968,6 +968,24 @@ service /mca on httpListener {
         return errorResponse;
     }
 
+    @http:ResourceConfig
+    resource function get getSessionVacancies(string doctorId) returns http:Response|error {
+        http:Response|error response = check clinicServiceEP->/getSessionVacancies;
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while retrieving session vacancies",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }
+
 }
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
