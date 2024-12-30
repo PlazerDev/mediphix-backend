@@ -22,7 +22,7 @@ public type SessionVacancy record {
 };
 
 public type DoctorResponse record {
-    int responseId;
+    int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
     string noteToPatient;

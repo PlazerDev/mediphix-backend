@@ -389,11 +389,10 @@ service /doctor on httpListener {
             string userId = check getCachedUserId(userEmail, userType);
             http:Response|error? response = check clinicServiceEP->/getDoctorSessionVacancies/[userId];
             return response;
-
         } on fail {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving patient details",
+                details: "Error occurred while retrieving session vacancies",
                 timeStamp: time:utcNow()
             };
             http:Response errorResponse = new;
@@ -403,6 +402,43 @@ service /doctor on httpListener {
         }
     }
 
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function post respondToSessionVacancy(http:Request req, DoctorResponse doctorResponse) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            doctorResponse.doctorId = userId;
+
+            http:Response|error? response = check clinicServiceEP->/respondDoctorToSessionVacancy.post(doctorResponse);
+            if response is http:Response {
+                return response;
+            }
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while responding to session vacancy",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while responding to session vacancy",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
 
     @http:ResourceConfig {
         auth: {
@@ -978,7 +1014,7 @@ service /mca on httpListener {
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
 
-        http:Response|error response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
+        http:Response|error? response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
         if response is http:Response {
             return response;
         }

@@ -55,7 +55,7 @@ public type SessionVacancy record {
 
 //This model is used by doctor to respond to a session vacancy
 public type DoctorResponse record {
-    int responseId;
+    int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
     string noteToPatient;
