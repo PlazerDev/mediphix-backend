@@ -1,5 +1,7 @@
 import clinic_management_service.model;
+
 import ballerina/http;
+import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
@@ -120,7 +122,6 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "description": 1
     };
 
-
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults = check medicalCenterCollection->find(filter, {}, projection, model:MedicalCenter);
     if findResults is stream<model:MedicalCenter, error?> {
         model:MedicalCenter[]|error medicalCenters = from model:MedicalCenter mc in findResults
@@ -188,6 +189,62 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
     }
 
     return sessionVacancies;
+}
+
+public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("doctor_response");
+    int|model:InternalError|error nextDoctorResponseId = getNextDoctorResponseId();
+    if nextDoctorResponseId is int {
+        response.responseId = nextDoctorResponseId;
+    } else if nextDoctorResponseId is model:InternalError {
+        return nextDoctorResponseId;
+    } else {
+        return error("Failed to get next doctor response id");
+    }
+    check sessionVacancyCollection->insertOne(response);
+    return http:CREATED;
+}
+
+public function getNextDoctorResponseId() returns int|model:InternalError|error {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorResponseCollection = check mediphixDb->getCollection("counters");
+
+    map<json> filter = {"_id": "doctorResponseId"};
+
+    mongodb:Update update = {
+        inc: {"sequenceValue": 1}
+    };
+
+    mongodb:UpdateOptions options = {upsert: true};
+
+    mongodb:UpdateResult|error updateResult = check doctorResponseCollection->updateOne(filter, update, options);
+
+    if updateResult is mongodb:UpdateResult {
+        log:printInfo("Doctor response ID update successful.");
+    } else {
+        log:printError("Doctor response ID update failed.", updateResult);
+        model:ErrorDetails errorDetails = {
+            message: "Failed to update the doctor response ID counter",
+            details: "doctorResponse/counter",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
+    model:Counter|error? findResults = check doctorResponseCollection->findOne(filter, {}, (), model:Counter);
+    if findResults is model:Counter {
+        return findResults.sequenceValue;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find the doctor response ID counter",
+            details: "doctorResponse/counter",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
 }
 
 public function getDoctorDetails(string id) returns error|model:Doctor|model:InternalError {

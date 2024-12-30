@@ -30,8 +30,9 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
     error|model:Doctor|model:InternalError result = check dao:getDoctorDetails(id);
     return result;
 }
+
 public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
-     http:Created|error? result = check dao:setDoctorJoinRequest(req);
+    http:Created|error? result = check dao:setDoctorJoinRequest(req);
     return result;
 }
 
@@ -55,6 +56,20 @@ public function getMyMedicalCenters(string id) returns error|model:MedicalCenter
 
 public function getDoctorSessionVacancies(string doctorId) returns error|model:SessionVacancy[]|model:InternalError {
     model:SessionVacancy[]|model:InternalError result = check dao:getDoctorSessionVacancies(doctorId);
+    return result;
+}
+
+public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
+    http:Created|model:InternalError|error? result = check dao:respondDoctorToSessionVacancy(response);
+    if (result is error?) {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to respond to session vacancy. Please retry!",
+            details: "doctor/respondDoctorToSessionVacancy",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
     return result;
 }
 
@@ -196,7 +211,7 @@ public function getMedia(string userType, string uploadType, string email) retur
     return objectStreamResult;
 }
 
-public function getMediaLink(string userType, string uploadType, string email) returns string|error?{
+public function getMediaLink(string userType, string uploadType, string email) returns string|error? {
     string emailHead = getEmailHead(email);
     string fileName = "other";
     string link = "";
