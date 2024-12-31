@@ -209,3 +209,12 @@ public type TempMedicalRecord record {|
            |}? reportDetails;
         |}? labReport;
     |};
+
+    
+    // Create a record type for the projected fields
+    public type ProjectedAppointment record {
+        string _id;
+        string sessionId;
+        int timeSlot;
+        int queueNumber;
+    };
