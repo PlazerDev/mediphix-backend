@@ -371,7 +371,7 @@ public function doctorRegistration(model:DoctorSignupData data) returns ()|error
     }
 }
 
-public function registerMedicalCenter(model:medicalCenterSignupData data) returns error? {
+public function registerMedicalCenter(model:MedicalCenterSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
@@ -585,7 +585,7 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
 
 }
 
-public function registerMedicalCenterReceptionist(model:medicalCenterReceptionistSignupData data) returns error? {
+public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionistSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterReceptionistCollection = check mediphixDb->getCollection("medical_center_receptionist");
@@ -682,7 +682,7 @@ public function registerMedicalCenterReceptionist(model:medicalCenterReceptionis
 
 }
 
-public function registerMedicalCenterLabStaff(model:medicalCenterLabStaffSignupData data) returns error? {
+public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterLabStaffCollection = check mediphixDb->getCollection("medical_center_lab_staff");
