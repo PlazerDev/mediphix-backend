@@ -918,6 +918,7 @@ service /mcs on httpListener {
             return errorResponse;
         }
     }
+
 }
 
 // MCS [END] .......................................................................................
@@ -1002,7 +1003,6 @@ service /registration on httpListener {
         return errorResponse;
     }
 }
-
 //Medical center admin
 @http:ServiceConfig {
     cors: {
@@ -1014,7 +1014,9 @@ service /mca on httpListener {
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
 
+
         http:Response|error? response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
+
         if response is http:Response {
             return response;
         }

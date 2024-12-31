@@ -4,7 +4,6 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
-import ballerina/io;
 
 configurable string username = ?;
 configurable string password = ?;
@@ -207,62 +206,134 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
-
-
 public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     returns http:Ok|model:InternalError|model:NotFoundError|error? {
 
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
     int aptNumber = medicalRecord.aptNumber;
-    map<json> filter = {"aptNumber": aptNumber};
-    io:println("Filter for update: " + filter.toString());
+
+    log:printInfo(string `Starting medical record update for appointment ${aptNumber}`);
+
+    map<json> appointmentFilter = {"aptNumber": aptNumber};
+    // Define projection to only retrieve needed fields
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "sessionId": 1,
+        "timeSlot": 1,
+        "queueNumber": 1
+    };
+
+    log:printInfo(string `Using appointment filter: ${appointmentFilter.toString()}`);
+
+    // Use projection in findOne
+    model:ProjectedAppointment|error? appointmentDoc = appointmentCollection->
+        findOne(appointmentFilter, {}, projection, model:ProjectedAppointment);
+
+    if appointmentDoc is error {
+        log:printError(string `Error retrieving appointment document: ${appointmentDoc.message()}`);
+        model:ErrorDetails errorDetails = {
+            message: "Error retrieving appointment details",
+            details: string `Failed to retrieve appointment/${aptNumber}`,
+            timeStamp: time:utcNow()
+        };
+        return <model:InternalError>{body: errorDetails};
+    }
+
+    if appointmentDoc is () {
+        log:printError(string `No appointment found for aptNumber: ${aptNumber}`);
+        model:ErrorDetails errorDetails = {
+            message: "Appointment not found",
+            details: string `appointment/${aptNumber}`,
+            timeStamp: time:utcNow()
+        };
+        return <model:NotFoundError>{body: errorDetails};
+    }
+
+    log:printInfo(string `Successfully retrieved appointment document: ${appointmentDoc.toString()}`);
 
     json medicalRecordJson = medicalRecord.toJson();
+    mongodb:Update appointmentUpdate = {
+        "set": {
+            "medicalRecord": medicalRecordJson,
+            "aptStatus": "OVER"
+        }
+    };
 
-    io:println("medicalRecordJson: " + medicalRecordJson.toJsonString());
+    mongodb:UpdateResult|error appointmentResult = appointmentCollection->updateOne(
+        appointmentFilter,
+        appointmentUpdate
+    );
 
-    mongodb:Update update = {"set": {"medicalRecord": medicalRecordJson}};
-    io:println("Update object: " + update.toJsonString());
+    if (appointmentResult is error) {
+        log:printError("Error updating appointment", appointmentResult);
+        model:ErrorDetails errorDetails = {
+            message: "Error updating appointment",
+            details: string `appointment/${aptNumber}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
 
-    // Define options for the update operation
-    mongodb:UpdateOptions options = {};
+    string sessionId = appointmentDoc.sessionId;
+    int timeSlot = appointmentDoc.timeSlot;
+    int queueNumber = appointmentDoc.queueNumber;
 
-    mongodb:UpdateResult|error result = appointmentCollection->updateOne(filter, update, options);
- 
-    if (result is mongodb:UpdateResult) {
-        if (result.matchedCount == 0) {
-            log:printError("No appointment found for the given aptNumber: " + aptNumber.toString());
+    map<json> sessionFilter = {
+        "_id": {"$oid": sessionId},
+        "timeSlot.slotId": timeSlot
+    };
+    mongodb:Update sessionUpdate = {
+        "push": {
+            "timeSlot.$.queue.queueOperations.finished": queueNumber
+        },
+        "set": {
+            "timeSlot.$.queue.queueOperations.ongoing": -1
+        }
+    };
+
+    mongodb:UpdateResult|error sessionResult = sessionCollection->updateOne(
+        sessionFilter,
+        sessionUpdate
+    );
+
+    if (sessionResult is error) {
+        log:printError("Error updating session", sessionResult);
+        model:ErrorDetails errorDetails = {
+            message: "Error updating session",
+            details: string `session/${sessionId}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
+    if (appointmentResult is mongodb:UpdateResult && sessionResult is mongodb:UpdateResult) {
+        if (appointmentResult.matchedCount == 0 || sessionResult.matchedCount == 0) {
+            log:printError("No matching documents found for update");
             model:ErrorDetails errorDetails = {
-                message: "Appointment not found for the given aptNumber",
+                message: "No matching documents found for update",
                 details: string `appointment/${aptNumber}`,
                 timeStamp: time:utcNow()
             };
             model:NotFoundError notFoundError = {body: errorDetails};
             return notFoundError;
-        } else if (result.modifiedCount == 0) {
-            log:printError("Failed to update the medical record for aptNumber: " + aptNumber.toString());
+        } else if (appointmentResult.modifiedCount == 0 || sessionResult.modifiedCount == 0) {
+            log:printError("Failed to update documents");
             model:ErrorDetails errorDetails = {
-                message: "Failed to update the medical record",
+                message: "Failed to update documents",
                 details: string `appointment/${aptNumber}`,
                 timeStamp: time:utcNow()
             };
             model:InternalError internalError = {body: errorDetails};
             return internalError;
         }
-        log:printInfo("Successfully updated the medical record for aptNumber: " + aptNumber.toString());
+
+        log:printInfo("Successfully updated both appointment and session documents");
         return http:OK;
-    } else {
-        io:println("Error occurred while updating the medical record", result);
-        
-        model:ErrorDetails errorDetails = {
-            message: "An error occurred while updating the medical record",
-            details: string `appointment/${aptNumber}`,
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
     }
 }
 

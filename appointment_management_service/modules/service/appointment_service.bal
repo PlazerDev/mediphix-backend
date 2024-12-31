@@ -269,7 +269,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
     if updateResult is http:Ok {
         return http:OK;
         
-        // http:Ok|model:InternalError|model:NotFoundError|error? appendQueueNoResult = dao:appendQueueNoToFinishedArray(aptNumber);
+        // 
         // if appendQueueNoResult is http:Ok {
         //     return http:OK;
         // }
