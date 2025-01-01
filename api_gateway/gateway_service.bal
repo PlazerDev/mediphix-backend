@@ -541,25 +541,6 @@ service /doctor on httpListener {
         }
     }
 
-    //submit patient medical record
-    resource function post submitPatientRecord(PatientRecord patientRecord) returns http:Response|error? {
-        http:Response|error? response = check clinicServiceEP->/submitPatientRecord.post(patientRecord);
-
-        if (response is http:Response) {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while creating appointment",
-            timeStamp: time:utcNow()
-        };
-        InternalError internalError = {body: errorDetails};
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(internalError.body.toJson());
-        return errorResponse;
-    }
-
     resource function patch appointments/[int aptNumber]/medicalRecord(http:Request request)
     returns http:Response|error {
 
