@@ -144,6 +144,7 @@ public type AppointmentRecord record {
     boolean isPayed;
     int queueNumber;
     MedicalRecord medicalRecord;
+    time:Date paymentTimeStamp;
 };
 
 public type MedicalRecord record {
