@@ -73,44 +73,6 @@ public function respondDoctorToSessionVacancy(model:DoctorResponse response) ret
     return result;
 }
 
-public function submitPatientRecord(model:PatientRecord patientRecord) returns http:Created|model:InternalError|error {
-
-    string refNumber = patientRecord.appointmentData.refNumber;
-    string|model:InternalError|error patientIdResult = dao:getPatientIdByRefNumber(refNumber);
-
-    string patientId;
-    if patientIdResult is string {
-        patientId = patientIdResult;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Failed to retrieve patient ID. Please retry!",
-            details: "record_book/patientId",
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-
-    map<anydata> recordToStore = {
-        patientId: patientId,
-        patientRecord: patientRecord
-    };
-
-    http:Created|error? storeResult = dao:createPatientRecord(recordToStore);
-    if storeResult is http:Created {
-        return http:CREATED;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Failed to store patient record. Please retry!",
-            details: "record_book/patientRecord",
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-
-}
-
 public function uploadMedia(string userType, string uploadType, string email, byte[] fileBytes, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
     string emailHead = getEmailHead(email);
     string fileNameNew = "other";

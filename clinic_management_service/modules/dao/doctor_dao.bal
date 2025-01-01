@@ -363,14 +363,6 @@ public function getPatientIdByRefNumber(string refNumber)
     }
 }
 
-public function createPatientRecord(map<anydata> recordToStore) returns http:Created|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection recordBookCollection = check mediphixDb->getCollection("record_book");
-
-    check recordBookCollection->insertOne(recordToStore);
-    return http:CREATED;
-}
-
 public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorRequestCollection = check mediphixDb->getCollection("doctor_join_request_to_mc");
