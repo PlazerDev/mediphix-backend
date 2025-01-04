@@ -4,6 +4,7 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 configurable string username = ?;
 configurable string password = ?;
@@ -128,6 +129,48 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         return userNotFound;
     }
 
+}
+
+public function getSessionDetailsByDoctorId(string doctorId) returns 
+model:Session[]|model:InternalError|model:NotFoundError|error? {
+    
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+
+    map<json> filter = {"doctorId": {"$oid": doctorId}};
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "timeSlot": [],
+        "doctorId": 1,
+        "medicalCenterId": 1,
+        "aptCategories": [],       
+        "payment": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1    
+    };
+
+    stream<model:Session, error?> findResults = 
+    check sessionCollection->find(filter, {}, projection, model:Session);
+
+    model:Session[]|error sessions = from model:Session session in findResults
+        select session;
+    if sessions is model:Session[] {
+        io:println(sessions);
+        return sessions;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find sessions for the doctor",
+            details: string `session/${doctorId}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
 }
 
 public function getAppointmentByMobileAndNumber(string mobile, string appointmentNumber) returns model:Appointment|model:InternalError|model:NotFoundError|error {
