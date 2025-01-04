@@ -5,8 +5,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError|error {
-    // Get the next appointment number
+public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Created|model:InternalError|error? {
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;
 
@@ -22,42 +21,36 @@ public function createAppointment(model:NewAppointment newAppointment) returns h
         return internalError;
     }
 
-    model:AppointmentStatus appointmentStatus = "ACTIVE";
-
-    if (newAppointment.isPaid) {
-        appointmentStatus = "PAID";
-    }
-
-    // Create a new appointment
-    model:Appointment appointment = {
-        appointmentNumber: newAppointmentNumber,
-        doctorId: newAppointment.doctorId,
-        patientId: newAppointment.patientId,
-        sessionId: newAppointment.sessionId,
-        medicalRecordId: "",
-        category: newAppointment.category,
-        medicalCenterId: newAppointment.medicalCenterId,
-        medicalCenterName: newAppointment.medicalCenterName,
-        isPaid: newAppointment.isPaid,
-        payment: newAppointment.payment,
-        status: appointmentStatus,
-        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00+05:30
-        createdTime: time:utcToCivil(time:utcNow()),
-        lastModifiedTime: time:utcToCivil(time:utcNow())
+    model:AppointmentRecord appointmentRecord = {
+        aptNumber: newAppointmentNumber,
+        sessionId: newAppointmentRecord.sessionId,
+        timeSlot: newAppointmentRecord.timeSlot,
+        category: newAppointmentRecord.category,
+        patient: newAppointmentRecord.patient,
+        queueNumber: newAppointmentRecord.queueNumber, 
+        doctorId: newAppointmentRecord.doctorId,
+        doctorName: newAppointmentRecord.doctorName,
+        medicalCenterId: newAppointmentRecord.medicalCenterId,
+        medicalCenterName: newAppointmentRecord.medicalCenterName,
+        payment: newAppointmentRecord.payment,
+        aptCreatedTimestamp: time:utcToCivil(time:utcNow()),
+        aptStatus: "ACTIVE",
+        isPayed: false      
     };
 
-    http:Created|error? appointmentResult = dao:createAppointment(appointment);
-    if appointmentResult is http:Created {
-        return http:CREATED;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry!",
-            details: string `appointment/${newAppointmentNumber}`,
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
+    http:Created|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
+    if (appointmentResult is http:Created) {
+        return appointmentResult;
     }
+
+    model:ErrorDetails errorDetails = {
+        message: "Unexpected internal error occurred, please retry!",
+        details: "Appointment",
+        timeStamp: time:utcNow()
+    };
+
+    model:InternalError internalError = {body: errorDetails};
+    return internalError;
 }
 
 public function getAppointmentsByUserId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
@@ -72,7 +65,6 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         };
         return valueError;
     }
-
 
     model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByUserId(userId);
     if appointments is model:Appointment[] {
@@ -106,7 +98,6 @@ public function getAppointmentsByDoctorId(string userId) returns model:Appointme
         };
         return valueError;
     }
-
 
     model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByDoctorId(userId);
     if appointments is model:Appointment[] {
@@ -213,7 +204,7 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
-public function updateMedicalRecord(int aptNumber, model:TempMedicalRecord tempRecord) 
+public function updateMedicalRecord(int aptNumber, model:TempMedicalRecord tempRecord)
 returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
 
     // Create final MedicalRecord with converted timestamps
@@ -226,7 +217,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
         treatments: tempRecord.treatments,
         noteToPatient: tempRecord.noteToPatient,
         isLabReportRequired: tempRecord.isLabReportRequired,
-        labReport: () 
+        labReport: ()
     };
     // Handle optional labReport and its optional reportDetails
     // if tempRecord.labReport != () {
@@ -254,7 +245,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
     //     medicalRecord.labReport = labReport;
     // }
 
-   if tempRecord.aptNumber != aptNumber {
+    if tempRecord.aptNumber != aptNumber {
         model:ErrorDetails errorDetails = {
             message: "Invalid appointment number",
             details: "Appointment number in URL must match the medical record",
@@ -268,7 +259,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
 
     if updateResult is http:Ok {
         return http:OK;
-        
+
         // 
         // if appendQueueNoResult is http:Ok {
         //     return http:OK;
@@ -285,7 +276,7 @@ returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
         //     model:InternalError internalError = {body: errorDetails};
         //     return internalError;
         // }
-        
+
     } else if updateResult is model:InternalError|model:NotFoundError {
         return updateResult;
     } else {

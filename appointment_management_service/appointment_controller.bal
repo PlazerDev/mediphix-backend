@@ -9,19 +9,21 @@ import ballerina/http;
     }
 }
 service / on new http:Listener(9091) {
-    resource function post appointment(model:NewAppointment newAppointment) returns http:Response|error {
-        http:Created|model:InternalError appointmentCreationStatus = check 'service:createAppointment(newAppointment);
+
+    resource function post createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Response {
+        http:Created|model:InternalError|error? result = 'service:createAppointmentRecord(newAppointmentRecord);
+
         http:Response response = new;
-
-        if appointmentCreationStatus is http:Created {
-            response.statusCode = 201;
-            response.setJsonPayload({message: "Appointment created successfully"});
-            return response;
-        } else if appointmentCreationStatus is model:InternalError {
+        if (result is http:Created) {
+            response.statusCode = 200;
+            response.setJsonPayload({"message": "Appointment created successfully"});
+        } else if (result is model:InternalError) {
             response.statusCode = 500;
-            response.setJsonPayload(appointmentCreationStatus.body.toJson());
+            response.setJsonPayload(result.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({"message": "Internal server error!"});
         }
-
         return response;
     }
 
@@ -48,7 +50,7 @@ service / on new http:Listener(9091) {
 
         return response;
     }
- 
+
     resource function get appointmentsByDoctorId/[string userId]() returns http:Response|error {
         model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByDoctorId(userId);
 
@@ -72,6 +74,7 @@ service / on new http:Listener(9091) {
 
         return response;
     }
+
     resource function put appointment/status/[string mobile]/[int appointmentNumber]/[model:AppointmentStatus status]() returns http:Response|error {
         http:Ok|model:InternalError|model:ValueError|model:NotFoundError|error appointmentUpdateStatus = 'service:updateAppointmentStatus(mobile, appointmentNumber, status);
 
@@ -82,7 +85,7 @@ service / on new http:Listener(9091) {
         } else if appointmentUpdateStatus is model:ValueError {
             response.statusCode = 406;
             response.setJsonPayload(appointmentUpdateStatus.body.toJson());
-        }else if appointmentUpdateStatus is model:NotFoundError {
+        } else if appointmentUpdateStatus is model:NotFoundError {
             response.statusCode = 404;
             response.setJsonPayload(appointmentUpdateStatus.body.toJson());
         } else if appointmentUpdateStatus is model:InternalError {
@@ -97,7 +100,7 @@ service / on new http:Listener(9091) {
     }
 
     resource function patch appointments/[int aptNumber]/medicalRecord(model:TempMedicalRecord tempRecord)
-     returns http:Response|error {
+    returns http:Response|error {
         http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error? result = 'service:updateMedicalRecord(aptNumber, tempRecord);
 
         http:Response response = new;

@@ -10,6 +10,3 @@ public type MedicalCenterId record {
     string id;
 
 };
-
-
-
