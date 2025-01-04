@@ -193,8 +193,24 @@ service /patient on httpListener {
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(errorDetails.toJson());
         return errorResponse;
-    }   
+    } 
 
+    resource function get appointment/[string doctorId]/sessiondetails(http:Request req) returns http:Response|error? {
+         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }  
 }
 
 @http:ServiceConfig {

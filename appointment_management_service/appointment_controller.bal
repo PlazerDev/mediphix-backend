@@ -99,4 +99,29 @@ service / on new http:Listener(9091) {
 
         return response;
     }
+
+    resource function get getSessionDetailsByDoctorId/[string doctorId]() returns http:Response|error {
+        model:Session[]|model:InternalError|model:NotFoundError|model:ValueError|error?
+        sessions = 'service:getSessionDetailsByDoctorId(doctorId);
+
+        http:Response response = new;
+        if sessions is model:Session[] {
+            response.statusCode = 200;
+            response.setJsonPayload(sessions.toJson());
+        } else if sessions is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(sessions.body.toJson());
+        } else if sessions is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(sessions.body.toJson());
+        } else if sessions is model:ValueError {
+            response.statusCode = 406;
+            response.setJsonPayload(sessions.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error"});
+        }
+
+        return response;
+    }
 }
