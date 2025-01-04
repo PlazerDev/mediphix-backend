@@ -86,7 +86,7 @@ public function getNextAppointmentNumber() returns int|model:InternalError|error
 
 }
 
-public function getAppointmentsByUserId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|error? {
+public function getAppointmentsByUserId(string userId) returns model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
@@ -94,71 +94,33 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
     map<json> projection = {
         "_id": {"$toString": "$_id"},
-        "appointmentNumber": 1,
-        "doctorId": 1,
-        "patientId": 1,
+        "aptNumber": 1,
         "sessionId": 1,
+        "timeSlot": 1,
         "category": 1,
+        "doctorId": 1,
+        "doctorName": 1,
         "medicalCenterId": 1,
         "medicalCenterName": 1,
-        "isPaid": 1,
         "payment": 1,
-        "status": 1,
-        "appointmentTime": 1,
-        "createdTime": 1,
-        "lastModifiedTime": 1
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patient": 1,
+        "isPaid": 1,
+        "queueNumber": 1,
+        "medicalRecord": 1,
+        "paymentTimeStamp": 1
     };
 
-    stream<model:Appointment, error?> findResults = check appointmentCollection->find(filter, {}, projection, model:Appointment);
+    stream<model:AppointmentRecord, error?> findResults = check appointmentCollection->find(filter, {}, projection, model:AppointmentRecord);
 
-    model:Appointment[]|error appointments = from model:Appointment appointment in findResults
+    model:AppointmentRecord[]|error appointments = from model:AppointmentRecord appointment in findResults
         select appointment;
-    if appointments is model:Appointment[] {
+    if appointments is model:AppointmentRecord[] {
         return appointments;
     } else {
         model:ErrorDetails errorDetails = {
-            message: "Failed to find appointments for the given mobile number",
-            details: string `appointment/${userId}`,
-            timeStamp: time:utcNow()
-        };
-        model:NotFoundError userNotFound = {body: errorDetails};
-        return userNotFound;
-    }
-
-}
-
-public function getAppointmentsByDoctorId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
-
-    map<json> filter = {"doctorId": userId};
-
-    map<json> projection = {
-        "_id": {"$toString": "$_id"},
-        "appointmentNumber": 1,
-        "doctorId": 1,
-        "patientId": 1,
-        "sessionId": 1,
-        "category": 1,
-        "medicalCenterId": 1,
-        "medicalCenterName": 1,
-        "isPaid": 1,
-        "payment": 1,
-        "status": 1,
-        "appointmentTime": 1,
-        "createdTime": 1,
-        "lastModifiedTime": 1
-    };
-
-    stream<model:Appointment, error?> findResults = check appointmentCollection->find(filter, {}, projection, model:Appointment);
-
-    model:Appointment[]|error appointments = from model:Appointment appointment in findResults
-        select appointment;
-    if appointments is model:Appointment[] {
-        return appointments;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Failed to find appointments for the given doctor",
+            message: "Failed to find appointments for the user",
             details: string `appointment/${userId}`,
             timeStamp: time:utcNow()
         };

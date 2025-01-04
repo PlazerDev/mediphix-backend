@@ -28,34 +28,10 @@ service / on new http:Listener(9091) {
     }
 
     resource function get appointments/[string userId]() returns http:Response|error {
-        model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByUserId(userId);
+        model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByUserId(userId);
 
         http:Response response = new;
-        if appointments is model:Appointment[] {
-            response.statusCode = 200;
-            response.setJsonPayload(appointments.toJson());
-        } else if appointments is model:InternalError {
-            response.statusCode = 500;
-            response.setJsonPayload(appointments.body.toJson());
-        } else if appointments is model:NotFoundError {
-            response.statusCode = 404;
-            response.setJsonPayload(appointments.body.toJson());
-        } else if appointments is model:ValueError {
-            response.statusCode = 406;
-            response.setJsonPayload(appointments.body.toJson());
-        } else {
-            response.statusCode = 500;
-            response.setJsonPayload({message: "Internal server error"});
-        }
-
-        return response;
-    }
-
-    resource function get appointmentsByDoctorId/[string userId]() returns http:Response|error {
-        model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByDoctorId(userId);
-
-        http:Response response = new;
-        if appointments is model:Appointment[] {
+        if appointments is model:AppointmentRecord[] {
             response.statusCode = 200;
             response.setJsonPayload(appointments.toJson());
         } else if appointments is model:InternalError {

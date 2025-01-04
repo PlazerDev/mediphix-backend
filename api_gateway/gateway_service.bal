@@ -151,17 +151,12 @@ service /patient on httpListener {
         return response;
     }
 
-    // @http:ResourceConfig {
-    //     auth: {
-    //         scopes: ["insert_appointment"]
-    //     }
-    // }
     resource function get appointments(http:Request req) returns http:Response|error? {
         do {
             string userEmail = check getUserEmailByJWT(req);
             string userType = "patient";
             string userId = check getCachedUserId(userEmail, userType);
-            Appointment[] appointments = check getAppointments(userId) ?: [];
+            AppointmentRecord[] appointments = check getAppointments(userId) ?: [];
 
             http:Response response = new;
             response.setJsonPayload(appointments.toJson());
@@ -590,11 +585,11 @@ service /doctor on httpListener {
             string doctorEmail = check getUserEmailByJWT(req);
             string userType = "doctor";
             string doctorId = check getCachedUserId(doctorEmail, userType);
-            Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
+            AppointmentRecord[] allAppointments = check getAppointments(doctorId) ?: [];
 
             time:Utc currentTime = time:utcNow();
-            Appointment[] previousAppointments = from Appointment appointment in allAppointments
-                let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.appointmentTime.toString())
+            AppointmentRecord[] previousAppointments = from AppointmentRecord appointment in allAppointments
+                let time:Utc|error appointmentUtcResult = time:utcFromString(appointment.aptCreatedTimestamp.toString())
                 where appointmentUtcResult is time:Utc && appointmentUtcResult < currentTime
                 select appointment;
 
@@ -622,14 +617,14 @@ service /doctor on httpListener {
             string doctorEmail = check getUserEmailByJWT(req);
             string userType = "doctor";
             string doctorId = check getCachedUserId(doctorEmail, userType);
-            Appointment[] allAppointments = check getAppointmentsForDoctor(doctorId) ?: [];
+            AppointmentRecord[] allAppointments = check getAppointments(doctorId) ?: [];
             io:println("Fetched all appointments: ", allAppointments.toString());
 
             time:Utc currentUtcTime = time:utcNow();
 
-            Appointment[] upcomingAppointments = [];
-            foreach Appointment appointment in allAppointments {
-                string appointmentTimeStr = appointment.appointmentTime.toString();
+            AppointmentRecord[] upcomingAppointments = [];
+            foreach AppointmentRecord appointment in allAppointments {
+                string appointmentTimeStr = appointment.aptCreatedTimestamp.toString();
                 io:println("appointmentTimeStr: ", appointmentTimeStr);
                 time:Utc parsedTime = check time:utcFromString(appointmentTimeStr);
                 io:println("parsedTime: ", parsedTime);
@@ -1075,13 +1070,8 @@ public function getPatientData(string userId) returns Patient|error {
     return patient;
 }
 
-public function getAppointments(string userId) returns Appointment[]|error? {
-    Appointment[] appointments = check appointmentServiceEP->/appointments/[userId];
-    return appointments;
-}
-
-public function getAppointmentsForDoctor(string userId) returns Appointment[]|error? {
-    Appointment[] appointments = check appointmentServiceEP->/appointmentsByDoctorId/[userId];
+public function getAppointments(string userId) returns AppointmentRecord[]|error? {
+    AppointmentRecord[] appointments = check appointmentServiceEP->/appointments/[userId];
     return appointments;
 }
 

@@ -53,7 +53,7 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
     return internalError;
 }
 
-public function getAppointmentsByUserId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
+public function getAppointmentsByUserId(string userId) returns model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error {
     if (userId.length() === 0) {
         model:ErrorDetails errorDetails = {
             message: "Please provide a valid mobile number",
@@ -66,41 +66,8 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         return valueError;
     }
 
-    model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByUserId(userId);
-    if appointments is model:Appointment[] {
-        return appointments;
-    } else if appointments is model:InternalError {
-        return appointments;
-    } else if appointments is model:NotFoundError {
-        return appointments;
-    } else {
-        io:println(appointments);
-        model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry!",
-            details: string `appointment/${userId}`,
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-
-}
-
-public function getAppointmentsByDoctorId(string userId) returns model:Appointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
-    if (userId.length() === 0) {
-        model:ErrorDetails errorDetails = {
-            message: "Please provide a valid mobile number",
-            details: string `appointment/${userId}`,
-            timeStamp: time:utcNow()
-        };
-        model:ValueError valueError = {
-            body: errorDetails
-        };
-        return valueError;
-    }
-
-    model:Appointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByDoctorId(userId);
-    if appointments is model:Appointment[] {
+    model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByUserId(userId);
+    if appointments is model:AppointmentRecord[] {
         return appointments;
     } else if appointments is model:InternalError {
         return appointments;
