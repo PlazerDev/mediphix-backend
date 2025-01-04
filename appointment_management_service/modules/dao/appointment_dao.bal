@@ -12,11 +12,32 @@ configurable string cluster = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
-public function createAppointmentRecord(model:AppointmentRecord  appointmentRecord) returns http:Created|error? {
+public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
-   check appointmentCollection->insertOne(appointmentRecord);
+    check appointmentCollection->insertOne(appointmentRecord);
+
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+
+    map<json> sessionFilter = {
+        "_id": {"$oid": appointmentRecord.sessionId},
+        "timeSlot.slotId": appointmentRecord.timeSlot
+    };
+    mongodb:Update sessionUpdate = {
+        "push": {
+            "timeSlot.$.queue.appointments": appointmentRecord.aptNumber
+        }
+    };
+
+    mongodb:UpdateResult sessionResult = check sessionCollection->updateOne(
+        sessionFilter,
+        sessionUpdate
+    );
+
+    if (sessionResult.modifiedCount == 0) {
+        return error("Failed to update session. No matching session found.");
+    }
 
     return http:CREATED;
 }
