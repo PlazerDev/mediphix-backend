@@ -19,6 +19,15 @@ public function createAppointment(model:Appointment appointment) returns http:Cr
     return http:CREATED;
 }
 
+public function createAppointmentRecord(model:AppointmentRecord  appointmentRecord) returns http:Created|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+   check appointmentCollection->insertOne(appointmentRecord);
+
+    return http:CREATED;
+}
+
 public function getNextAppointmentNumber() returns int|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection counterCollection = check mediphixDb->getCollection("counters");

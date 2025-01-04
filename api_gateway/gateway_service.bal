@@ -151,11 +151,11 @@ service /patient on httpListener {
         return response;
     }
 
-    @http:ResourceConfig {
-        auth: {
-            scopes: ["insert_appointment"]
-        }
-    }
+    // @http:ResourceConfig {
+    //     auth: {
+    //         scopes: ["insert_appointment"]
+    //     }
+    // }
     resource function get appointments(http:Request req) returns http:Response|error? {
         do {
             string userEmail = check getUserEmailByJWT(req);
@@ -199,6 +199,26 @@ service /patient on httpListener {
         errorResponse.setJsonPayload(internalError.body.toJson());
         return errorResponse;
     }
+
+    
+    resource function post createAppointment(NewAppointmentRecord newAppointmentRecord) returns http:Response|error {
+   
+        http:Response|error? response = check appointmentServiceEP->/createAppointmentRecord.post(newAppointmentRecord);
+
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while creating session vacancy",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
+    }   
 
 }
 
