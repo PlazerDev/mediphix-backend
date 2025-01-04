@@ -5,61 +5,6 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointment(model:NewAppointment newAppointment) returns http:Created|model:InternalError|error {
-    // Get the next appointment number
-    int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
-    int newAppointmentNumber = 0;
-
-    if nextAppointmentNumber is int {
-        newAppointmentNumber = nextAppointmentNumber;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry!",
-            details: "appointment/counter",
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-
-    model:AppointmentStatus appointmentStatus = "ACTIVE";
-
-    if (newAppointment.isPaid) {
-        appointmentStatus = "PAID";
-    }
-
-    // Create a new appointment
-    model:Appointment appointment = {
-        appointmentNumber: newAppointmentNumber,
-        doctorId: newAppointment.doctorId,
-        patientId: newAppointment.patientId,
-        sessionId: newAppointment.sessionId,
-        medicalRecordId: "",
-        category: newAppointment.category,
-        medicalCenterId: newAppointment.medicalCenterId,
-        medicalCenterName: newAppointment.medicalCenterName,
-        isPaid: newAppointment.isPaid,
-        payment: newAppointment.payment,
-        status: appointmentStatus,
-        appointmentTime: check time:civilFromString(newAppointment.appointmentTime), // accepted format -> 2024-10-03T10:15:30.00+05:30
-        createdTime: time:utcToCivil(time:utcNow()),
-        lastModifiedTime: time:utcToCivil(time:utcNow())
-    };
-
-    http:Created|error? appointmentResult = dao:createAppointment(appointment);
-    if appointmentResult is http:Created {
-        return http:CREATED;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Unexpected internal error occurred, please retry!",
-            details: string `appointment/${newAppointmentNumber}`,
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-}
-
 public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Created|model:InternalError|error? {
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;

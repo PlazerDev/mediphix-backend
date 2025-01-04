@@ -12,13 +12,6 @@ configurable string cluster = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
-public function createAppointment(model:Appointment appointment) returns http:Created|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
-    check appointmentCollection->insertOne(appointment);
-    return http:CREATED;
-}
-
 public function createAppointmentRecord(model:AppointmentRecord  appointmentRecord) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
