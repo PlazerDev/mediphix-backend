@@ -466,22 +466,24 @@ public function mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, str
                             if nextPatientQueueNumber is null {
                                 // case :: no avaiable next patient , this will never be true, cuz nextpatient1 is there 
                             } else {
-                                if nextPatientQueueNumber == timeSlotResult[slotInStarted].queue.queueOperations.nextPatient1 {
+
+                                if nextPatientQueueNumber == timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 {
                                     // case :: next patient 1 is setted automatically 
                                     nextPatientQueueNumber = getNextAvailablePatientQueueNumber(timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 + 1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
 
                                     if nextPatientQueueNumber is null {
                                         // case :: no any avaiable appointments
                                         // update :: set next patient 2 to -1 
-                                         timeSlotResult[slotInStarted].queue.queueOperations.nextPatient2 = -1;    
+                                         timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = -1;    
                                     }else {
                                         // case :: there is avaialble appointments
                                         // update :: set next patient 2 to avaiable patient 
-                                        timeSlotResult[slotInStarted].queue.queueOperations.nextPatient2 = nextPatientQueueNumber;
+                                        // TODO :: issue in here 
+                                        timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = nextPatientQueueNumber;
                                     }
                                 }else {
                                     // case :: next patient 1 is setted mannualy
-                                    timeSlotResult[slotInStarted].queue.queueOperations.nextPatient2 = nextPatientQueueNumber;
+                                    timeSlotResult[slotInStarted -1].queue.queueOperations.nextPatient2 = nextPatientQueueNumber;
                                 }
                             }
 
