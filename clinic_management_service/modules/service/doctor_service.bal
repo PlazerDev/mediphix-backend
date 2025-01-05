@@ -30,8 +30,9 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
     error|model:Doctor|model:InternalError result = check dao:getDoctorDetails(id);
     return result;
 }
+
 public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
-     http:Created|error? result = check dao:setDoctorJoinRequest(req);
+    http:Created|error? result = check dao:setDoctorJoinRequest(req);
     return result;
 }
 
@@ -53,43 +54,23 @@ public function getMyMedicalCenters(string id) returns error|model:MedicalCenter
     return result;
 }
 
+public function getDoctorSessionVacancies(string doctorId) returns error|model:SessionVacancy[]|model:InternalError {
+    model:SessionVacancy[]|model:InternalError result = check dao:getDoctorSessionVacancies(doctorId);
+    return result;
+}
 
-public function submitPatientRecord(model:PatientRecord patientRecord) returns http:Created|model:InternalError|error {
-
-    string refNumber = patientRecord.appointmentData.refNumber;
-    string|model:InternalError|error patientIdResult = dao:getPatientIdByRefNumber(refNumber);
-
-    string patientId;
-    if patientIdResult is string {
-        patientId = patientIdResult;
-    } else {
+public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
+    http:Created|model:InternalError|error? result = check dao:respondDoctorToSessionVacancy(response);
+    if (result is error?) {
         model:ErrorDetails errorDetails = {
-            message: "Failed to retrieve patient ID. Please retry!",
-            details: "record_book/patientId",
+            message: "Failed to respond to session vacancy. Please retry!",
+            details: "doctor/respondDoctorToSessionVacancy",
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
-
-    map<anydata> recordToStore = {
-        patientId: patientId,
-        patientRecord: patientRecord
-    };
-
-    http:Created|error? storeResult = dao:createPatientRecord(recordToStore);
-    if storeResult is http:Created {
-        return http:CREATED;
-    } else {
-        model:ErrorDetails errorDetails = {
-            message: "Failed to store patient record. Please retry!",
-            details: "record_book/patientRecord",
-            timeStamp: time:utcNow()
-        };
-        model:InternalError internalError = {body: errorDetails};
-        return internalError;
-    }
-
+    return result;
 }
 
 public function uploadMedia(string userType, string uploadType, string email, byte[] fileBytes, string fileName, string fileType, string extension) returns string|model:InternalError|error? {
@@ -192,7 +173,7 @@ public function getMedia(string userType, string uploadType, string email) retur
     return objectStreamResult;
 }
 
-public function getMediaLink(string userType, string uploadType, string email) returns string|error?{
+public function getMediaLink(string userType, string uploadType, string email) returns string|error? {
     string emailHead = getEmailHead(email);
     string fileName = "other";
     string link = "";

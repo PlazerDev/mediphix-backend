@@ -9,7 +9,7 @@ content-type: application/json
         "day": 06
     },
     "name": "Rimas",
-    "mobileNumber": "+94718923456"
+    "mobile": "+94718923456"
 }
 
 ### Get users
