@@ -817,12 +817,12 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put startAppointment (string sessionId, int slotId, int aptNumber) returns http:Response{
+    resource function put startAppointment (string sessionId, int slotId) returns http:Response{
         do {
             string userEmail = "mcs1@nawaloka.lk";
             string userId = check getCachedUserId(userEmail, "mcs");
 
-            string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
+            string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&userId=${userId}`;
 
             http:Response response = check clinicServiceEP->put(url, {});
             return response;

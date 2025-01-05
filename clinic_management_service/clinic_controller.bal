@@ -330,7 +330,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+    resource function put mcsStartAppointment(string sessionId, int slotId, string userId) returns http:Response|error {
        
         model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
