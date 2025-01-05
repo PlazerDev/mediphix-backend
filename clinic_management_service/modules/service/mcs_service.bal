@@ -276,6 +276,7 @@ public function mcsEndTimeSlot(string sessionId, string userId) returns error|mo
                                 return error("Database error, while updating the time slot status");
                             }else {
                                 if result.modifiedCount == 1 {
+                                    // todo :: need to change the status of all appointment in the absend queue to "CANCELED"
                                     return null;
                                 }else {
                                     return initNotFoundError("Session data not found, Update Failed");
@@ -323,35 +324,45 @@ public function mcsEndLastTimeSlot(string sessionId, string userId) returns erro
                 if slotInStarted < 0 {
                     return error("No active time slot found!");
                 }else{
+                    // check :: the time slot is the last one
                     if slotInStarted == timeSlotResult.length() {
-                    if timeSlotResult[slotInStarted - 1].queue.queueOperations.ongoing == -1 {
-                        int ? nextAvlQueueNumber = getNextAvailablePatientQueueNumber(1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
-                        if nextAvlQueueNumber is null {
-                            // update the timeslot status to FINISHED
-                            timeSlotResult[slotInStarted - 1].status = "FINISHED";
-                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateSessionToEndAppointment(sessionId, timeSlotResult);
-                            if result is mongodb:Error {
-                                return error("Database error, while updating the time slot status");
-                            }else {
-                                if result.modifiedCount == 1 {
-                                    return null;
+                        // check :: no ongoing appointments
+                        if timeSlotResult[slotInStarted - 1].queue.queueOperations.ongoing == -1 {
+                            int ? nextAvlQueueNumber = getNextAvailablePatientQueueNumber(1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
+                            // check :: no avialble appointment in the current queue 
+                            if nextAvlQueueNumber is null {
+                                // update :: the timeslot status to FINISHED & session to OVER
+                                timeSlotResult[slotInStarted - 1].status = "FINISHED";
+                                mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateSessionToEndAppointment(sessionId, timeSlotResult);
+                                if result is mongodb:Error {
+                                    return error("Database error, while updating the time slot status");
                                 }else {
-                                    return initNotFoundError("Session data not found, Update Failed");
+                                    if result.modifiedCount == 1 {
+                                        // uodate :: the status of all appointment in the absend queue to "CANCELED"
+                                        int[] absentAppointmentsQueueNumbers = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent;
+                                        if absentAppointmentsQueueNumbers.length() > 0 {
+                                            int[] absentAppointmentNumbers = getAppointmentNumbersFromQueueNumbers(timeSlotResult[slotInStarted - 1].queue);
+                                            mongodb:Error|mongodb:UpdateResult updateResult = dao:mcsUpdateAptListStatus(absentAppointmentNumbers, "CANCELED");
+                                            if updateResult is mongodb:Error {
+                                                return error("Database Error in updating appointment status to canceled");
+                                            }else {
+                                                return null;       
+                                            }
+                                        }
+                                        return null;
+                                    }else {
+                                        return initNotFoundError("Session data not found, Update Failed");
+                                    }
                                 }
+                            }else {
+                                return error("Action Failed, available appointment(s) found in the queue " + nextAvlQueueNumber.toString());
                             }
                         }else {
-                            return error("Action Failed, available appointment(s) found in the queue " + nextAvlQueueNumber.toString());
+                            return error("Action Failed, active appointment found!");
                         }
-                        
-                    }else {
-                        return error("Action Failed, active appointment found!");
-                    }
                     }else{
                         return error("Active slot is not the last one");
                     }
-
-
-                    
                 }
             }else {
                 return error("Database Error");
@@ -499,4 +510,12 @@ public function findSlotInStarted(model:McsTimeSlot[] data) returns int {
     }
 
     return -999;
+}
+
+public function getAppointmentNumbersFromQueueNumbers(model:McsQueue data) returns int[] {
+    int[] result = [];
+    foreach int queueNumber in data.queueOperations.absent {
+        result.push(data.appointments[queueNumber - 1]);
+    }
+    return result;
 }
