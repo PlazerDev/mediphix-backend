@@ -528,6 +528,169 @@ public function mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, str
     }
 }
 
+public function mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber, string userId) returns error|model:NotFoundError ? {
+    
+    // check :: session is assigned to the correct user
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
+
+    model:McsSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionData(sessionId);
+
+    // check :: session is in ongoing Status
+    if sessionResult is mongodb:Error {
+        return error("Database Error");
+    }else if sessionResult is null {
+        return initNotFoundError("Session Data Not Found");
+    }else {
+        if sessionResult.overallSessionStatus == "ONGOING" {
+            
+            if sessionResult.timeSlot is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+                int slotInStarted = findSlotInStarted(timeSlotResult);
+
+                // check :: no active slots
+                if slotInStarted < 0 {
+                    return error("No active time slot found!");
+                }else{
+                    int ? queueNumber = timeSlotResult[slotInStarted - 1].queue.appointments.indexOf(aptNumber);
+                    // check :: aptNumber is in the queue
+                    if queueNumber is null {
+                        return error("Invalid appointment number");
+                    }else {
+                        int actualQueueNumber = queueNumber + 1;
+                    
+                        if isMarkedAsAbsent(actualQueueNumber, timeSlotResult[slotInStarted - 1].queue.queueOperations) {
+                            // check :: queueNumber is in absent
+
+                            int ? nextPatientQueueNumber = getNextAvailablePatientQueueNumber(timeSlotResult[slotInStarted - 1].queue.queueOperations.defaultIncrementQueueNumber + 1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
+
+                            if nextPatientQueueNumber is null {
+                                // check :: no next patient
+
+                                // update :: set the queue number to next patient1
+                                timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 = actualQueueNumber;
+
+                            } else {
+                                // check :: there is a next patient 
+
+                                if nextPatientQueueNumber != timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 {
+                                    // check :: the next avilable patient is not the nextpatient1
+                                    
+                                    if nextPatientQueueNumber != timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 {
+                                        // check :: the next available patient is not the nextpatient2
+                                        // status :: nextpatient1 is overided | nextpatient2 is overided 
+
+                                        // nothing need to be done specifically
+
+                                    }else {
+                                        // check :: the next available patient is the nextpatient2
+                                        // status :: nextpatient1 is overided | nextpatient2 is not overided 
+                                        
+                                        if actualQueueNumber < timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 {
+                                            // check :: actual queue number has priority thatn the next patient 2
+                                            // update :: nextpatient2
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = actualQueueNumber;
+                                        }else {
+                                            // nothing need to be done 
+                                        }
+                                    }
+                                    
+                                }else {
+                                    // check :: the next available patient is the next patient 1
+                                    nextPatientQueueNumber = getNextAvailablePatientQueueNumber(timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 + 1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
+                                    
+                                    if nextPatientQueueNumber is null {
+                                        // check :: no available patient after next patient 1
+                                        // status :: nextpatient1 is not overided | no nextpatient2 
+                                        if timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 > actualQueueNumber {
+                                            // check :: queuenumber has more priority than next patient 1
+                                            // update :: nextpatient1, nextpatient2
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1;
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 = actualQueueNumber; 
+                                        }else {
+                                            // update :: next patient 2
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = actualQueueNumber;
+                                        }
+
+                                    }else if nextPatientQueueNumber == timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 {
+                                        // check :: next availble patient is the next patient 2
+                                        // status :: nextpatient1 is not overided | nextpatient2 is not overided
+
+                                        if actualQueueNumber < timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 {
+                                            // check  :: the precidency 
+                                            // update :: nextpatient1, nextpatient2
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1;
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 = actualQueueNumber;
+                                        }else if actualQueueNumber < timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2{
+                                            // check :: the precideny
+                                            // update :: the nextpatient2
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = actualQueueNumber;
+                                        }else {
+                                            // check :: the queuenumber doesn't has priority
+                                            // nothing to do 
+                                        }
+                                    }else {
+                                        // check :: next availble patient is not the next patient 2
+                                        // status :: nextpatient1 is not overided | nextpatient2 is overided 
+                                        if actualQueueNumber < timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 {
+                                            // check :: queue number has more priority than nextpatient1
+                                            // update :: nextpatient1
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 = actualQueueNumber;
+                                        }else {
+                                            // check :: queue number doesn't has more pririoty than nextpatient1
+                                            // nothing to do
+                                        }
+                                    }
+                                }
+
+                            }
+
+                            // update :: timslot, absent queue
+                            int ? i = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent.indexOf(actualQueueNumber);
+                            if i is null {
+                                //  will not happen since we already check this before 
+                                return error ("Unknown error");
+
+                            }else {
+                                // update :: remove the queue number from the absent 
+                                int temp = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent.remove(i); 
+                                if temp == actualQueueNumber {
+                                    // just to ensure
+
+                                    // update :: timeslot in db
+                                    mongodb:Error|mongodb:UpdateResult updateResult = dao:mcsUpdateTimeSlot(sessionId, timeSlotResult);
+                                    if updateResult is mongodb:Error {
+                                        return error("Database error, while updating the time slot status");
+                                    }else {
+                                        if updateResult.modifiedCount == 1 {
+                                            return null;
+                                        }else {
+                                            return initNotFoundError("Session data not found, Update Failed");
+                                        }
+                                    }
+                                } else {
+                                    return error ("Error happen updating absent queue");
+                                }
+                            }
+
+                        }else {
+                            // check :: queueNumber is not in absent
+                            return error("Appointment is not in the absent queue");
+                        }
+                    }
+                }
+            }else {
+                return error("Database Error");
+            }
+        }else {
+            return error("Session is not in ONGOING status");
+        }
+    }
+}
+
+
+
 // HELPERS ............................................................................................................
 
 public function initNotFoundError(string details) returns model:NotFoundError {
