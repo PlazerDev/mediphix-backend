@@ -414,8 +414,8 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function put mcsStartAppointment(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
-
+    resource function put mcsStartAppointment(string sessionId, int slotId, string userId) returns http:Response|error {
+      
         model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
         http:Response response = new;
@@ -481,6 +481,42 @@ service / on new http:Listener(9090) {
 
         return response;
     }
+
+    resource function put mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+       
+        model:NotFoundError ? result = check 'service:mcsMoveToAbsent(sessionId, slotId, aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+       
+        model:NotFoundError ? result = check 'service:mcsRevertFromAbsent(sessionId, slotId, aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+
 
     // MCS [END]  ###################################################################
 
@@ -555,6 +591,5 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
-
 }
 
