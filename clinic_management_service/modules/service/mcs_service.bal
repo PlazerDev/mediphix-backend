@@ -563,6 +563,11 @@ public function mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber,
                         if isMarkedAsAbsent(actualQueueNumber, timeSlotResult[slotInStarted - 1].queue.queueOperations) {
                             // check :: queueNumber is in absent
 
+                            if timeSlotResult[slotInStarted - 1].queue.queueOperations.defaultIncrementQueueNumber > actualQueueNumber {
+                                // check :: has lost possition  
+                                return error("Has lost the possition, please add to the end of queue");
+                            }
+
                             int ? nextPatientQueueNumber = getNextAvailablePatientQueueNumber(timeSlotResult[slotInStarted - 1].queue.queueOperations.defaultIncrementQueueNumber + 1, timeSlotResult[slotInStarted - 1].queue.appointments.length(), timeSlotResult[slotInStarted - 1].queue.queueOperations);
 
                             if nextPatientQueueNumber is null {
