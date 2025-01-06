@@ -696,6 +696,87 @@ public function mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber,
     }
 }
 
+public function mcsAddToEnd(string sessionId, int slotId, int aptNumber, string userId) returns error|model:NotFoundError ? {
+    
+    // check :: session is assigned to the correct user
+    if (!isSessionAssigned(sessionId, userId)) {
+        return error("Session is not assigned to the user");
+    }
+
+    model:McsSession|mongodb:Error ? sessionResult = dao:mcsGetAllSessionData(sessionId);
+
+    // check :: session is in ongoing Status
+    if sessionResult is mongodb:Error {
+        return error("Database Error");
+    }else if sessionResult is null {
+        return initNotFoundError("Session Data Not Found");
+    }else {
+        if sessionResult.overallSessionStatus == "ONGOING" {
+            
+            if sessionResult.timeSlot is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+                int slotInStarted = findSlotInStarted(timeSlotResult);
+                
+                // check :: no active slots
+                if slotInStarted < 0 {
+                    return error("No active time slot found!");
+                }else{
+                    int ? queueNumber = timeSlotResult[slotInStarted - 1].queue.appointments.indexOf(aptNumber);
+                    // check :: aptNumber is in the queue
+                    if queueNumber is null {
+                        return error("Invalid appointment number");
+                    }else {
+                        int actualQueueNumber = queueNumber + 1;
+                    
+                        if isMarkedAsAbsent(actualQueueNumber, timeSlotResult[slotInStarted - 1].queue.queueOperations) {
+                            // check :: queueNumber is in absent
+
+                            if timeSlotResult[slotInStarted - 1].queue.queueOperations.defaultIncrementQueueNumber > actualQueueNumber {
+                                // case :: has lost possition  
+                                // update :: in appointments add the apt number to end of list, remove it from absent 
+                                timeSlotResult[slotInStarted - 1].queue.appointments[actualQueueNumber - 1] = -1 * aptNumber;
+                                timeSlotResult[slotInStarted - 1].queue.appointments.push(aptNumber);
+                                int ? tempI = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent.indexOf(actualQueueNumber);
+                                if tempI is int {
+                                    int temp = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent.remove(tempI);
+                                    if temp == actualQueueNumber {
+                                        // will always true
+                                    }else {
+                                        return error("Unexpected error occured");
+                                    }
+                                }else {
+                                    // will not happen bexcause we check this earlier
+                                }
+                            }else{
+                                // case :: has not lost the possition
+                                return error("The appointment still has its original possition, please revert");
+                            }
+
+                            // update :: timeslot in db
+                            mongodb:Error|mongodb:UpdateResult updateResult = dao:mcsUpdateTimeSlot(sessionId, timeSlotResult);
+                            if updateResult is mongodb:Error {
+                                return error("Database error, while updating the time slot status");
+                            }else {
+                                if updateResult.modifiedCount == 1 {
+                                    return null;
+                                }else {
+                                    return initNotFoundError("Session data not found, Update Failed");
+                                }
+                            }
+                        }else {
+                            // check :: queueNumber is not in absent
+                            return error("Appointment is not in the absent queue");
+                        }
+                    }
+                }
+            }else {
+                return error("Database Error");
+            }
+        }else {
+            return error("Session is not in ONGOING status");
+        }
+    }
+}
 
 
 // HELPERS ............................................................................................................
