@@ -407,14 +407,14 @@ service /doctor on httpListener {
             scopes: ["retrive_appoinments"]
         }
     }
-    resource function post respondToSessionVacancy(http:Request req, DoctorResponse doctorResponse) returns http:Response|error? {
+    resource function post respondToSessionVacancy(http:Request req, NewDoctorResponse newDoctorResponse) returns http:Response|error? {
         do {
             string userEmail = check getUserEmailByJWT(req);
             string userType = "doctor";
             string userId = check getCachedUserId(userEmail, userType);
-            doctorResponse.doctorId = userId;
+            newDoctorResponse.doctorId = userId;
 
-            http:Response|error? response = check clinicServiceEP->/respondDoctorToSessionVacancy.post(doctorResponse);
+            http:Response|error? response = check clinicServiceEP->/respondDoctorToSessionVacancy.post(newDoctorResponse);
             if response is http:Response {
                 return response;
             }

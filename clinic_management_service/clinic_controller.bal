@@ -347,8 +347,8 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function post respondDoctorToSessionVacancy(model:DoctorResponse doctorResponse) returns http:Response|error? {
-        http:Created|model:InternalError|error? result = check 'service:respondDoctorToSessionVacancy(doctorResponse);
+    resource function post respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorResponse) returns http:Response|error? {
+        http:Created|model:InternalError|error? result = check 'service:respondDoctorToSessionVacancy(newDoctorResponse);
         http:Response response = new;
         if (result is http:Created) {
             response.statusCode = 200;
