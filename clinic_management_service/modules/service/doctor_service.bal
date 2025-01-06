@@ -59,8 +59,18 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:S
     return result;
 }
 
-public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
-    http:Created|model:InternalError|error? result = check dao:respondDoctorToSessionVacancy(response);
+public function respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorResponse) returns http:Created|model:InternalError|error? {
+    model:DoctorResponse doctorResponse = {
+        responseId: newDoctorResponse.responseId ?: 0,
+        submittedTimestamp: check time:civilFromString(newDoctorResponse.submittedTimestamp),
+        doctorId: newDoctorResponse.doctorId,
+        noteToPatient: newDoctorResponse.noteToPatient,
+        vacancyNoteToCenter: newDoctorResponse.vacancyNoteToCenter,
+        responseApplications: newDoctorResponse.responseApplications,
+        isCompletelyRejected: newDoctorResponse.isCompletelyRejected
+    };
+
+    http:Created|model:InternalError|error? result = check dao:respondDoctorToSessionVacancy(doctorResponse);
     if (result is error?) {
         model:ErrorDetails errorDetails = {
             message: "Failed to respond to session vacancy. Please retry!",

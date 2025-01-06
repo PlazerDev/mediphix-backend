@@ -53,6 +53,16 @@ public type SessionVacancy record {
     time:Date vacancyClosedTimestamp?;
 };
 
+public type NewDoctorResponse record {
+    int responseId?;
+    string submittedTimestamp;
+    string doctorId;
+    string noteToPatient;
+    string vacancyNoteToCenter;
+    DoctorResponseApplication[] responseApplications;
+    boolean isCompletelyRejected;
+};
+
 //This model is used by doctor to respond to a session vacancy
 public type DoctorResponse record {
     int responseId?;
