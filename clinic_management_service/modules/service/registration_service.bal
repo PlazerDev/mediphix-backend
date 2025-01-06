@@ -117,45 +117,11 @@ public function registerDoctor(model:DoctorSignupData data) returns model:Return
 
 
 
-public function registerMedicalCenter(model:otherSignupData data) returns model:ReturnMsg {
+public function registerMedicalCenter(model:MedicalCenterSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
-    if (data.name.length() == 0) {
-        returnMsg.message = "Medical Center Name cannot be empty";
-        returnMsg.statusCode = 400;
-        return returnMsg;
-    }
-    else if (data.district.length() == 0) {
-        returnMsg.message = "District cannot be empty";
-        returnMsg.statusCode = 400;
-        return returnMsg;
-    }
-    else if (data.address.length() == 0) {
-        returnMsg.message = "Address cannot be empty";
-        returnMsg.statusCode = 400;
-        return returnMsg;
-    }
-    else if (data.mobile.length() == 0) {
-        returnMsg.message = "mibile cannot be empty";
-        returnMsg.statusCode = 400;
-        return returnMsg;
-    }
-     else if (data.password !== data.confirmPassword) {
-        returnMsg.message = "Password and Confirm Password should be same";
-        returnMsg.statusCode = 400;
-        return returnMsg;
-    }
-
-
-    else if(dao:isMedicalCenterExist(data.email) === true){
-        returnMsg.message="Email Already exist";
-        returnMsg.statusCode = 500;
-        return returnMsg;
-    }
-    else {
-        data.password = genarateHash(data.password);
-        error? addPatientRecord = dao:medicalCenterRegistration(data);
-        if addPatientRecord is error {
-            returnMsg.message = addPatientRecord.message();
+        error? addMedicalCenter = dao:registerMedicalCenter(data);
+        if addMedicalCenter is error {
+            returnMsg.message = addMedicalCenter.message();
             returnMsg.statusCode = 500;
             return returnMsg;
         }
@@ -165,9 +131,54 @@ public function registerMedicalCenter(model:otherSignupData data) returns model:
             return returnMsg;
         }
         
-        
-    }
+}
 
+public function registerMedicalCenterStaff(model:medicalCenterStaffData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenter = dao:registerMedicalCenterStaff(data);
+        if addMedicalCenter is error {
+            returnMsg.message = addMedicalCenter.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Staff Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+}
+
+public function registerMedicalCenterReceptionist(model:medicalCenterStaffData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenterReceptionist = dao:registerMedicalCenterReceptionist(data);
+        if addMedicalCenterReceptionist is error {
+            returnMsg.message = addMedicalCenterReceptionist.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Receptionist Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
+}
+
+public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns model:ReturnMsg {
+    model:ReturnMsg returnMsg = {message: "", statusCode: 0};
+        error? addMedicalCenterReceptionist = dao:registerMedicalCenterLabStaff(data);
+        if addMedicalCenterReceptionist is error {
+            returnMsg.message = addMedicalCenterReceptionist.message();
+            returnMsg.statusCode = 500;
+            return returnMsg;
+        }
+        else {
+            returnMsg.message = "Medical Center Lab Staff Registered Successfully";
+            returnMsg.statusCode = 200;
+            return returnMsg;
+        }
+        
 }
 public function registerLaboratary(model:otherSignupData data) returns model:ReturnMsg {
     model:ReturnMsg returnMsg = {message: "", statusCode: 0};
