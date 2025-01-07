@@ -740,12 +740,20 @@ public function mcsAddToEnd(string sessionId, int slotId, int aptNumber, string 
                                 if tempI is int {
                                     int temp = timeSlotResult[slotInStarted - 1].queue.queueOperations.absent.remove(tempI);
                                     if temp == actualQueueNumber {
-                                        // will always true
+                                        // case ::will always true
+                                        // check :: there is a nextpatient 1 or nextpatient 2
+                                        if timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 == -1 {
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient1 = timeSlotResult[slotInStarted - 1].queue.appointments.length();
+                                        }else if timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 == -1 {
+                                            timeSlotResult[slotInStarted - 1].queue.queueOperations.nextPatient2 = timeSlotResult[slotInStarted - 1].queue.appointments.length();
+                                        }else {
+                                            // case :: nothing to do 
+                                        }
                                     }else {
                                         return error("Unexpected error occured");
                                     }
                                 }else {
-                                    // will not happen bexcause we check this earlier
+                                    // will not happen bexause we check this earlier
                                 }
                             }else{
                                 // case :: has not lost the possition
