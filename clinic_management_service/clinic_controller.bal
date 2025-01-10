@@ -534,7 +534,20 @@ service / on new http:Listener(9090) {
     }
 
     // MCS [END]  ###################################################################
+// ******************************************************************************************************
+    // MCR [START] ###################################################################  
 
+    resource function get mcrIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError userId = 'service:mcrGetUserIdByEmail(email.trim());
+        if userId is string {
+            return userId;
+        } else {
+            return error("Error occurred while retrieving MCR id number");
+        }
+    }
+
+    // MCR [START] ###################################################################
+    
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
         string|model:InternalError|error? result = 'service:uploadMedia(userType, uploadType, emailHead, fileBytes, fileName, fileType, extension);
