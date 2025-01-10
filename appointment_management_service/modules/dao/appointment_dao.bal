@@ -1,10 +1,10 @@
 import appointment_management_service.model;
 
 import ballerina/http;
+import ballerina/io;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
-import ballerina/io;
 
 configurable string username = ?;
 configurable string password = ?;
@@ -131,38 +131,51 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
 }
 
-public function getSessionDetailsByDoctorId(string doctorId) returns 
+public function getSessionDetailsByDoctorId(string doctorId) returns
 model:Session[]|model:InternalError|model:NotFoundError|error? {
-    
+
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
-    map<json> filter = {"doctorId": {"$oid": doctorId}};
+    map<json> filter = {"doctorId": doctorId};
+    io:println("Filter being used:", filter);
 
     map<json> projection = {
-        "_id": {"$toString": "$_id"},
-        "endTimestamp": 1,
-        "startTimestamp": 1,
-        "timeSlot": [],
+        // "_id": {"$toString": "$_id"},
+        // "endTimestamp": 1,
+        // "startTimestamp": 1,
+        // "timeSlot": 1,
         "doctorId": 1,
         "medicalCenterId": 1,
-        "aptCategories": [],       
+        // "aptCategories": 1,
         "payment": 1,
         "hallNumber": 1,
         "noteFromCenter": 1,
         "noteFromDoctor": 1,
-        "overallSessionStatus": 1    
+        "overallSessionStatus": 1
     };
+    io:println("Projection being used:", projection);
 
-    stream<model:Session, error?> findResults = 
-    check sessionCollection->find(filter, {}, projection, model:Session);
+    stream<model:Session, error?>|error findStream = sessionCollection->find(filter, {}, projection, model:Session);
+    if findStream is error {
+        io:println("Error during find operation:", findStream.message()); // Log find operation error
+        return findStream;
+    }
+
+    stream<model:Session, error?> findResults = check findStream;
 
     model:Session[]|error sessions = from model:Session session in findResults
         select session;
     if sessions is model:Session[] {
-        io:println(sessions);
+        if sessions.length() == 0 {
+            io:println("No sessions found for doctorId:", doctorId); // Log when no sessions found
+        } else {
+            io:println("Found", sessions.length(), "sessions"); // Log number of sessions found
+        }
+        io:println("Retrieved sessions:", sessions); // Log full session data
         return sessions;
     } else {
+        io:println("Error during stream processing:", sessions.message());
         model:ErrorDetails errorDetails = {
             message: "Failed to find sessions for the doctor",
             details: string `session/${doctorId}`,

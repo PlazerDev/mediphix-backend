@@ -1,6 +1,7 @@
 import ballerina/time;
 
-public type Session record {|
+public type Session record {
+    string _id?;
     time:Date endTimestamp?;
     time:Date startTimestamp?;
     string doctorId?;
@@ -11,4 +12,4 @@ public type Session record {|
     string noteFromCenter?;
     string noteFromDoctor?;
     string overallSessionStatus?;
-|};
+};
