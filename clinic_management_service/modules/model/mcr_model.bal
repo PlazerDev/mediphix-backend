@@ -19,7 +19,14 @@ public type McrAppointment record {|
 public type McrPayment record {|
     time:Date ? paymentTimestamp;
     string handleBy;
-    boolean isPayed;
+    boolean isPaid;
+    decimal amount;
+|};
+
+public type McrUpdatePayment record {|
+    json paymentTimestamp;
+    string handleBy;
+    boolean isPaid;
     decimal amount;
 |};
 
@@ -48,6 +55,18 @@ public type McrSessionData record {|
     string noteFromDoctor;
     string[] aptCategories;
 |};
+
+public type McrUser record {|
+    string name?;
+    string nic?;
+    string mobile?;
+    string empId?;
+    string centerId?;
+    string profileImage?;
+    string userId?;
+|};
+
+
 // ############################# FINAL #########################
 public type McrSearchPaymentFinalData record {|
     McrAptAndSessionFinalData aptAndSessionDetails;
@@ -84,7 +103,7 @@ public type McrDoctorFinalData record {|
 |};
 
 public type McrPaymentFinalData record {|
-    boolean isPayed;
+    boolean isPaid;
     time:Date ? paymentTimestamp;
     string handleBy;
     decimal amount;

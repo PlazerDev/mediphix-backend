@@ -10,7 +10,6 @@ public function mcrGetUserIdByEmail(string email) returns error|string|model:Int
     return result;
 }
 
-
 public function mcrSearchPayment(int aptNumber) returns error|model:NotFoundError|model:McrSearchPaymentFinalData {
 
     model:McrAppointment|mongodb:Error ? aptDetails = dao:mcrGetAptDetails(aptNumber);
@@ -54,7 +53,7 @@ public function mcrSearchPayment(int aptNumber) returns error|model:NotFoundErro
                             aptCreatedTimestamp: aptDetails.aptCreatedTimestamp
                         },
                         paymentDetails: {
-                            isPayed: false, 
+                            isPaid: false, 
                             paymentTimestamp: aptDetails.payment.paymentTimestamp, 
                             handleBy: aptDetails.payment.handleBy, 
                             amount: aptDetails.payment.amount}
@@ -87,6 +86,71 @@ public function mcrSearchPayment(int aptNumber) returns error|model:NotFoundErro
     }
     
 }
+
+public function mcrMarkToPay(int aptNumber, string userId) returns error|model:NotFoundError ? {
+    
+    // get center ID of the MCR
+    // check the apt is associated with that center is
+    // check the aptStatus - should be in either INQUEUE or ACTIVE
+    // check the payment isPaid is false
+    // update the payment with userId, timestamp, isPaid
+
+
+    model:McrUser|mongodb:Error ? userData = dao:mcrGetCenterId(userId);
+    
+    if userData is model:McrUser {
+        // case :: centerId fetched success 
+        model:McrAppointment|mongodb:Error ? aptDetails = dao:mcrGetAptDetails(aptNumber);
+        
+        if aptDetails is model:McrAppointment {
+            // case :: apt details fetch sucess
+            
+            if  aptDetails.medicalCenterId == userData.centerId {
+                // case :: the ids are same
+
+                if aptDetails.aptStatus == "INQUEUE" || aptDetails.aptStatus == "ACTIVE" {
+                    // case :: appointment is in correct status
+                    
+                    // model:McrPayment paymentData = aptDetails.payment.clone();
+                    model:McrUpdatePayment paymentData = {
+                        paymentTimestamp: time:utcToCivil(time:utcNow()).toJson(),
+                        handleBy: userId,
+                        isPaid: true,
+                        amount: aptDetails.payment.amount
+                    };
+
+                    // update :: update the payment
+                    mongodb:Error ? updatePayment = check dao:mcrUpdatePayment(aptNumber, paymentData);
+                    
+                    if updatePayment is null {
+                        // case :: update sucess
+                        return null;
+                    } else if updatePayment is mongodb:Error {
+                        return initDatabaseError(updatePayment);
+                    }
+
+                }else {
+                    return error("Can't perform this action for this appointment, Invalid appointment status");
+                }
+
+            }else {
+                return error("Invalid operation, MCR dosen't have the access for this appointment");
+            }
+
+        }else if aptDetails is null {
+            return initNotFoundError("Appointment details not found !");
+        }else {
+            return initDatabaseError(aptDetails);
+        }
+
+    }else if userData is null {
+        return initNotFoundError("Center ID not found for the MCR");
+    }else {
+        return initDatabaseError(userData);
+    }
+}
+
+
 
 // Helpers ......................................................................................................................
 

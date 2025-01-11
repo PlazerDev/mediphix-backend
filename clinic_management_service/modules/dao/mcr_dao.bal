@@ -34,7 +34,7 @@ public function mcrGetUserIdByEmail(string email) returns string|error|model:Int
     # 
     # 
     # + aptNumber - appointment number
-    # + return - sessionId, patientId, doctorId, aptStatus, aptCreatedTimestamp, queueNumber, payment, timeslot id
+    # + return - sessionId, patientId, doctorId, aptStatus, aptCreatedTimestamp, queueNumber, payment, timeslot id, medical center Id
 public function mcrGetAptDetails(int aptNumber) returns model:McrAppointment|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("appointment");
 
@@ -51,7 +51,8 @@ public function mcrGetAptDetails(int aptNumber) returns model:McrAppointment|mon
         "aptCreatedTimestamp": 1,
         "queueNumber": 1,
         "payment": 1,
-        "timeSlot": 1
+        "timeSlot": 1,
+        "medicalCenterId": 1
     };
 
     model:McrAppointment ? result = check collection->findOne(filter, {}, projection);
@@ -140,6 +141,58 @@ public function mcrGetSessionDetails(string sessionId) returns model:McrSessionD
     model:McrSessionData ? result = check collection->findOne(filter, {}, projection);
     
     return result;
+}
+
+
+  # Fetch the center id of the user
+    # 
+    # 
+    # + userId - Session id (_id)
+    # + return - on sucess [ center id that the user work on ]
+public function mcrGetCenterId(string userId) returns model:McrUser|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("medical_center_receptionist");
+   
+    map<json> filter = {
+        "userId": userId
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "centerId": 1
+    };
+
+    model:McrUser ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+
+  # Update the payment section in appointment
+    # 
+    # 
+    # + aptNumber - Appointment number
+    # + paymentDetails - New Payment Details 
+    # + return - on sucess return null
+public function mcrUpdatePayment(int aptNumber, model:McrUpdatePayment paymentDetails) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("appointment");
+  
+    map<json> filter = {
+        "aptNumber": aptNumber
+    };
+
+    mongodb:Update update = {
+        "set": { "payment": paymentDetails}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("Payment update failed");
 }
 
 // HELPERS ............................................................................................................
