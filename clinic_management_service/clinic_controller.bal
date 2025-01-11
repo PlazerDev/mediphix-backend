@@ -270,6 +270,22 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    resource function get getDoctorDetails2/[string id]() returns error|http:Response {
+        model:Doctor|model:InternalError doctorDetails = check 'service:getDoctorDetails2(id.trim());
+
+        io:println(doctorDetails);
+
+        http:Response response = new;
+        if (doctorDetails is model:Doctor) {
+            response.statusCode = 200;
+            response.setJsonPayload(doctorDetails);
+        } else {
+            response.statusCode = 404;
+            response.setJsonPayload({message: "Doctor not found"});
+        }
+        return response;
+    }
+
     //this function return doctor details
 
     resource function get getAllMedicalCenters() returns http:Response|error? {
