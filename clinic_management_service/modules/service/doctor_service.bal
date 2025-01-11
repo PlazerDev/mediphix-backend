@@ -31,6 +31,11 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
     return result;
 }
 
+public function getDoctorDetails2(string id) returns error|model:Doctor|model:InternalError {
+    error|model:Doctor|model:InternalError result = check dao:getDoctorDetails2(id);
+    return result;
+}
+
 public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
     http:Created|error? result = check dao:setDoctorJoinRequest(req);
     return result;

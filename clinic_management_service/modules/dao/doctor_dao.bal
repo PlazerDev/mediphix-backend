@@ -293,6 +293,51 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
     }
 }
 
+public function getDoctorDetails2(string id) returns error|model:Doctor|model:InternalError {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
+
+    map<json> filter = {"_id": {"$oid": id}};
+
+    // Optional: You can specify which fields to retrieve in the projection
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "name": 1,
+        "slmc": 1,
+        "nic": 1,
+        "education": 1,
+        "mobile": 1,
+        "specialization": 1,
+        "email": 1,
+        "category": 1,
+        "availability": 1,
+        "verified": 1,
+        "profileImage": 1,
+        "patients": 1,
+        "medical_centers": 1,
+        "sessions": 1,
+        "channellings": 1,
+        "medical_records": 1,
+        "lab_reports": 1,
+        "media_storage": 1
+    };
+    model:Doctor|mongodb:Error? findResults = check doctorCollection->findOne(filter, {}, projection, model:Doctor);
+
+    if findResults is model:Doctor {
+        return findResults;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving doctor name",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
+}
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
