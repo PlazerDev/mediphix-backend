@@ -997,10 +997,11 @@ service /mcr on httpListener {
     resource function get searchPayment/[int aptNumber](http:Request request) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = "mcr1@nawaloka.lk";
             string userId = check getCachedUserId(userEmail, "mcr");
+            // TODO :: Role checking should be there
 
-            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
+            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber];
             return response;
         } on fail {
             ErrorDetails errorDetails = {
