@@ -551,6 +551,57 @@ service / on new http:Listener(9090) {
 
     // MCS [END]  ###################################################################
 
+
+// ******************************************************************************************************
+    
+    
+    // MCR [START] ###################################################################  
+
+    resource function get mcrIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError userId = 'service:mcrGetUserIdByEmail(email.trim());
+        if userId is string {
+            return userId;
+        } else {
+            return error("Error occurred while retrieving MCR id number");
+        }
+    }
+
+    resource function get mcrSearchPayment/[int aptNumber]/[string userId]() returns http:Response|error {
+
+        model:NotFoundError|model:McrSearchPaymentFinalData result = check 'service:mcrSearchPayment(aptNumber);
+        // TODO :: by using the userId check the currosponding aptNumber is in the same medical center. 
+        http:Response response = new;
+
+        if (result is model:McrSearchPaymentFinalData) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcrMarkToPay(int aptNumber, string userId) returns http:Response|error {
+       
+        model:NotFoundError ? result = check 'service:mcrMarkToPay(aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    // MCR [END] ###################################################################
+    
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
         string|model:InternalError|error? result = 'service:uploadMedia(userType, uploadType, emailHead, fileBytes, fileName, fileType, extension);
