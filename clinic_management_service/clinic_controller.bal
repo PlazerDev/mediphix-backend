@@ -49,7 +49,7 @@ service / on new http:Listener(9090) {
         return (response);
     }
 
-    resource function post signup/medicalCenter(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/medicalCenter(model:MedicalCenterSignupData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -62,6 +62,62 @@ service / on new http:Listener(9090) {
         } else {
             response.statusCode = 200;
             response.setJsonPayload({message: "Medical Center Registered Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/medicalCenterStaff(model:medicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
+
+        io:println("Hello this is Medical Center");
+
+        model:ReturnMsg result = 'service:registerMedicalCenterStaff(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Staff Registered  Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/registerMedicalCenterReceptionist(model:MedicalCenterReceptionistSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        model:ReturnMsg result = 'service:registerMedicalCenterReceptionist(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Receptionist Registered Successfully"});
+        }
+
+        io:println(result);
+        return (response);
+
+    }
+
+    resource function post signup/registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+        model:ReturnMsg result = 'service:registerMedicalCenterLabStaff(data);
+
+        http:Response response = new;
+        if (result.statusCode == 500 || result.statusCode == 400) {
+            response.statusCode = result.statusCode;
+            response.setJsonPayload({message: result.message});
+        } else {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Medical Center Lab Staff Registered Successfully"});
         }
 
         io:println(result);
@@ -88,6 +144,26 @@ service / on new http:Listener(9090) {
         return (response);
 
     }
+
+    // resource function post signup/medicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+
+    //     io:println("Hello this is Medical Center");
+
+    //     model:ReturnMsg result = 'service:registerMedicalCenter(data);
+
+    //     http:Response response = new;
+    //     if (result.statusCode == 500 || result.statusCode == 400) {
+    //         response.statusCode = result.statusCode;
+    //         response.setJsonPayload({message: result.message});
+    //     } else {
+    //         response.statusCode = 200;
+    //         response.setJsonPayload({message: "Medical Center Registered Successfully"});
+    //     }
+
+    //     io:println(result);
+    //     return (response);
+
+    // }
 
     // Get patient with user id
     resource function get patient/[string userId]() returns http:Response|error? {
@@ -145,9 +221,8 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-
     //Doctor Controllers 
-    
+
     //Get all doctor details
     resource function get getAllDoctors() returns http:Response|error? {
         model:Doctor[]|model:InternalError doctorDetails = check 'service:getAllDoctors();
@@ -162,8 +237,6 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-  
-
     resource function get getSessionDetailsByDoctorId/[string doctorId]() returns http:Response|error? {
         model:Session[]|model:InternalError session = check 'service:getSessionDetailsByDoctorId(doctorId);
 
@@ -172,7 +245,7 @@ service / on new http:Listener(9090) {
             response.statusCode = 200;
             response.setJsonPayload(session.toJson());
             io:println("Function responde successfully");
-        } else if session is model:InternalError {
+        } else if (session is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(session.body.toJson());
         }
@@ -197,25 +270,23 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    //this function return doctor details
+    resource function get getDoctorDetails2/[string id]() returns error|http:Response {
+        model:Doctor|model:InternalError doctorDetails = check 'service:getDoctorDetails2(id.trim());
 
-    //submit patient record
-    resource function post submitPatientRecord(model:PatientRecord patientRecord) returns http:Response|error {
-        http:Created|model:InternalError patientRecordSubmissionStatus = check 'service:submitPatientRecord(patientRecord);
+        io:println(doctorDetails);
+
         http:Response response = new;
-
-        if (patientRecordSubmissionStatus is http:Created) {
-            response.statusCode = 201;
-            response.setJsonPayload({message: "Patient record submitted successfully"});
-            return response;
+        if (doctorDetails is model:Doctor) {
+            response.statusCode = 200;
+            response.setJsonPayload(doctorDetails);
+        } else {
+            response.statusCode = 404;
+            response.setJsonPayload({message: "Doctor not found"});
         }
-        else if (patientRecordSubmissionStatus is model:InternalError) {
-            response.statusCode = 500;
-            response.setJsonPayload(patientRecordSubmissionStatus.body.toJson());
-        }
-
         return response;
     }
+
+    //this function return doctor details
 
     resource function get getAllMedicalCenters() returns http:Response|error? {
         model:MedicalCenter[]|model:InternalError medicalCenters = check 'service:getAllMedicalCenters();
@@ -261,10 +332,38 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    // MCS [START] ...............................................................
+    resource function get getDoctorSessionVacancies/[string userId]() returns error|http:Response {
+        model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getDoctorSessionVacancies(userId.trim());
+        http:Response response = new;
+        if sessionVacancies is model:SessionVacancy[] {
+            response.statusCode = 200;
+            response.setJsonPayload(sessionVacancies.toJson());
+        } else if sessionVacancies is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(sessionVacancies.body.toJson());
+        }
+        return response;
+    }
 
+    resource function post respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorResponse) returns http:Response|error? {
+        http:Created|model:InternalError|error? result = check 'service:respondDoctorToSessionVacancy(newDoctorResponse);
+        http:Response response = new;
+        if (result is http:Created) {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Doctor response submitted successfully"});
+        } else if (result is model:InternalError) {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error!"});
+        }
+        return response;
+    }
 
-    // #### GET USERID BY EMAIL OF THE MCS ####################
+    // MCS [START] ###################################################################
+
+    // #### GET USERID BY EMAIL OF THE MCS 
     resource function get mcsIdByEmail/[string email]() returns string|error? {
         error|string|model:InternalError userId = 'service:mcsGetUserIdByEmail(email.trim());
         if userId is string {
@@ -274,7 +373,7 @@ service / on new http:Listener(9090) {
         }
     }
 
-    // #### VIEW ALL ASSIGNED UPOMMING SESSIONS OF THE MCS ####
+    // #### VIEW ALL ASSIGNED UPOMMING SESSIONS OF THE MCS 
     resource function get mcsUpcomingClinicSessions/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] result = check 'service:mcsGetUpcomingSessionList(userId);
@@ -282,58 +381,175 @@ service / on new http:Listener(9090) {
         http:Response response = new;
 
         if (result is model:McsAssignedSessionWithDoctorDetails[]) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
         return response;
     }
 
-    // #### VIEW ALL ASSIGNED Ongoing SESSIONS OF THE MCS #####
+    // #### VIEW ALL ASSIGNED Ongoing SESSIONS OF THE MCS 
     resource function get mcsOngoingClinicSessions/[string userId]() returns http:Response|error {
-        
+
         // within start time & end time
         // before 1 hour
-        
+
         model:NotFoundError|model:McsAssignedSessionWithDoctorDetails[] result = check 'service:mcsGetOngoingSessionList(userId);
 
         http:Response response = new;
 
         if (result is model:McsAssignedSessionWithDoctorDetails[]) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
         return response;
     }
 
-    // #### VIEW ALL ASSIGNED Ongoing TIME SLOT DATA OF THE MCS #####
+    // #### VIEW ALL ASSIGNED Ongoing TIME SLOT DATA OF THE MCS 
     resource function get mcsOngoingClinicSessionTimeSlots/[string sessionId]() returns http:Response|error {
-        
+
         model:NotFoundError|model:McsTimeSlotList result = check 'service:mcsGetOngoingSessionTimeSlotDetails(sessionId);
 
         http:Response response = new;
 
         if (result is model:McsTimeSlotList) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
         return response;
     }
 
+    resource function put mcsStartAppointment(string sessionId, int slotId, string userId) returns http:Response|error {
 
-    // MCS [END]  ...............................................................
+        model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
+        http:Response response = new;
+
+        if (result is model:McsTimeSlot) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsStartTimeSlot(string sessionId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsStartTimeSlot(sessionId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload({"status": "sucess"});
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsEndTimeSlot(string sessionId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsEndTimeSlot(sessionId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload({"status": "sucess"});
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsEndLastTimeSlot(string sessionId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsEndLastTimeSlot(sessionId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload({"status": "sucess"});
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsMoveToAbsent(sessionId, slotId, aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsRevertFromAbsent(sessionId, slotId, aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcsAddToEnd(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcsAddToEnd(sessionId, slotId, aptNumber, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    // MCS [END]  ###################################################################
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
@@ -406,7 +622,5 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
-
-
 }
 

@@ -17,7 +17,7 @@ public type MedicalCenter record {|
     string[] appointments?;
     string[] patients?;
     string[] medicalCenterStaff?;
-    string description;
+    string description?;
 |};
 
 public type UnregisteredMedicalCEnter record {|
@@ -32,15 +32,11 @@ public type UnregisteredMedicalCEnter record {|
     decimal fee;
 |};
 
-public type DoctorRequests record {
-    string session;
-    string sessionVacancyId;
-};
 
 public type NewSessionVacancy record {
     string[] aptCategories;
     string medicalCenterId;
-    string mobileNumber;
+    string mobile;
     string vacancyNoteToDoctors;
     NewOpenSession[] openSessions;
 };
@@ -50,16 +46,26 @@ public type SessionVacancy record {
     DoctorResponse[] responses?;
     string[] aptCategories;
     string medicalCenterId;
-    string mobileNumber;
+    string mobile;
     string vacancyNoteToDoctors;
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
     time:Date vacancyClosedTimestamp?;
 };
 
+public type NewDoctorResponse record {
+    int responseId?;
+    string submittedTimestamp;
+    string doctorId;
+    string noteToPatient;
+    string vacancyNoteToCenter;
+    DoctorResponseApplication[] responseApplications;
+    boolean isCompletelyRejected;
+};
+
 //This model is used by doctor to respond to a session vacancy
 public type DoctorResponse record {
-    int responseId;
+    int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
     string noteToPatient;
@@ -74,13 +80,14 @@ public type NewOpenSession record {
     string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
     string rangeStartTimestamp;
     string rangeEndTimestamp;
-    Repetition repetition;
+    NewRepetition repetition;
 };
 
 public type OpenSession record {
     int sessionId;
     time:Date startTime;
     time:Date endTime;
+    int numberOfTimeslots?;
     time:Date rangeStartTimestamp;
     time:Date rangeEndTimestamp;
     Repetition repetition;

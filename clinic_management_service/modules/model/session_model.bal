@@ -19,6 +19,7 @@ public type Session record {
     boolean isAccepted?;
     int maxPatientCount?;
     int reservedPatientCount?;
+    boolean isFull;
     string[] reservedPatientIds?;
     TimeSlot[] timeSlots;
     string[] timeSlotIds;
@@ -33,9 +34,16 @@ public type TimeSlot record {
     time:Date startTime;
     time:Date endTime;
     int maxPatientCount;
-    int patientCount;
+    int reservedPatientCount;
+    boolean isFull;
     string[] appointmentIds;
     string[] patientId;
     string[] medicalStaffId;
     string[] patients;
+};
+
+public enum TimeslotStatus{
+    NOTSTARTED,
+    STARTED,
+    FINISHED
 };

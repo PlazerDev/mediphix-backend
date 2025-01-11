@@ -124,6 +124,222 @@ public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns mo
     return result;
 }
 
+// get specific time slot data by {slotId}
+public function mcsGetTimeSlot(string sessionId, int slotId) returns model:McsTimeSlot|mongodb:Error ?{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1
+    };
+
+    model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result is null ? result : ((result.timeSlot.length() > slotId && slotId >= 0) ? result.timeSlot[slotId] : null);
+}
+
+// get all timeslot list
+public function mcsGetAllTimeSlotList(string sessionId) returns model:McsTimeSlotList|mongodb:Error ?{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1
+    };
+
+    model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+// get all session details by id - New
+public function mcsGetAllSessionData(string sessionId) returns model:McsSession|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "medicalCenterId": 1,
+        "aptCategories": 1,
+        "payment": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1,
+        "timeSlot": 1
+    };
+
+    model:McsSession ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+// get all session details by id - Old
+public function mcsGetAllSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+
+    
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> projection = {
+        "_id": 0,
+        "timeSlot": 1,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1
+    };
+
+    model:McsAssignedSession ? result = check sessionCollection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+// Update the appointment status by the {aptNumber} - Also check the prevStatus is there 
+public function mcsUpdateAptStatus(int aptNumber, string newStatus, string preStatus) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection appointmentCollection = check initDatabaseConnection("appointment");
+
+    map<json> filter = {
+        "aptNumber": aptNumber,
+        "aptStatus": preStatus
+    };
+
+    mongodb:Update update = {
+        "set": { "aptStatus": newStatus }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check appointmentCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the {queueOperations} by the {sessionId} and {slotID}
+public function mcsUpdateQueueOperations(string sessionId, int slotId, model:McsTimeSlot[]? data) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": data }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the {overallSessionStatus, status} to "ONGOING" , "STARTED"
+public function mcsUpdateSessionToStartAppointment(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the statues of appointments List 
+public function mcsUpdateAptListStatus(int[] aptList, string status) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection appointmentCollection = check initDatabaseConnection("appointment");
+    
+    map<json> filter = {
+        "aptNumber": {"$in": aptList}
+    };
+
+    mongodb:Update update = {
+        "set": { "aptStatus": status }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check appointmentCollection->updateMany(filter, update, options);
+    return result;
+}
+
+// update the status of the timeslot
+public function mcsUpdateTimeSlotStatus(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the the timeslot
+public function mcsUpdateTimeSlot(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot}
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
+
+// update the {overallSessionStatus, status} to "OVER" , "FINISHED"
+public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTimeSlot[] timeSlot) returns mongodb:Error|mongodb:UpdateResult{
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+  
+    map<json> filter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    mongodb:Update update = {
+        "set": { "timeSlot": timeSlot, "overallSessionStatus": "OVER" }
+    };
+
+    mongodb:UpdateOptions options = {};    
+
+    mongodb:UpdateResult|mongodb:Error result = check sessionCollection->updateOne(filter, update, options);
+    return result;
+}
 
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {

@@ -133,17 +133,44 @@ public type Counter record {
 };
 
 //new appointment record for reviva
+public type NewAppointmentRecord record {
+    string sessionId;
+    int timeSlot;
+    string patientId;
+    string patientName;
+    int queueNumber;
+    string[] aptCategories;
+    string doctorId;
+    string doctorName;
+    string medicalCenterId;
+    string medicalCenterName;
+    decimal paymentAmount;
+};
+
 public type AppointmentRecord record {
-    string _id;
+    string _id?;
     int aptNumber;
     string sessionId;
     int timeSlot;
+    string[] aptCategories;
+    string doctorId;
+    string doctorName;
+    string medicalCenterId;
+    string medicalCenterName;
+    Payment payment;
     time:Date aptCreatedTimestamp;
     AppointmentStatus aptStatus;
-    string patient;
-    boolean isPayed;
+    string patientId;
+    string patientName;
     int queueNumber;
-    MedicalRecord medicalRecord;
+    MedicalRecord medicalRecord?;
+};
+
+public type Payment record {
+    boolean isPayed;
+    decimal amount;
+    string handleBy;
+    time:Date paymentTimestamp?;
 };
 
 public type MedicalRecord record {
@@ -168,16 +195,16 @@ public type LabReport record {
     ReportDetails? reportDetails;
 };
 
-public type ReportDetails record {  
+public type ReportDetails record {
     time:Date testStartedTimestamp;
-    time:Date testEndedTimestamp; 
+    time:Date testEndedTimestamp;
     string? additionalNote;
     string[]? resultFiles;
 };
 
 public type Treatment record {
     string[] medications;
-    string[] description;    
+    string[] description;
 };
 
 public type Diagnosis record {
@@ -185,3 +212,36 @@ public type Diagnosis record {
     string[] description;
 };
 
+public type TempMedicalRecord record {|
+    int aptNumber;
+    string startedTimestamp;
+    string endedTimestamp;
+    string[] symptoms;
+    Diagnosis diagnosis;
+    Treatment treatments;
+    string noteToPatient?;
+    boolean isLabReportRequired;
+    record {|
+        string requestedTimestamp;
+        boolean isHighPrioritize;
+        string testType;
+        string testName;
+        string noteToLabStaff;
+        int status;
+        record {|
+            string testStartedTimestamp;
+            string testEndedTimestamp;
+            string? additionalNote;
+            string[]? resultFiles;
+        |}? reportDetails;
+    |}? labReport;
+|};
+
+    
+    // Create a record type for the projected fields
+    public type ProjectedAppointment record {
+        string _id;
+        string sessionId;
+        int timeSlot;
+        int queueNumber;
+    };
