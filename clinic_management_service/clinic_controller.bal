@@ -245,7 +245,7 @@ service / on new http:Listener(9090) {
             response.statusCode = 200;
             response.setJsonPayload(session.toJson());
             io:println("Function responde successfully");
-        } else if session is model:InternalError {
+        } else if (session is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(session.body.toJson());
         }
@@ -415,7 +415,7 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcsStartAppointment(string sessionId, int slotId, string userId) returns http:Response|error {
-      
+
         model:NotFoundError|model:McsTimeSlot result = check 'service:mcsStartAppointment(sessionId, slotId, userId);
 
         http:Response response = new;
@@ -483,16 +483,16 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcsMoveToAbsent(sessionId, slotId, aptNumber, userId);
+
+        model:NotFoundError? result = check 'service:mcsMoveToAbsent(sessionId, slotId, aptNumber, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
@@ -500,16 +500,16 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcsRevertFromAbsent(sessionId, slotId, aptNumber, userId);
+
+        model:NotFoundError? result = check 'service:mcsRevertFromAbsent(sessionId, slotId, aptNumber, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
@@ -517,16 +517,16 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcsAddToEnd(string sessionId, int slotId, int aptNumber, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcsAddToEnd(sessionId, slotId, aptNumber, userId);
+
+        model:NotFoundError? result = check 'service:mcsAddToEnd(sessionId, slotId, aptNumber, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 

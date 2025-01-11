@@ -54,6 +54,7 @@ public type OpenSession record {
     int sessionId?;
     time:Date startTime;  
     time:Date endTime;    
+    int numberOfTimeslots?;
     time:Date rangeStartTimestamp;
     time:Date rangeEndTimestamp;
     Repetition repetition;

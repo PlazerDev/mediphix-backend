@@ -26,10 +26,28 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
             sessionId: 0,
             startTime: check time:civilFromString(newOpenSession.startTime),
             endTime: check time:civilFromString(newOpenSession.endTime),
+            numberOfTimeslots: 0,
             rangeStartTimestamp: check time:civilFromString(newOpenSession.rangeStartTimestamp),
             rangeEndTimestamp: check time:civilFromString(newOpenSession.rangeEndTimestamp),
             repetition: repetition
         };
+        time:Error? startTimeValidate = check time:dateValidate(openSession.startTime);
+        time:Error? endTimeValidate = check time:dateValidate(openSession.endTime);
+        if (startTimeValidate != null || endTimeValidate != null) {
+            model:ErrorDetails errorDetails = {
+                message: "Invalid date format",
+                details: "startTime or endTime",
+                timeStamp: time:utcNow()
+            };
+
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
+        time:Utc startTimeUtc = check time:utcFromString(newOpenSession.startTime);
+        time:Utc endTimeUtc = check time:utcFromString(newOpenSession.endTime);
+        decimal diffSeconds = time:utcDiffSeconds(endTimeUtc, startTimeUtc);
+        decimal diffHours = diffSeconds / 3600;
+        openSession.numberOfTimeslots = <int>diffHours.round();
         sessionVacancy.openSessions.push(openSession);
     }
 
