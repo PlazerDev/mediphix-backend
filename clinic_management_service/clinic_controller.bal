@@ -550,10 +550,10 @@ service / on new http:Listener(9090) {
         }
     }
 
-    resource function get mcrSearchPayment/[int aptNumber]() returns http:Response|error {
+    resource function get mcrSearchPayment/[int aptNumber]/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McrSearchPaymentFinalData result = check 'service:mcrSearchPayment(aptNumber);
-
+        // TODO :: by using the userId check the currosponding aptNumber is in the same medical center. 
         http:Response response = new;
 
         if (result is model:McrSearchPaymentFinalData) {

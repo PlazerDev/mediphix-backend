@@ -999,9 +999,8 @@ service /mcr on httpListener {
             // TODO :: get the {userEmail} from JWT
             string userEmail = "mcr1@nawaloka.lk";
             string userId = check getCachedUserId(userEmail, "mcr");
-            // TODO :: Role checking should be there
 
-            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber];
+            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
             return response;
         } on fail {
             ErrorDetails errorDetails = {
