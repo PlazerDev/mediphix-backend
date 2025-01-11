@@ -155,8 +155,8 @@ public function mcsStartAppointment(string sessionId, int slotId, string userId)
                     return error("There is a session ongoing!");
                 }else {
                     // at this level all checks are passed in [session]
-                    // if so change the {aptStatus} in [appointment] from "PAID" to "ONGOING" using {aptNumber}
-                    mongodb:UpdateResult|mongodb:Error updateAptStatusResult = dao:mcsUpdateAptStatus(aptNumber, "ONGOING", "PAID");
+                    // if so change the {aptStatus} in [appointment] from "INQUEUE" to "ONGOING" using {aptNumber}
+                    mongodb:UpdateResult|mongodb:Error updateAptStatusResult = dao:mcsUpdateAptStatus(aptNumber, "ONGOING", "INQUEUE");
                     if updateAptStatusResult is mongodb:UpdateResult {
                         if updateAptStatusResult.modifiedCount != 0 {
                             // update has been made successfully | Apt has set to ONGOING | No error should happen this point onward
