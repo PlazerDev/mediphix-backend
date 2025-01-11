@@ -21,21 +21,28 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
         return internalError;
     }
 
+    model:Payment payment = {
+        isPayed: false,
+        amount: newAppointmentRecord.paymentAmount,
+        handleBy: "",
+        paymentTimestamp: () 
+    };
+
     model:AppointmentRecord appointmentRecord = {
         aptNumber: newAppointmentNumber,
         sessionId: newAppointmentRecord.sessionId,
         timeSlot: newAppointmentRecord.timeSlot,
-        category: newAppointmentRecord.category,
-        patient: newAppointmentRecord.patient,
+        aptCategories: newAppointmentRecord.aptCategories,       
+        patientId: newAppointmentRecord.patientId,
+        patientName: newAppointmentRecord.patientName,
         queueNumber: newAppointmentRecord.queueNumber, 
         doctorId: newAppointmentRecord.doctorId,
+        payment: payment,
         doctorName: newAppointmentRecord.doctorName,
         medicalCenterId: newAppointmentRecord.medicalCenterId,
         medicalCenterName: newAppointmentRecord.medicalCenterName,
-        payment: newAppointmentRecord.payment,
         aptCreatedTimestamp: time:utcToCivil(time:utcNow()),
-        aptStatus: "ACTIVE",
-        isPayed: false      
+        aptStatus: "ACTIVE"
     };
 
     http:Created|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);

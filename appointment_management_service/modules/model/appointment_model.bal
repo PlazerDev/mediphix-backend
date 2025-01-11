@@ -136,14 +136,15 @@ public type Counter record {
 public type NewAppointmentRecord record {
     string sessionId;
     int timeSlot;
-    string patient;
+    string patientId;
+    string patientName;
     int queueNumber;
-    string category;
+    string[] aptCategories;
     string doctorId;
     string doctorName;
     string medicalCenterId;
     string medicalCenterName;
-    decimal payment;
+    decimal paymentAmount;
 };
 
 public type AppointmentRecord record {
@@ -151,19 +152,25 @@ public type AppointmentRecord record {
     int aptNumber;
     string sessionId;
     int timeSlot;
-    string category;
+    string[] aptCategories;
     string doctorId;
     string doctorName;
     string medicalCenterId;
     string medicalCenterName;
-    decimal payment;
+    Payment payment;
     time:Date aptCreatedTimestamp;
     AppointmentStatus aptStatus;
-    string patient;
-    boolean isPayed;
+    string patientId;
+    string patientName;
     int queueNumber;
     MedicalRecord medicalRecord?;
-    time:Date paymentTimeStamp?;
+};
+
+public type Payment record {
+    boolean isPayed;
+    decimal amount;
+    string handleBy;
+    time:Date paymentTimestamp?;
 };
 
 public type MedicalRecord record {
