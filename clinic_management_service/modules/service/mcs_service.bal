@@ -799,6 +799,16 @@ public function initNotFoundError(string details) returns model:NotFoundError {
     return notFound;
 }
 
+public function initValueError(string details) returns model:ValueError {
+    model:ErrorDetails errorDetails = {
+        message: "Value Error",
+        details: details,
+        timeStamp: time:utcNow()
+    };
+    model:ValueError valueError = {body: errorDetails};
+    return valueError;
+}
+
 public function startNextAppointmentQueueHandler(int queueLength, model:McsQueueOperations mcsQueueOperations) returns model:McsQueueOperations{
     model:McsQueueOperations temp = mcsQueueOperations.clone();
 

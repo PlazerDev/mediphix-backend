@@ -1,0 +1,478 @@
+[33mcommit afd90b8b79fe79ac55214e6e68d9efaa01d20812[m[33m ([m[1;36mHEAD -> [m[1;32mfeat/mcs[m[33m)[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Mon Jan 6 23:28:14 2025 +0530
+
+    fixed a path issue in MCS - ADD to end
+
+[33mcommit 55b3064ed445cf6b9519a870a4cc158606739d9b[m[33m ([m[1;31morigin/feat/mcs[m[33m)[m
+Merge: 89e456f d7b3703
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Mon Jan 6 23:12:03 2025 +0530
+
+    Merge branch 'dev' of https://github.com/PlazerDev/mediphix-backend into feat/mcs
+
+[33mcommit 89e456fe03be1c5b7e145114b5503be67181f16b[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Mon Jan 6 23:11:28 2025 +0530
+
+    MCS - add to end of queue
+
+[33mcommit d7b3703fcfa4c2631d399ccb4879a50a1ff135fd[m[33m ([m[1;31morigin/dev[m[33m)[m
+Merge: a9e80b9 85a32f2
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Mon Jan 6 19:19:20 2025 +0530
+
+    Merge pull request #117 from PlazerDev/feat/handle-session-vacancy
+    
+    Finish doctor respond to vacancies
+
+[33mcommit 85a32f2a4736228a188f4cda1c404d685eeecb9a[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Jan 6 19:12:16 2025 +0530
+
+    Finish doctor respond to vacancies
+
+[33mcommit 09bca57c10bb74a0c4b34fae7b097dae52b5b977[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Mon Jan 6 00:26:01 2025 +0530
+
+    fixed a bug in MCS - move to absent
+
+[33mcommit a9e80b9917584a681c751c3f4db5dc06c734c59e[m
+Merge: 57c4fa7 eea814a
+Author: Vishwa Sandaruwan <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 22:34:48 2025 +0530
+
+    Merge pull request #116 from PlazerDev/feat/mcs
+    
+    Feat/mcs
+
+[33mcommit eea814ac6a5bf174c0c905d3635f420f2f92e551[m
+Merge: 10d7741 57c4fa7
+Author: Vishwa Sandaruwan <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 22:34:39 2025 +0530
+
+    Merge branch 'dev' into feat/mcs
+
+[33mcommit 10d7741f367df41e5d3f41010c8ec063d6ab1ee5[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 22:30:56 2025 +0530
+
+    fixed bug in mcs - revert from absent
+
+[33mcommit 22188265f674ffe21aa7b2962336c1373e29f9bf[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 22:21:07 2025 +0530
+
+    mcs - revert from absent done
+
+[33mcommit c6232006f17f9cbfa4806b10fe83f822beae79bc[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 18:52:49 2025 +0530
+
+    fixed the issue start appointmment
+
+[33mcommit a3d2c8e6ec6965c9de0f8fc4966b56dfcd9c8e3c[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 18:19:44 2025 +0530
+
+    MCS - Move to absent
+
+[33mcommit e5bc003d36698eae6b44338a180cb0272fd142ed[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Jan 5 14:42:47 2025 +0530
+
+    fixed issue in the ending last timeslot
+
+[33mcommit 57c4fa7038b9c6734525b9a138ef67312d793f46[m
+Merge: 097307a 1c8c8a1
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 23:50:01 2025 +0530
+
+    Merge pull request #115 from PlazerDev/feat/patient-appointment
+    
+    Implement functions to get session details using doctorId
+
+[33mcommit 1c8c8a1846d94a9c9961fced4561679f23d8c23e[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 23:47:34 2025 +0530
+
+    Implement functions to get session details using doctorId
+
+[33mcommit 097307a5e647b61aafeb9927c06485e094e0507b[m
+Merge: 6b9fc23 7b34387
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 15:35:05 2025 +0530
+
+    Merge pull request #114 from PlazerDev/feat/ongoing-session
+    
+    Feat/ongoing session
+
+[33mcommit 7b343873f8fc36765adf61d547f999c7828932fe[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 15:33:26 2025 +0530
+
+    Modify get appointment functions
+
+[33mcommit 28cb3e743657b69025c3d7183ba94772bfd81012[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 14:59:01 2025 +0530
+
+    Modify function to add aptNumber to the session collection when creating an appointment
+
+[33mcommit 6b9fc23e2fc25b7e9f8277ebddf8bc87c654ac2c[m
+Merge: 37aec29 38cc255
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 13:05:11 2025 +0530
+
+    Merge pull request #113 from PlazerDev/feat/ongoing-session
+    
+    Feat/ongoing session
+
+[33mcommit 38cc25516baff3edb5c1d4844113e4e2ca1789bb[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 12:57:29 2025 +0530
+
+    Remove previous appointment create functions
+
+[33mcommit 5e97d144cc43d6c6d171e975b7a6818555575d6c[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Jan 4 12:44:46 2025 +0530
+
+    Implement function to create appointment for patient
+
+[33mcommit 37aec291ccef90caad9f14e130d9424787361f87[m
+Merge: f58debe e7aa015
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Wed Jan 1 14:28:16 2025 +0530
+
+    Merge pull request #112 from PlazerDev/feat/ongoing-session
+    
+    Feat/ongoing session
+
+[33mcommit e7aa015c1caf4c35fe1e38be580a2b3ed0ed06e7[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Wed Jan 1 14:26:58 2025 +0530
+
+    Remove past patient medical record submit functions
+
+[33mcommit 13ccd798d6fdb53929fc831315a1d9e3843aa7ef[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Wed Jan 1 14:09:41 2025 +0530
+
+    Add paymentTimeStamp to Appointment model
+
+[33mcommit f58debeb1ebcac0f5b74a8d951a1217c4074c262[m
+Merge: 336ae05 8228314
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Tue Dec 31 17:16:38 2024 +0530
+
+    Merge pull request #111 from PlazerDev/feat/ongoing-session
+    
+    Feat/ongoing session
+
+[33mcommit 8228314f5c29ef9d3b7dc17deab96746a76ba4ac[m
+Merge: 4c7eeb7 336ae05
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Tue Dec 31 15:33:25 2024 +0530
+
+    Merge branch 'dev' into feat/ongoing-session
+
+[33mcommit 4c7eeb796a91ffa258ec4f400acad2c757337fea[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Tue Dec 31 15:06:33 2024 +0530
+
+    Update appointment and session collection when saving a medical record
+
+[33mcommit 336ae05f6df84c995977d2f7c6988aa83eb2ff04[m
+Merge: 96fa3c0 4961829
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Mon Dec 30 19:19:55 2024 +0530
+
+    Merge pull request #110 from PlazerDev/feat/handle-session-vacancy
+    
+    Feat/handle session vacancy
+
+[33mcommit 49618297955f7464f8de31505a70d6a41d29398a[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Dec 30 19:14:39 2024 +0530
+
+    Implement doctor response to session vacancy
+
+[33mcommit 49f9d0925d71437a6b9e97c920d17fb2e2252452[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Dec 30 17:17:05 2024 +0530
+
+    Modify to create session vacancies with NewRepetition model
+
+[33mcommit 96fa3c05bd34fe8403b20656a2f39c944c8a8a34[m
+Merge: 971faed a5745fe
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Mon Dec 30 15:34:27 2024 +0530
+
+    Merge pull request #109 from PlazerDev/feat/handle-session-vacancy
+    
+    Feat/handle session vacancy
+
+[33mcommit a5745fe188e80599ddce1ebabd91ee79e62a1798[m
+Merge: c184f48 023e185
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Dec 30 15:33:01 2024 +0530
+
+    Merge branch 'feat/handle-session-vacancy' of https://github.com/PlazerDev/mediphix-backend into feat/handle-session-vacancy
+
+[33mcommit c184f48524757154e584cb63a6e4db76444b8533[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Dec 30 15:32:46 2024 +0530
+
+    Finish get doctor session vacancies function
+
+[33mcommit 971faedc14c1af17dce174d99966fdf4a7404226[m
+Merge: 9b90884 023e185
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Mon Dec 30 13:21:18 2024 +0530
+
+    Merge pull request #108 from PlazerDev/feat/handle-session-vacancy
+    
+    Implement get doctor session vacancies function
+
+[33mcommit 023e185be06ebe16bf2a8c9eba682e2dbfa8dda2[m
+Merge: b903d93 9b90884
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Mon Dec 30 13:20:53 2024 +0530
+
+    Merge branch 'dev' into feat/handle-session-vacancy
+
+[33mcommit b903d9379e89c66a042554937c97764cbe1395ea[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Mon Dec 30 13:17:11 2024 +0530
+
+    Implement get doctor session vacancies function
+
+[33mcommit ba3ad76d97bb25e5ed97ac06f2f53b9062cde678[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 19:30:37 2024 +0530
+
+    fix the issue in status in MCA - Start appointment
+
+[33mcommit 9b9088495fae08f7a5826c5b68cd00108a71bea5[m
+Merge: c5afcfe 1152fb1
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 12:29:16 2024 +0530
+
+    Merge pull request #107 from PlazerDev/feat/Registration
+    
+    remove fee in dao call
+
+[33mcommit 1152fb1a66c41d909a8c4998bb86d1f301f60576[m
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 12:28:26 2024 +0530
+
+    remove fee in dao call
+
+[33mcommit c5afcfe982cfaf9890c10b735f17161a3f28bca7[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Sun Dec 29 11:23:16 2024 +0530
+
+    Adjust mobile field to keep consistency
+
+[33mcommit ee7db45eef9dde92a3551ed53d4d100d39c3d63a[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Sun Dec 29 10:28:37 2024 +0530
+
+    Fix naming conventions & best practices
+
+[33mcommit d27179531b20b417543f152b256e188b4e0bd492[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sun Dec 29 06:20:41 2024 +0530
+
+    updateMedicalRecord - update appointment status
+
+[33mcommit e1d06e15e463f2ad2b3f3d7d27872d602a91ca23[m
+Merge: dad6648 daae02c
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sun Dec 29 04:58:00 2024 +0530
+
+    Merge pull request #106 from PlazerDev/feat/ongoing-session
+    
+    Fix the error in UpdateMedicalRecord DAO function
+
+[33mcommit daae02c2aa80ead3280de0c0b1383aba593035db[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sun Dec 29 04:55:37 2024 +0530
+
+    Fix the error in UpdateMedicalRecord DAO function
+
+[33mcommit dad66485680a796b067c89dcb8a77c6c822b3e34[m
+Merge: 9942b00 f754bc6
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 02:28:07 2024 +0530
+
+    Merge pull request #104 from PlazerDev/feat/Registration
+    
+    Feat/registration
+
+[33mcommit f754bc6ad9e5af0c4f559d8bed78a56fd19ce063[m
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 02:27:08 2024 +0530
+
+    change to optional
+
+[33mcommit 36233ec641fac4bf6cfecde3fd98dd8fa846b979[m
+Merge: 5bb38f5 2f8c50b
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 02:26:29 2024 +0530
+
+    Merge branch 'dev' into feat/Registration
+
+[33mcommit 9942b00f1a6328d882b799f9b808146ada8a8abf[m
+Merge: 2f8c50b 2e246bf
+Author: Vishwa Sandaruwan <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 02:04:11 2024 +0530
+
+    Merge pull request #105 from PlazerDev/feat/mcs
+    
+    MCS - End Time Slot | End Last Time Slot
+
+[33mcommit 2e246bf346d978a838d6d1042b87c1c4712d7e0a[m
+Merge: 7dc6ec1 487e964
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 02:01:40 2024 +0530
+
+    Merge branch 'feat/mcs' of https://github.com/PlazerDev/mediphix-backend into feat/mcs
+
+[33mcommit 7dc6ec1d7872c3795b36f8ddc80b2ac5ed33cc8e[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 02:00:31 2024 +0530
+
+    MCA - End Last Time Slot - Fixed a bug
+
+[33mcommit 5bb38f5e83323d2cde322c5dbc09b03c73d9acff[m
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 01:50:03 2024 +0530
+
+    Medical Center Lab Staff registration Completed
+
+[33mcommit 98e4142264dc952c3182fc23ac592644c274002d[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 01:46:50 2024 +0530
+
+    MCA - End Time Slot - Fixed a bug
+
+[33mcommit 35926f6e03b8c330f5c52f45bee318b3f4986e5a[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 01:24:57 2024 +0530
+
+    MCA - End Time Slot
+
+[33mcommit 3c83a4e603e540f9a1f12aa153399d55e800cd4f[m
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 00:53:33 2024 +0530
+
+    medical center Staff registration API done
+
+[33mcommit 2f8c50b7c0cbcd80986cb9a66935036e55f47c45[m
+Merge: e037edd 487e964
+Author: Vishwa Sandaruwan <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 00:30:04 2024 +0530
+
+    Merge pull request #103 from PlazerDev/feat/mcs
+    
+    MCS - Start Time Slot
+
+[33mcommit 487e964a375ee9ad2106e46192531c26bc9b8977[m
+Merge: 89a8910 e037edd
+Author: Vishwa Sandaruwan <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 00:29:50 2024 +0530
+
+    Merge branch 'dev' into feat/mcs
+
+[33mcommit 89a8910a2a0ae974d8c3c35cd89dcadef3e6d64d[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sun Dec 29 00:23:00 2024 +0530
+
+    MCS - Start Time Slot
+
+[33mcommit 6ec6476087ae7c6c84bfe24e39778cc7ca594418[m
+Author: Visal Vishmitha Alwis <106392603+vishmitha1@users.noreply.github.com>
+Date:   Sun Dec 29 00:07:18 2024 +0530
+
+    medical Center and MCAdmin registrations Completed.
+
+[33mcommit e037edd6ab98d76d47a2eae3f8e7a888bbf6d653[m
+Merge: ff56f59 a47740b
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Sat Dec 28 22:35:16 2024 +0530
+
+    Merge pull request #100 from PlazerDev/feat/handle-session-vacancy
+    
+    Fix bugs in creating session vacancy
+
+[33mcommit a47740b064707eadb15a6e09c13cba606b8cf63e[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Sat Dec 28 22:34:08 2024 +0530
+
+    Fix bugs in creating session vacancy
+
+[33mcommit 0510ee179390b6cfc617cbdb760efa5f5807f7a9[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sat Dec 28 18:31:12 2024 +0530
+
+    Fixed Issues in MCS start appointment
+
+[33mcommit ff56f5971b29780420dcf529cd969a3b986715de[m
+Merge: ab43ea7 bd1ae33
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Sat Dec 28 17:41:48 2024 +0530
+
+    Merge pull request #99 from PlazerDev/feat/handle-session-vacancy
+    
+    Finish implementing create session vacancy
+
+[33mcommit bd1ae338157fb66e466eebb1645c4a2745443fb6[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Sat Dec 28 17:40:45 2024 +0530
+
+    Finish implementing create session vacancy
+
+[33mcommit 5efc33163dda5fb85f51b0382282724a0583e42d[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sat Dec 28 14:55:10 2024 +0530
+
+    MCS start appointment finished
+
+[33mcommit f27e597a1645a5f6e267f0fd058e0468badaa1e1[m
+Author: itsvishwa <116142492+itsvishwa@users.noreply.github.com>
+Date:   Sat Dec 28 14:36:14 2024 +0530
+
+    main logic created for queue handling
+
+[33mcommit ab43ea7342223ade12215f9cc9be994c5a8d703c[m
+Merge: 8c7080a db17452
+Author: Praveena Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Dec 28 14:02:31 2024 +0530
+
+    Merge pull request #98 from PlazerDev/feat/ongoing-session
+    
+    Modify functions to upload medical records(Error in DAO function)
+
+[33mcommit db1745255cd86c3f39d718c24734bddd59e3781f[m
+Author: S.A.P.V.Rupasinghe <sapvrupasinghe@gmail.com>
+Date:   Sat Dec 28 13:56:00 2024 +0530
+
+    Modify functions to upload medical records(Error in DAO function)
+
+[33mcommit 8c7080a06fa715f9b767d68b3b584e55e1492632[m
+Merge: a433af5 6ce78d7
+Author: Sashmitha Ravindu <86905915+Sashmitha-Ravindu@users.noreply.github.com>
+Date:   Fri Dec 27 18:32:37 2024 +0530
+
+    Merge pull request #97 from PlazerDev/feat/handle-session-vacancy
+    
+    Feat/handle session vacancy
+
+[33mcommit 6ce78d70ebb04c504b25142babec158e3f998920[m
+Author: Sashmitha-Ravindu <sashmitharavindu33@gmail.com>
+Date:   Fri Dec 27 18:31:51 2024 +0530
+
+    Implement method to create vacancy in api gateway

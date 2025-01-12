@@ -62,7 +62,7 @@ public function createTimeslots(model:Session session) returns http:Created|erro
     mongodb:Collection timeSlotCollection = check mediphixDb->getCollection("time_slot");
 
     foreach model:TimeSlot timeSlot in session.timeSlots {
-        timeSlot.timeSlotNumber = timeSlot.timeSlotNumber ?: 0;
+        // timeSlot.slotId = timeSlot.timeSlotNumber ?: 0;
         mongodb:Error? result = check timeSlotCollection->insertOne(timeSlot);
     }
     return http:CREATED;
