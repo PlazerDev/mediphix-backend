@@ -60,7 +60,7 @@ public type McsTimeSlot record {|
     int slotId;
     string startTime;
     int maxNoOfPatients;
-    TimeSlotStatus status;
+    string status;
     McsQueue queue;
 |};
 

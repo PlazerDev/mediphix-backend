@@ -48,3 +48,14 @@ public type medicalCenterLabStaff record {
     string profileImage?;
     string userId;
 };
+
+public type FinalUserResult record {|
+    string role;
+    medicalCenterAdmin|medicalCenterStaff|medicalCenterReceptionist|medicalCenterReceptionist userData;
+    MedicalCenterBrief medicalCenterData;
+|};
+
+public type MedicalCenterBrief record {|
+    string name;
+    string profileImage;
+|};

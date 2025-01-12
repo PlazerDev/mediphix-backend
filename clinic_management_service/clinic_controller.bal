@@ -602,6 +602,34 @@ service / on new http:Listener(9090) {
 
     // MCR [END] ###################################################################
     
+
+// ******************************************************************************************************
+
+
+    // ROLE [START] ###################################################################  
+
+    resource function get findUserRole/[string userEmail]() returns http:Response|error {
+        
+        model:NotFoundError|model:ValueError|model:FinalUserResult result = check 'service:findUserRole(userEmail);
+        
+        http:Response response = new;
+        if (result is model:FinalUserResult) {
+            response.statusCode = 200; 
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404; 
+            response.setJsonPayload(result.body.toJson());
+        } else if result is model:ValueError {
+            response.statusCode = 406; 
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }   
+
+    // ROLE [END] ###################################################################  
+
+
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
         string|model:InternalError|error? result = 'service:uploadMedia(userType, uploadType, emailHead, fileBytes, fileName, fileType, extension);
