@@ -1002,7 +1002,6 @@ service /mcs on httpListener {
         }
     }
 }
-
 // MCS [END] .......................................................................................
 
 
@@ -1060,9 +1059,51 @@ service /mcr on httpListener {
     }
 
 }
-
-
 // MCR [END] .......................................................................................
+
+
+// ROLE [START] .......................................................................................
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    },
+    auth: [
+        {
+            jwtValidatorConfig: {
+                issuer: issuer,
+                audience: audience,
+                signatureConfig: {
+                    jwksConfig: {
+                        url: jwksUrl
+                    }
+                }
+            }
+        }
+    ]
+}
+service /user on httpListener {
+    
+    @http:ResourceConfig
+    resource function get find(http:Request request) returns http:Response {
+        do {
+            string userEmail = check getUserEmailByJWT(request);
+
+            http:Response response = check clinicServiceEP->/findUserRole/[userEmail];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+}
+// ROLE [END] .......................................................................................
 
 
 /// Registration Listener...........................................................................
@@ -1145,6 +1186,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 }
+
 //Medical center admin
 @http:ServiceConfig {
     cors: {
