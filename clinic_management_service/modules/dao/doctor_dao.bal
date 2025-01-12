@@ -149,6 +149,7 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
 
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("session_vacancy");
+    mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
 
     model:SessionVacancy[] sessionVacancies = [];
 
@@ -174,6 +175,30 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
                 select sv;
             if sessionVacanciesTemp is model:SessionVacancy[] {
                 foreach model:SessionVacancy sv in sessionVacanciesTemp {
+                     map<json> mcFilter = {"_id": {"$oid": sv.medicalCenterId}};
+                     map<json> mcProjection = {
+                            "_id": {"$toString": "$_id"},
+                            "name": 1,
+                            "address": 1,
+                            "mobile": 1,
+                            "email": 1,
+                            "district": 1,
+                            "verified": 1,
+                            "profileImage": 1,
+                            "appointmentCategories": 1,
+                            "mediaStorage": 1,
+                            "specialNotes": 1,
+                            "doctors": 1,
+                            "appointments": 1,
+                            "patients": 1,
+                            "medicalCenterStaff": 1,
+                            "description": 1
+                        };
+                    model:MedicalCenter|mongodb:Error? mcfindResults = check medicalCenterCollection->findOne(mcFilter, {}, mcProjection,model:MedicalCenter);
+                    if(mcfindResults is model:MedicalCenter){
+                        sv.centerName = mcfindResults.name;
+                        sv.profileImage = mcfindResults.profileImage;
+                    }
                     sessionVacancies.push(sv);
                 }
             }
