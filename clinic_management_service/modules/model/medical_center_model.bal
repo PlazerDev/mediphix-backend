@@ -51,6 +51,8 @@ public type SessionVacancy record {
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
     time:Date vacancyClosedTimestamp?;
+    string centerName?;
+    string profileImage?;
 };
 
 public type NewDoctorResponse record {
