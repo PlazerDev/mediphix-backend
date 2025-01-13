@@ -53,7 +53,7 @@ public function mcrSearchPayment(int aptNumber) returns error|model:NotFoundErro
                             aptCreatedTimestamp: aptDetails.aptCreatedTimestamp
                         },
                         paymentDetails: {
-                            isPaid: false, 
+                            isPaid: aptDetails.payment.isPaid, 
                             paymentTimestamp: aptDetails.payment.paymentTimestamp, 
                             handleBy: aptDetails.payment.handleBy, 
                             amount: aptDetails.payment.amount}

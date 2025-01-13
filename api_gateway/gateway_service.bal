@@ -1017,7 +1017,7 @@ service /mcr on httpListener {
     resource function get searchPayment/[int aptNumber](http:Request request) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcr1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcr");
 
             http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
@@ -1036,10 +1036,10 @@ service /mcr on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put markToPay/[int aptNumber](http:Request request) returns http:Response {
+    resource function put markToPay(http:Request request, int aptNumber) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcr1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcr");
             string url = string `/mcrMarkToPay?aptNumber=${aptNumber}&userId=${userId}`;
 
