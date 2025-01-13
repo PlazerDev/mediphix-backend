@@ -109,6 +109,14 @@ public function uploadMedia(string userType, string uploadType, string email, by
         fileNameNew = "patient-resources/" + emailHead + "/" + "reports" + "/" + fileName;
     } else if (userType === "patient" && uploadType === "profileImage") {
         fileNameNew = "patient-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcs" && uploadType === "profileImage") {
+        fileNameNew = "mcs-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mca" && uploadType === "profileImage") {
+        fileNameNew = "mca-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcr" && uploadType === "profileImage") {
+        fileNameNew = "mcr-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcls" && uploadType === "profileImage") {
+        fileNameNew = "mcls-resources/" + emailHead + "/" + "profileImage";
     } else {
         model:ErrorDetails errorDetails = {
             message: "Invalid upload type",
