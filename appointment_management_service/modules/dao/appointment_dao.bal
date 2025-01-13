@@ -133,17 +133,17 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
 public function getSessionDetailsByDoctorId(string doctorId) returns
 model:Session[]|model:InternalError|model:NotFoundError|error? {
-
+    io:println("Inside dao");
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
     map<json> filter = {"doctorId": doctorId};
-
+    io:println("Found doctor", filter);
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "endTimestamp": 1,
         "startTimestamp": 1,
-        "timeSlot": 1,
+        "timeSlots": 1,
         "doctorId": 1,
         "medicalCenterId": 1,
         "aptCategories": 1,
@@ -156,7 +156,14 @@ model:Session[]|model:InternalError|model:NotFoundError|error? {
 
     stream<model:Session, error?>|error findStream = sessionCollection->find(filter, {}, projection, model:Session);
     if findStream is error {
-        return findStream;
+         io:println("Error during find operation:", findStream.message());
+        model:ErrorDetails errorDetails = {
+            message: "Database error while finding sessions",
+            details: findStream.message(),
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
     }
 
     stream<model:Session, error?> findResults = check findStream;
@@ -164,6 +171,15 @@ model:Session[]|model:InternalError|model:NotFoundError|error? {
     model:Session[]|error sessions = from model:Session session in findResults
         select session;
     if sessions is model:Session[] {
+        if sessions.length() == 0 {
+            model:ErrorDetails errorDetails = {
+                message: "No sessions found for the doctor",
+                details: string `session/${doctorId}`,
+                timeStamp: time:utcNow()
+            };
+            model:NotFoundError notFound = {body: errorDetails};
+            return notFound;
+        }
         return sessions;
     } else {
         io:println("Error during stream processing:", sessions.message());
