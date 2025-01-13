@@ -56,6 +56,7 @@ public type FinalUserResult record {|
 |};
 
 public type MedicalCenterBrief record {|
+    string _id;
     string name;
     string profileImage;
 |};

@@ -150,7 +150,7 @@ public function getInfoMCLS(string userId) returns model:medicalCenterLabStaff|m
     # 
     # 
     # + centerId - center ID
-    # + return - on sucess return name, profileImage
+    # + return - on sucess return name, profileImage and centerId
 
 public function getInfoCenter(string centerId) returns model:MedicalCenterBrief|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center");
@@ -160,7 +160,7 @@ public function getInfoCenter(string centerId) returns model:MedicalCenterBrief|
     };
 
    map<json> projection = {
-        "_id": 0,
+        "_id": {"$toString": "$_id"},
         "name": 1,
         "profileImage": 1
     };
@@ -175,7 +175,7 @@ public function getInfoCenter(string centerId) returns model:MedicalCenterBrief|
     # 
     # 
     # + centerEmail - center ID
-    # + return -  on sucess return name, profileImage
+    # + return -  on sucess return name, profileImage and centerId
 
 public function getInfoCenterByEmail(string centerEmail) returns model:MedicalCenterBrief|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center");
@@ -185,7 +185,7 @@ public function getInfoCenterByEmail(string centerEmail) returns model:MedicalCe
     };
 
    map<json> projection = {
-        "_id": 0,
+        "_id": {"$toString": "$_id"},
         "name": 1,
         "profileImage": 1
     };
