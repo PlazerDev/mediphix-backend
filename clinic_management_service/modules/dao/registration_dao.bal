@@ -377,6 +377,7 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
     mongodb:Collection medicalCenterAdminCollection = check mediphixDb->getCollection("medical_center_admin");
     string emaiHead = getEmailHead(data.mcaData.email);
+    string centerEmailHead = getEmailHead(data.mcData.email);
 
     model:User mcUser = {
         email: data.mcaData.email,
@@ -404,7 +405,7 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
                 name: data.mcaData.name,
                 nic: data.mcaData.nic,
                 mobile: data.mcaData.mobile,
-                profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mca-resources/" + emaiHead + "/profileImage",
+                profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/medical-center-resources/" + centerEmailHead + "/logo",
                 medicalCenterEmail: data.mcData.email,
                 userId: <string>userId
             };
