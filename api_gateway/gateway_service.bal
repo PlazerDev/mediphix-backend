@@ -134,6 +134,13 @@ service /patient on httpListener {
         return response;
     }
 
+    
+    //    resource function get getDoctorName(string doctorId) returns http:Response|error? {
+    //     io:println("Inside getDoctorName in gateway");
+    //     http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[doctorId];
+    //     return doctorName;
+    // }
+
     resource function get centerdata() returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
         if (response !is http:Response) {
@@ -167,6 +174,24 @@ service /patient on httpListener {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
                 details: "Error occurred while retrieving appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+    
+    resource function get getDoctorDetails/[string doctorId]() returns http:Response|error? {
+        do {
+            http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[doctorId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
                 timeStamp: time:utcNow()
             };
             http:Response errorResponse = new;
