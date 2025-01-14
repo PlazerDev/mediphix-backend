@@ -1,6 +1,5 @@
 import clinic_management_service.model;
 
-import ballerina/io;
 import ballerina/time;
 import ballerinax/mongodb;
 
@@ -61,7 +60,6 @@ public function getPatientById(string userId) returns model:Patient|model:NotFou
 
         return userNotFound;
     }
-    io:println("patient results" + findResults.toString());
     return findResults;
 }
 
