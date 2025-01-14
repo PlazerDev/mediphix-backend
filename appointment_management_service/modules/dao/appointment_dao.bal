@@ -14,12 +14,11 @@ configurable string cluster = ?;
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
-   io:println("Debug: Creating appointment record: ", appointmentRecord.toJson());
+
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
     check appointmentCollection->insertOne(appointmentRecord);
-    io:println("Debug: Done insert appointment");
     
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
@@ -33,26 +32,19 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
         }
     };
 
-    io:println("Debug: Attempting to update session with filter: ", sessionFilter.toJson());
-
     mongodb:UpdateResult|error updateResult = sessionCollection->updateOne(
         sessionFilter,
         sessionUpdate
     );
     
     if updateResult is error {
-        io:println("Debug: Session update failed with error: ", updateResult.message());
         return updateResult;
     }
 
     if updateResult.modifiedCount == 0 {
         string errMsg = "Failed to update session. No matching session found.";
-        io:println("Debug: ", errMsg);
         return error(errMsg);
     }
-
-    // Debug Step 6: Log successful completion
-    io:println("Debug: Successfully created appointment and updated session");
     return http:CREATED;
 }
 
