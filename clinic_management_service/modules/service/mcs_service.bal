@@ -109,7 +109,6 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
 
 public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns error|model:NotFoundError|model:McsTimeSlotList {
     model:McsTimeSlotList|mongodb:Error ? result = dao:mcsGetOngoingSessionTimeSlotDetails(sessionId);
-
     if result is null {
         return initNotFoundError("Time slot data not found!");
     } else if result is mongodb:Error {

@@ -53,7 +53,7 @@ public type McsDoctorDetails record {|
 |};
 
 public type McsTimeSlotList record {|
-    McsTimeSlot[] timeSlot;
+    McsTimeSlot[] timeSlots;
 |};
 
 public type McsTimeSlot record {|

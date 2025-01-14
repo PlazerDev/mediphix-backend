@@ -115,6 +115,7 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsA
 
 public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {    
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    io:println("hello this in here");
 
     map<json> | error filter = initOngoingSessionFilter(sessionId);
     if filter is error {
@@ -123,7 +124,7 @@ public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns mo
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -140,12 +141,12 @@ public function mcsGetTimeSlot(string sessionId, int slotId) returns model:McsTi
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
     
-    return result is null ? result : ((result.timeSlot.length() > slotId && slotId >= 0) ? result.timeSlot[slotId] : null);
+    return result is null ? result : ((result.timeSlots.length() > slotId && slotId >= 0) ? result.timeSlots[slotId] : null);
 }
 
 // get all timeslot list
@@ -158,7 +159,7 @@ public function mcsGetAllTimeSlotList(string sessionId) returns model:McsTimeSlo
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -186,7 +187,7 @@ public function mcsGetAllSessionData(string sessionId) returns model:McsSession|
         "noteFromCenter": 1,
         "noteFromDoctor": 1,
         "overallSessionStatus": 1,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsSession ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -205,7 +206,7 @@ public function mcsGetAllSessionDetails(string sessionId) returns model:McsAssig
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1,
+        "timeSlots": 1,
         "endTimestamp": 1,
         "startTimestamp": 1,
         "doctorId": 1,
@@ -248,7 +249,7 @@ public function mcsUpdateQueueOperations(string sessionId, int slotId, model:Mcs
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": data }
+        "set": { "timeSlots": data }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -266,7 +267,7 @@ public function mcsUpdateSessionToStartAppointment(string sessionId, model:McsTi
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "ONGOING" }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -302,7 +303,7 @@ public function mcsUpdateTimeSlotStatus(string sessionId, model:McsTimeSlot[] ti
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "ONGOING" }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -320,7 +321,7 @@ public function mcsUpdateTimeSlot(string sessionId, model:McsTimeSlot[] timeSlot
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot}
+        "set": { "timeSlots": timeSlot}
     };
 
     mongodb:UpdateOptions options = {};    
@@ -338,7 +339,7 @@ public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTime
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "OVER" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "OVER" }
     };
 
     mongodb:UpdateOptions options = {};    
