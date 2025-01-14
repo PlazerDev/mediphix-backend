@@ -692,6 +692,27 @@ service /doctor on httpListener {
         }
     }
 
+    resource function get getSessionDetailsForDoctorHome(http:Request req) returns http:Response|error? {
+        string doctorEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string doctorId = check getCachedUserId(doctorEmail, userType);
+         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        
+        return response;
+    }  
+
 }
 
 @http:ServiceConfig {
