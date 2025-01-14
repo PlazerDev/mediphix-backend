@@ -17,7 +17,7 @@ public type McrAppointment record {|
 |};
 
 public type McrPayment record {|
-    time:Date ? paymentTimestamp;
+    time:Date paymentTimestamp ?;
     string handleBy;
     boolean isPaid;
     decimal amount;
