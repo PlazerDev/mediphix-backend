@@ -93,7 +93,10 @@ public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctor
 public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
 
-    map<json> filter = initOngoingSessionFilter(sessionId);
+    map<json> | error filter = initOngoingSessionFilter(sessionId);
+    if filter is error {
+        return null;
+    }
 
     map<json> projection = {
         "_id": {"$toString": "$_id"},
@@ -113,7 +116,10 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsA
 public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {    
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
 
-    map<json> filter = initOngoingSessionFilter(sessionId);
+    map<json> | error filter = initOngoingSessionFilter(sessionId);
+    if filter is error {
+        return null;
+    }
 
     map<json> projection = {
         "_id": 0,
@@ -349,12 +355,13 @@ public function initDatabaseConnection(string collectionName) returns mongodb:Co
     return collection;
 }
 
-public function initOngoingSessionFilter(string sessionId) returns map<json> {
-    time:Utc currentTimeStamp = time:utcNow();
+public function initOngoingSessionFilter(string sessionId) returns map<json> | error {
+    time:Civil currentTimeStamp = getCurrentCivilLKTime();
+    time:Utc currentTimeStampInUTC = check time:utcFromCivil(currentTimeStamp);
 
-    json currentTimeJson = time:utcToCivil(currentTimeStamp).toJson();
-    json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStamp, 3600)).toJson();
-
+    json currentTimeJson = currentTimeStamp.toJson();
+    json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStampInUTC, 3600)).toJson();
+    
     map<json> filter = {
         "_id": {"$oid": sessionId},
         "$or": [
@@ -375,4 +382,12 @@ public function initOngoingSessionFilter(string sessionId) returns map<json> {
     };
 
     return filter;
+}
+
+public function getCurrentCivilLKTime() returns time:Civil {
+    time:Utc utcNow = time:utcNow();
+    time:Seconds offsetInSeconds = (5 * 60 * 60) + (30 * 60);
+    time:Utc sriLankaUtcTime = time:utcAddSeconds(utcNow, offsetInSeconds);
+    time:Civil sriLankaTime = time:utcToCivil(sriLankaUtcTime);
+    return sriLankaTime;
 }

@@ -69,6 +69,7 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
         foreach string sessionId in sessionIdList.assignedSessions {
             
             model:McsAssignedSession|mongodb:Error ? sessionDetails = dao:mcsGetOngoingSessionDetails(sessionId);
+            
             if(sessionDetails is mongodb:Error){
                 return error("Database Error!: ", sessionDetails);
             }
