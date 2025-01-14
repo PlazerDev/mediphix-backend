@@ -1,6 +1,5 @@
-import clinic_management_service.dao;
 import clinic_management_service.model;
-
+import clinic_management_service.dao;
 import ballerina/http;
 import ballerina/time;
 
@@ -80,4 +79,15 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
 
     model:InternalError internalError = {body: errorDetails};
     return internalError;
+}
+
+
+public function getMcaUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:getMcaUserIdByEmail(email);
+    return result;
+}
+
+public function getMcaSessionVacancies(string userId) returns error|model:McaUserID|model:InternalError {
+    error|model:McaUserID|model:InternalError result = check dao:getMcaSessionVacancies(userId);
+    return result;
 }

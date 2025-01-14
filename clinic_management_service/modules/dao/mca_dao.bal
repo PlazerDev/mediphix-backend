@@ -61,7 +61,6 @@ public function createTimeslots(model:Session session) returns http:Created|erro
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection timeSlotCollection = check mediphixDb->getCollection("time_slot");
 
-
     foreach model:TimeSlot timeSlot in session.timeSlots {
         // timeSlot.slotId = timeSlot.timeSlotNumber ?: 0;
         mongodb:Error? result = check timeSlotCollection->insertOne(timeSlot);
@@ -156,4 +155,81 @@ public function getNextOpenSessionId() returns int|model:InternalError|error {
         return internalError;
     }
 
+}
+
+public function getMcaUserIdByEmail(string email) returns string|error|model:InternalError {
+    mongodb:Collection userCollection = check initDatabaseConnection("user");
+
+    map<json> filter = {"email": email};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"}
+    };
+
+    model:McaUserID|mongodb:Error? findResults = userCollection->findOne(filter, {}, projection);
+
+    if findResults is model:McaUserID {
+        return findResults._id;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA ID",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
+}
+
+public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError|error {
+    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
+    map<json> filter = {"medicalCenterId": userId};
+    stream<model:SessionVacancy, error?>|mongodb:Error? findResults = check sessionVacancyCollection->find(filter, {}, {}, model:SessionVacancy);
+
+    if !(findResults is stream<model:SessionVacancy, error?>) {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA session vacancies",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError sessionVacancyNotFound = {body: errorDetails};
+
+        return sessionVacancyNotFound;
+    }
+
+    model:SessionVacancy[]|error sessionVacancies = from model:SessionVacancy vacancy in findResults
+        select vacancy;
+
+    if sessionVacancies is model:SessionVacancy[] {
+        return sessionVacancies;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA session vacancies",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError sessionVacancyNotFound = {body: errorDetails};
+
+        return sessionVacancyNotFound;
+    }
+
+}
+
+public function getMcaAssociatedMedicalCenterId(string userId) returns string|error {
+    mongodb:Collection mcaCollection = check initDatabaseConnection("medical_center_admin");
+
+    map<json> filter = {"userId": userId};
+    map<json> projection = {
+        "medicalCenterEmail": 1
+    };
+
+    model:McaMedicalCenterEmail|mongodb:Error?| findResults = mcaCollection->findOne(filter, {}, projection);
+
+    if findResults is model:McaUser {
+        return findResults.medicalCenterId;
+    }
+    else {
+        return error("Internal Error");
+    }
 }

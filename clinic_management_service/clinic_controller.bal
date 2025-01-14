@@ -701,5 +701,28 @@ service / on new http:Listener(9090) {
         }
         return response;
     }
+
+    // MCA -----------------------------------------------------------------------------------------------
+    resource function get getMcaSessionVacancies/[string userId]() returns error|http:Response {
+        model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getMcaSessionVacancies(userId.trim());
+        http:Response response = new;
+        if sessionVacancies is model:SessionVacancy[] {
+            response.statusCode = 200;
+            response.setJsonPayload(sessionVacancies.toJson());
+        } else if sessionVacancies is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(sessionVacancies.body.toJson());
+        }
+        return response;
+    }
+
+    resource function get mcaIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError userId = 'service:getMcaUserIdByEmail(email.trim());
+        if userId is string {
+            return userId;
+        } else {
+            return error("Error occurred while retrieving MCR id number");
+        }
+    }
 }
 
