@@ -161,9 +161,9 @@ public function mcsStartAppointment(string sessionId, int slotId, string userId)
                         if updateAptStatusResult.modifiedCount != 0 {
                             // update has been made successfully | Apt has set to ONGOING | No error should happen this point onward
                             model:McsQueueOperations newQueueOps = startNextAppointmentQueueHandler(timeslotResult.queue.appointments.length(), timeslotResult.queue.queueOperations);
-                            sessionResult.timeSlot[slotId-1].queue.queueOperations = newQueueOps;
+                            sessionResult.timeSlots[slotId-1].queue.queueOperations = newQueueOps;
                             timeslotResult.queue.queueOperations = newQueueOps;
-                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateQueueOperations(sessionId, slotId, sessionResult.timeSlot);
+                            mongodb:Error|mongodb:UpdateResult result = dao:mcsUpdateQueueOperations(sessionId, slotId, sessionResult.timeSlots);
                             if(result is mongodb:Error){
                                 return error("Databse error occured!");
                             }else {
@@ -203,8 +203,8 @@ public function mcsStartTimeSlot(string sessionId, string userId) returns error|
     }else {
         if sessionResult.overallSessionStatus == "ACTIVE" || sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotIdToBeStarted = findSlotToBeStarted(timeSlotResult);
 
                 // check :: no active slots
@@ -258,8 +258,8 @@ public function mcsEndTimeSlot(string sessionId, string userId) returns error|mo
     }else {
         if sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotInStarted = findSlotInStarted(timeSlotResult);
 
                 // check :: no active slots
@@ -316,8 +316,8 @@ public function mcsEndLastTimeSlot(string sessionId, string userId) returns erro
     }else {
         if sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotInStarted = findSlotInStarted(timeSlotResult);
 
                 // check :: no active slots
@@ -390,8 +390,8 @@ public function mcsMoveToAbsent(string sessionId, int slotId, int aptNumber, str
     }else {
         if sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotInStarted = findSlotInStarted(timeSlotResult);
 
                 // check :: no active slots
@@ -547,8 +547,8 @@ public function mcsRevertFromAbsent(string sessionId, int slotId, int aptNumber,
     }else {
         if sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotInStarted = findSlotInStarted(timeSlotResult);
 
                 // check :: no active slots
@@ -713,8 +713,8 @@ public function mcsAddToEnd(string sessionId, int slotId, int aptNumber, string 
     }else {
         if sessionResult.overallSessionStatus == "ONGOING" {
             
-            if sessionResult.timeSlot is model:McsTimeSlot[] {
-                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlot;
+            if sessionResult.timeSlots is model:McsTimeSlot[] {
+                model:McsTimeSlot[] timeSlotResult = <model:McsTimeSlot[]> sessionResult.timeSlots;
                 int slotInStarted = findSlotInStarted(timeSlotResult);
                 
                 // check :: no active slots
