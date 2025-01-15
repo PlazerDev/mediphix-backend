@@ -16,7 +16,7 @@ public type MedicalCenter record {|
     string[] doctors?;
     string[] appointments?;
     string[] patients?;
-    string[] medicalCenterStaff?;
+    string[] MedicalCenterStaff?;
     string description?;
 |};
 

@@ -33,7 +33,7 @@ public function getUserData(string email) returns model:User|mongodb:Error ? {
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, profileImage, medicalCernterEmail, userId
 
-public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongodb:Error ? {
+public function getInfoMCA(string userId) returns model:MedicalCenterAdmin|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_admin");
 
     map<json> filter = {
@@ -50,7 +50,7 @@ public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongo
         "userId": 1
     };
 
-    model:medicalCenterAdmin ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterAdmin ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -62,7 +62,7 @@ public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongo
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongodb:Error ? {
+public function getInfoMCS(string userId) returns model:MedicalCenterStaff|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
 
     map<json> filter = {
@@ -80,7 +80,7 @@ public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongo
         "userId": 1
     };
 
-    model:medicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -92,7 +92,7 @@ public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongo
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCR(string userId) returns model:medicalCenterReceptionist|mongodb:Error ? {
+public function getInfoMCR(string userId) returns model:MedicalCenterReceptionist|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_receptionist");
 
     map<json> filter = {
@@ -110,7 +110,7 @@ public function getInfoMCR(string userId) returns model:medicalCenterReceptionis
         "userId": 1
     };
 
-    model:medicalCenterReceptionist ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterReceptionist ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -122,7 +122,7 @@ public function getInfoMCR(string userId) returns model:medicalCenterReceptionis
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCLS(string userId) returns model:medicalCenterLabStaff|mongodb:Error ? {
+public function getInfoMCLS(string userId) returns model:MedicalCenterLabStaff|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_lab_staff");
 
     map<json> filter = {
@@ -140,7 +140,7 @@ public function getInfoMCLS(string userId) returns model:medicalCenterLabStaff|m
         "userId": 1
     };
 
-    model:medicalCenterLabStaff ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterLabStaff ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }

@@ -1,8 +1,8 @@
 import ballerina/time;
 
-public type McsUserID record {|
+public type McsUserID record {
     string _id;
-|};
+};
 
 public type McsSession record {|
     time:Date endTimestamp?;

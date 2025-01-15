@@ -134,7 +134,6 @@ service /patient on httpListener {
         return response;
     }
 
-    
     //    resource function get getDoctorName(string doctorId) returns http:Response|error? {
     //     io:println("Inside getDoctorName in gateway");
     //     http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[doctorId];
@@ -182,7 +181,7 @@ service /patient on httpListener {
             return errorResponse;
         }
     }
-    
+
     resource function get getDoctorDetails/[string doctorId]() returns http:Response|error? {
         do {
             http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[doctorId];
@@ -200,9 +199,9 @@ service /patient on httpListener {
             return errorResponse;
         }
     }
-    
+
     resource function post appointment(NewAppointmentRecord newAppointmentRecord) returns http:Response|error {
-   
+
         http:Response|error? response = check appointmentServiceEP->/createAppointmentRecord.post(newAppointmentRecord);
 
         if response is http:Response {
@@ -218,10 +217,10 @@ service /patient on httpListener {
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(errorDetails.toJson());
         return errorResponse;
-    } 
+    }
 
     resource function get appointment/[string doctorId]/sessiondetails(http:Request req) returns http:Response|error? {
-         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -235,7 +234,7 @@ service /patient on httpListener {
             return errorResponse;
         }
         return response;
-    }  
+    }
 }
 
 @http:ServiceConfig {
@@ -816,7 +815,6 @@ service /receptionist on httpListener {
 
 }
 
-
 // MCS [START] .......................................................................................
 @http:ServiceConfig {
     cors: {
@@ -886,6 +884,7 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
+
     resource function put startAppointment (http:Request request, string sessionId, int slotId) returns http:Response{
         do {
             string userEmail = check getUserEmailByJWT(request);
@@ -1022,7 +1021,7 @@ service /mcs on httpListener {
             return errorResponse;
         }
     }
-    
+
     @http:ResourceConfig
     resource function put addToEnd(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
@@ -1046,8 +1045,8 @@ service /mcs on httpListener {
         }
     }
 }
-// MCS [END] .......................................................................................
 
+// MCS [END] .......................................................................................
 
 // MCR [START] .......................................................................................
 @http:ServiceConfig {
@@ -1056,7 +1055,7 @@ service /mcs on httpListener {
     }
 }
 service /mcr on httpListener {
-    
+
     @http:ResourceConfig
     resource function get searchPayment/[int aptNumber](http:Request request) returns http:Response {
         do {
@@ -1103,8 +1102,8 @@ service /mcr on httpListener {
     }
 
 }
-// MCR [END] .......................................................................................
 
+// MCR [END] .......................................................................................
 
 // ROLE [START] .......................................................................................
 @http:ServiceConfig {
@@ -1126,7 +1125,7 @@ service /mcr on httpListener {
     ]
 }
 service /user on httpListener {
-    
+
     @http:ResourceConfig
     resource function get find(http:Request request) returns http:Response {
         do {
@@ -1147,8 +1146,8 @@ service /user on httpListener {
         }
     }
 }
-// ROLE [END] .......................................................................................
 
+// ROLE [END] .......................................................................................
 
 /// Registration Listener...........................................................................
 @http:ServiceConfig {
@@ -1176,9 +1175,9 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post MedicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
+        http:Response|error? response = check clinicServiceEP->/signup/MedicalCenterStaff.post(data);
 
         if (response is http:Response) {
             return response;
@@ -1242,7 +1241,6 @@ service /mca on httpListener {
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
 
-
         http:Response|error? response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
 
         if response is http:Response {
@@ -1278,6 +1276,39 @@ service /mca on httpListener {
         return errorResponse;
     }
 
+    resource function get getMcaSessionVacancies(http:Request req) returns error|http:Response {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "mca";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getMcaSessionVacancies/[userId];
+            if response is http:Response {
+                return response;
+            } else {
+                ErrorDetails errorDetails = {
+                    message: "Internal server error",
+                    details: "Error occurred while retrieving session vacancies",
+                    timeStamp: time:utcNow()
+                };
+                http:Response errorResponse = new;
+                errorResponse.statusCode = 500;
+                errorResponse.setJsonPayload(errorDetails.toJson());
+                return errorResponse;
+            }
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+
+    }
+
 }
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
@@ -1305,8 +1336,10 @@ public function getCachedUserId(string userEmail, string userType) returns strin
             id = check clinicServiceEP->/doctorIdByEmail/[userEmail];
         } else if (userType == "mcs") {
             id = check clinicServiceEP->/mcsIdByEmail/[userEmail];
-        }else if (userType == "mcr") {
+        } else if (userType == "mcr") {
             id = check clinicServiceEP->/mcrIdByEmail/[userEmail];
+        } else if (userType == "mca") {
+            id = check clinicServiceEP->/mcaIdByEmail/[userEmail];
         }
         string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);

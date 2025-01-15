@@ -81,3 +81,25 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
     model:InternalError internalError = {body: errorDetails};
     return internalError;
 }
+
+public function getMcaUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:getMcaUserIdByEmail(email);
+    return result;
+}
+
+public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError {
+    model:SessionVacancy[]|model:InternalError|error result = dao:getMcaSessionVacancies(userId);
+
+    if (result is model:SessionVacancy[]) {
+        return result;
+    }
+    model:InternalError internalError = {
+        body: {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA session vacancies",
+            timeStamp: time:utcNow()
+        }
+    };
+
+    return internalError;
+}
