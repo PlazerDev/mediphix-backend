@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -245,3 +246,8 @@ public type TempMedicalRecord record {|
         int timeSlot;
         int queueNumber;
     };
+
+    public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
+};

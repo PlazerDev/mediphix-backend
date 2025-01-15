@@ -11,12 +11,15 @@ import ballerina/http;
 service / on new http:Listener(9091) {
 
     resource function post createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Response {
-        http:Created|model:InternalError|error? result = 'service:createAppointmentRecord(newAppointmentRecord);
+        model:AppointmentResponse|model:InternalError|error? result = 'service:createAppointmentRecord(newAppointmentRecord);
 
         http:Response response = new;
-        if (result is http:Created) {
+        if (result is model:AppointmentResponse) {
             response.statusCode = 200;
-            response.setJsonPayload({"message": "Appointment created successfully"});
+            response.setJsonPayload({
+                "message": "Appointment created successfully",
+                "appointmentNumber": result.aptNumber
+            });
         } else if (result is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(result.body.toJson());

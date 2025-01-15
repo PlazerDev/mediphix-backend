@@ -13,7 +13,7 @@ configurable string cluster = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
-public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
+public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns model:AppointmentResponse|error? {
 
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
@@ -45,7 +45,11 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
         string errMsg = "Failed to update session. No matching session found.";
         return error(errMsg);
     }
-    return http:CREATED;
+    
+    return {
+        aptNumber: appointmentRecord.aptNumber,
+        status: http:CREATED
+    };
 }
 
 public function getNextAppointmentNumber() returns int|model:InternalError|error {
