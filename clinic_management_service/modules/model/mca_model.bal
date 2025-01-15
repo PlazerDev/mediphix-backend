@@ -4,5 +4,10 @@ public type McaUserID record {
 };
 
 public type McaMedicalCenterEmail record {
+    string _id;
     string medicalCenterEmail;
+};
+
+public type McaMedicalCenterId record {
+    string _id;
 };

@@ -3,6 +3,7 @@ import clinic_management_service.model;
 
 import ballerina/http;
 import ballerina/io;
+import ballerina/log;
 
 @http:ServiceConfig {
     cors: {
@@ -69,7 +70,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    resource function post signup/medicalCenterStaff(model:medicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/MedicalCenterStaff(model:MedicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -145,7 +146,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    // resource function post signup/medicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+    // resource function post signup/MedicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
     //     io:println("Hello this is Medical Center");
 
@@ -551,10 +552,8 @@ service / on new http:Listener(9090) {
 
     // MCS [END]  ###################################################################
 
+    // ******************************************************************************************************
 
-// ******************************************************************************************************
-    
-    
     // MCR [START] ###################################################################  
 
     resource function get mcrIdByEmail/[string email]() returns string|error? {
@@ -584,16 +583,16 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcrMarkToPay(int aptNumber, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcrMarkToPay(aptNumber, userId);
+
+        model:NotFoundError? result = check 'service:mcrMarkToPay(aptNumber, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
@@ -601,34 +600,31 @@ service / on new http:Listener(9090) {
     }
 
     // MCR [END] ###################################################################
-    
 
-// ******************************************************************************************************
-
+    // ******************************************************************************************************
 
     // ROLE [START] ###################################################################  
 
     resource function get findUserRole/[string userEmail]() returns http:Response|error {
-        
+
         model:NotFoundError|model:ValueError|model:FinalUserResult result = check 'service:findUserRole(userEmail);
-        
+
         http:Response response = new;
         if (result is model:FinalUserResult) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         } else if result is model:ValueError {
-            response.statusCode = 406; 
+            response.statusCode = 406;
             response.setJsonPayload(result.body.toJson());
         }
 
         return response;
-    }   
+    }
 
     // ROLE [END] ###################################################################  
-
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
@@ -704,12 +700,16 @@ service / on new http:Listener(9090) {
 
     // MCA -----------------------------------------------------------------------------------------------
     resource function get getMcaSessionVacancies/[string userId]() returns error|http:Response {
+        io:println("in clinic controller before service call");
         model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getMcaSessionVacancies(userId.trim());
+        io:println("in clinic controller after service call");
         http:Response response = new;
         if sessionVacancies is model:SessionVacancy[] {
+            log:printInfo("Session vacancy retrieval successful");
             response.statusCode = 200;
             response.setJsonPayload(sessionVacancies.toJson());
         } else if sessionVacancies is model:InternalError {
+            io:println("in clinic controller sessionVacancies is model:InternalError");
             response.statusCode = 500;
             response.setJsonPayload(sessionVacancies.body.toJson());
         }

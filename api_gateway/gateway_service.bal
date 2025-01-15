@@ -1155,9 +1155,9 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post MedicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
+        http:Response|error? response = check clinicServiceEP->/signup/MedicalCenterStaff.post(data);
 
         if (response is http:Response) {
             return response;
@@ -1261,7 +1261,7 @@ service /mca on httpListener {
             string userEmail = check getUserEmailByJWT(req);
             string userType = "mca";
             string userId = check getCachedUserId(userEmail, userType);
-            http:Response|error? response = check clinicServiceEP->/getAdminSessionVacancies/userId;
+            http:Response|error? response = check clinicServiceEP->/getMcaSessionVacancies/[userId];
             if response is http:Response {
                 return response;
             } else {

@@ -1,5 +1,6 @@
-import clinic_management_service.model;
 import clinic_management_service.dao;
+import clinic_management_service.model;
+
 import ballerina/http;
 import ballerina/time;
 
@@ -81,13 +82,24 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
     return internalError;
 }
 
-
 public function getMcaUserIdByEmail(string email) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:getMcaUserIdByEmail(email);
     return result;
 }
 
-public function getMcaSessionVacancies(string userId) returns error|model:McaUserID|model:InternalError {
-    error|model:McaUserID|model:InternalError result = check dao:getMcaSessionVacancies(userId);
-    return result;
+public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError {
+    model:SessionVacancy[]|model:InternalError|error result = dao:getMcaSessionVacancies(userId);
+
+    if (result is model:SessionVacancy[]) {
+        return result;
+    }
+    model:InternalError internalError = {
+        body: {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA session vacancies",
+            timeStamp: time:utcNow()
+        }
+    };
+
+    return internalError;
 }

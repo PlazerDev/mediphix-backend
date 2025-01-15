@@ -183,25 +183,30 @@ public function getMcaUserIdByEmail(string email) returns string|error|model:Int
 }
 
 public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError|error {
+    string medicalCenterId = check getMcaAssociatedMedicalCenterId(userId);
+
     mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
-    map<json> filter = {"medicalCenterId": userId};
-    stream<model:SessionVacancy, error?>|mongodb:Error? findResults = check sessionVacancyCollection->find(filter, {}, {}, model:SessionVacancy);
+    map<json> filter = {"medicalCenterId": medicalCenterId};
+    map<json> sessionProjection = {
+        "_id": {"$toString": "$_id"},
+        "responses": 1,
+        "aptCategories": 1,
+        "medicalCenterId": 1,
+        "mobile": 1,
+        "vacancyNoteToDoctors": 1,
+        "openSessions": 1,
+        "vacancyOpenedTimestamp": 1,
+        "vacancyClosedTimestamp": 1,
+        "centerName": 1,
+        "profileImage": 1
+    };
 
-    if !(findResults is stream<model:SessionVacancy, error?>) {
-        model:ErrorDetails errorDetails = {
-            message: "Internal Error",
-            details: "Error occurred while retrieving MCA session vacancies",
-            timeStamp: time:utcNow()
-        };
-        model:InternalError sessionVacancyNotFound = {body: errorDetails};
+    stream<model:SessionVacancy, error?>|mongodb:Error? findResults = check sessionVacancyCollection->find(filter, {}, sessionProjection, model:SessionVacancy);
 
-        return sessionVacancyNotFound;
-    }
+    if findResults is stream<model:SessionVacancy, error?> {
 
-    model:SessionVacancy[]|error sessionVacancies = from model:SessionVacancy vacancy in findResults
-        select vacancy;
-
-    if sessionVacancies is model:SessionVacancy[] {
+        model:SessionVacancy[]|error sessionVacancies = from model:SessionVacancy vacancy in findResults
+            select vacancy;
         return sessionVacancies;
     } else {
         model:ErrorDetails errorDetails = {
@@ -213,23 +218,33 @@ public function getMcaSessionVacancies(string userId) returns model:SessionVacan
 
         return sessionVacancyNotFound;
     }
-
 }
 
 public function getMcaAssociatedMedicalCenterId(string userId) returns string|error {
     mongodb:Collection mcaCollection = check initDatabaseConnection("medical_center_admin");
-
     map<json> filter = {"userId": userId};
     map<json> projection = {
+        "_id": {"$toString": "$_id"},
         "medicalCenterEmail": 1
     };
+    model:McaMedicalCenterEmail|mongodb:Error? findResults = mcaCollection->findOne(filter, {}, projection, model:McaMedicalCenterEmail);
 
-    model:McaMedicalCenterEmail|mongodb:Error?| findResults = mcaCollection->findOne(filter, {}, projection);
-
-    if findResults is model:McaUser {
-        return findResults.medicalCenterId;
-    }
-    else {
+    if !(findResults is model:McaMedicalCenterEmail) {
         return error("Internal Error");
     }
+
+    string medicalCenterEmail = findResults.medicalCenterEmail;
+
+    mongodb:Collection medicalCenterCollection = check initDatabaseConnection("medical_center");
+
+    map<json> emailFilter = {"email": medicalCenterEmail};
+    projection = {
+        "_id": {"$toString": "$_id"}
+    };
+    model:McaMedicalCenterId|mongodb:Error? findMedicalCenter = check medicalCenterCollection->findOne(emailFilter, {}, projection, model:McaMedicalCenterId);
+
+    if !(findMedicalCenter is model:McaMedicalCenterId) {
+        return error("Internal Error");
+    }
+    return findMedicalCenter._id;
 }

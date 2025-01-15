@@ -118,7 +118,7 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "doctors": 1,
         "appointments": 1,
         "patients": 1,
-        "medicalCenterStaff": 1,
+        "MedicalCenterStaff": 1,
         "description": 1
     };
 
@@ -191,7 +191,7 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
                             "doctors": 1,
                             "appointments": 1,
                             "patients": 1,
-                            "medicalCenterStaff": 1,
+                            "MedicalCenterStaff": 1,
                             "description": 1
                         };
                     model:MedicalCenter|mongodb:Error? mcfindResults = check medicalCenterCollection->findOne(mcFilter, {}, mcProjection,model:MedicalCenter);
@@ -382,7 +382,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "doctors": [{"$toString": "$_id"}],
         "appointments": [{"$toString": "$_id"}],
         "patients": [{"$toString": "$_id"}],
-        "medicalCenterStaff": [{"$toString": "$_id"}],
+        "MedicalCenterStaff": [{"$toString": "$_id"}],
         "description": 1
     };
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults = check medicalCenterCollection->find({}, {}, projection, model:MedicalCenter);
