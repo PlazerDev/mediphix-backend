@@ -716,6 +716,27 @@ service /doctor on httpListener {
         }
     }
 
+    resource function get getSessionDetailsForDoctorHome(http:Request req) returns http:Response|error? {
+        string doctorEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string doctorId = check getCachedUserId(doctorEmail, userType);
+         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        
+        return response;
+    }  
+
 }
 
 @http:ServiceConfig {
@@ -805,8 +826,7 @@ service /mcs on httpListener {
     @http:ResourceConfig
     resource function get upcomingClinicSessions(http:Request request) returns http:Response {
         do {
-            // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             http:Response response = check clinicServiceEP->/mcsUpcomingClinicSessions/[userId];
@@ -827,8 +847,7 @@ service /mcs on httpListener {
     @http:ResourceConfig
     resource function get ongoingClinicSessions(http:Request request) returns http:Response {
         do {
-            // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             http:Response response = check clinicServiceEP->/mcsOngoingClinicSessions/[userId];
@@ -865,9 +884,10 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put startAppointment(string sessionId, int slotId) returns http:Response {
+
+    resource function put startAppointment (http:Request request, string sessionId, int slotId) returns http:Response{
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&userId=${userId}`;
@@ -888,9 +908,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put startTimeSlot(string sessionId) returns http:Response {
+    resource function put startTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsStartTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -911,9 +931,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put endTimeSlot(string sessionId) returns http:Response {
+    resource function put endTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsEndTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -934,9 +954,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put endLastTimeSlot(string sessionId) returns http:Response {
+    resource function put endLastTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsEndLastTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -957,9 +977,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put moveToAbsent(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put moveToAbsent(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsMoveToAbsent?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
@@ -980,9 +1000,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put revertFromAbsent(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put revertFromAbsent(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsRevertFromAbsent?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
@@ -1003,9 +1023,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put addToEnd(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put addToEnd(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsAddToEnd?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;

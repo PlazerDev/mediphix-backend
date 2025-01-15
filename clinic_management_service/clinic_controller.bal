@@ -258,8 +258,6 @@ service / on new http:Listener(9090) {
     resource function get getDoctorDetails/[string id]() returns error|http:Response {
         model:Doctor|model:InternalError doctorDetails = check 'service:getDoctorDetails(id.trim());
 
-        io:println(doctorDetails);
-
         http:Response response = new;
         if (doctorDetails is model:Doctor) {
             response.statusCode = 200;

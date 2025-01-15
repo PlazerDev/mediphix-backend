@@ -107,7 +107,7 @@ public type AppointmentRecord record {
 };
 
 public type Payment record {
-    boolean isPayed;
+    boolean isPaid;
     decimal amount;
     string handleBy;
     time:Date paymentTimestamp?;

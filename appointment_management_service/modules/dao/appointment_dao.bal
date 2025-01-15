@@ -14,32 +14,37 @@ configurable string cluster = ?;
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
+
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
     check appointmentCollection->insertOne(appointmentRecord);
-
+    
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
     map<json> sessionFilter = {
         "_id": {"$oid": appointmentRecord.sessionId},
-        "timeSlot.slotId": appointmentRecord.timeSlot
+        "timeSlots.slotId": appointmentRecord.timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.appointments": appointmentRecord.aptNumber
+            "timeSlots.$.queue.appointments": appointmentRecord.aptNumber
         }
     };
 
-    mongodb:UpdateResult sessionResult = check sessionCollection->updateOne(
+    mongodb:UpdateResult|error updateResult = sessionCollection->updateOne(
         sessionFilter,
         sessionUpdate
     );
-
-    if (sessionResult.modifiedCount == 0) {
-        return error("Failed to update session. No matching session found.");
+    
+    if updateResult is error {
+        return updateResult;
     }
 
+    if updateResult.modifiedCount == 0 {
+        string errMsg = "Failed to update session. No matching session found.";
+        return error(errMsg);
+    }
     return http:CREATED;
 }
 
@@ -266,7 +271,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     log:printInfo(string `Starting medical record update for appointment ${aptNumber}`);
 
     map<json> appointmentFilter = {"aptNumber": aptNumber};
-    // Define projection to only retrieve needed fields
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "sessionId": 1,
@@ -276,7 +280,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     log:printInfo(string `Using appointment filter: ${appointmentFilter.toString()}`);
 
-    // Use projection in findOne
     model:ProjectedAppointment|error? appointmentDoc = appointmentCollection->
         findOne(appointmentFilter, {}, projection, model:ProjectedAppointment);
 
@@ -332,14 +335,14 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     map<json> sessionFilter = {
         "_id": {"$oid": sessionId},
-        "timeSlot.slotId": timeSlot
+        "timeSlots.slotId": timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.queueOperations.finished": queueNumber
+            "timeSlots.$.queue.queueOperations.finished": queueNumber
         },
         "set": {
-            "timeSlot.$.queue.queueOperations.ongoing": -1
+            "timeSlots.$.queue.queueOperations.ongoing": -1
         }
     };
 
