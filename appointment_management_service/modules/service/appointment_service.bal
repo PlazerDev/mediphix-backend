@@ -22,7 +22,7 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
     }
 
     model:Payment payment = {
-        isPayed: false,
+        isPaid: false,
         amount: newAppointmentRecord.paymentAmount,
         handleBy: "",
         paymentTimestamp: () 
