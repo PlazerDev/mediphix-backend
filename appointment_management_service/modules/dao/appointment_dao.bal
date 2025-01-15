@@ -271,7 +271,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     log:printInfo(string `Starting medical record update for appointment ${aptNumber}`);
 
     map<json> appointmentFilter = {"aptNumber": aptNumber};
-    // Define projection to only retrieve needed fields
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "sessionId": 1,
@@ -281,7 +280,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     log:printInfo(string `Using appointment filter: ${appointmentFilter.toString()}`);
 
-    // Use projection in findOne
     model:ProjectedAppointment|error? appointmentDoc = appointmentCollection->
         findOne(appointmentFilter, {}, projection, model:ProjectedAppointment);
 
@@ -337,14 +335,14 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     map<json> sessionFilter = {
         "_id": {"$oid": sessionId},
-        "timeSlot.slotId": timeSlot
+        "timeSlots.slotId": timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.queueOperations.finished": queueNumber
+            "timeSlots.$.queue.queueOperations.finished": queueNumber
         },
         "set": {
-            "timeSlot.$.queue.queueOperations.ongoing": -1
+            "timeSlots.$.queue.queueOperations.ongoing": -1
         }
     };
 
