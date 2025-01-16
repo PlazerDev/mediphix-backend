@@ -41,7 +41,7 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
         doctorName: newAppointmentRecord.doctorName,
         medicalCenterId: newAppointmentRecord.medicalCenterId,
         medicalCenterName: newAppointmentRecord.medicalCenterName,
-        aptCreatedTimestamp: time:utcToCivil(time:utcNow()),
+        aptCreatedTimestamp: time:utcToCivil(time:utcAddSeconds(time:utcNow(), 5 * 3600 + 30 * 60)),
         aptStatus: "ACTIVE"
     };
 
