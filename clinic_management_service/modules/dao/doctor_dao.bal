@@ -175,27 +175,27 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
                 select sv;
             if sessionVacanciesTemp is model:SessionVacancy[] {
                 foreach model:SessionVacancy sv in sessionVacanciesTemp {
-                     map<json> mcFilter = {"_id": {"$oid": sv.medicalCenterId}};
-                     map<json> mcProjection = {
-                            "_id": {"$toString": "$_id"},
-                            "name": 1,
-                            "address": 1,
-                            "mobile": 1,
-                            "email": 1,
-                            "district": 1,
-                            "verified": 1,
-                            "profileImage": 1,
-                            "appointmentCategories": 1,
-                            "mediaStorage": 1,
-                            "specialNotes": 1,
-                            "doctors": 1,
-                            "appointments": 1,
-                            "patients": 1,
-                            "MedicalCenterStaff": 1,
-                            "description": 1
-                        };
-                    model:MedicalCenter|mongodb:Error? mcfindResults = check medicalCenterCollection->findOne(mcFilter, {}, mcProjection,model:MedicalCenter);
-                    if(mcfindResults is model:MedicalCenter){
+                    map<json> mcFilter = {"_id": {"$oid": sv.medicalCenterId}};
+                    map<json> mcProjection = {
+                        "_id": {"$toString": "$_id"},
+                        "name": 1,
+                        "address": 1,
+                        "mobile": 1,
+                        "email": 1,
+                        "district": 1,
+                        "verified": 1,
+                        "profileImage": 1,
+                        "appointmentCategories": 1,
+                        "mediaStorage": 1,
+                        "specialNotes": 1,
+                        "doctors": 1,
+                        "appointments": 1,
+                        "patients": 1,
+                        "MedicalCenterStaff": 1,
+                        "description": 1
+                    };
+                    model:MedicalCenter|mongodb:Error? mcfindResults = check medicalCenterCollection->findOne(mcFilter, {}, mcProjection, model:MedicalCenter);
+                    if (mcfindResults is model:MedicalCenter) {
                         sv.centerName = mcfindResults.name;
                         sv.profileImage = mcfindResults.profileImage;
                     }
@@ -217,8 +217,7 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
 }
 
 public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("doctor_response");
+    mongodb:Collection doctorResponseCollection = check initDatabaseConnection("doctor_response");
     int|model:InternalError|error nextDoctorResponseId = getNextDoctorResponseId();
     if nextDoctorResponseId is int {
         response.responseId = nextDoctorResponseId;
@@ -227,7 +226,32 @@ public function respondDoctorToSessionVacancy(model:DoctorResponse response) ret
     } else {
         return error("Failed to get next doctor response id");
     }
-    check sessionVacancyCollection->insertOne(response);
+    check doctorResponseCollection->insertOne(response);
+    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
+
+    map<json> sessionVacancyFilter = {
+        "_id": {"$oid": response.sessionVacancyId}
+    };
+    mongodb:Update sessionVacancyUpdate = {
+        "push": {
+            "responses": response.toJson()
+        }
+    };
+
+    mongodb:UpdateResult|error updateResult = sessionVacancyCollection->updateOne(
+        sessionVacancyFilter,
+        sessionVacancyUpdate
+    );
+
+    if updateResult is error {
+        return updateResult;
+    }
+
+    if updateResult.modifiedCount == 0 {
+        string errMsg = "Failed to update session vacancy. No matching session vacancy found.";
+        return error(errMsg);
+    }
+
     return http:CREATED;
 }
 
@@ -363,6 +387,7 @@ public function getDoctorDetails2(string id) returns error|model:Doctor|model:In
         return userNotFound;
     }
 }
+
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
