@@ -27,6 +27,7 @@ public enum SessionStatus {
 public type TimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     TimeSlotStatus status;
     Queue queue;

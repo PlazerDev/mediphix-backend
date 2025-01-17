@@ -69,6 +69,7 @@ public function respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorR
         responseId: newDoctorResponse.responseId ?: 0,
         submittedTimestamp: check time:civilFromString(newDoctorResponse.submittedTimestamp),
         doctorId: newDoctorResponse.doctorId,
+        sessionVacancyId: newDoctorResponse.sessionVacancyId,
         noteToPatient: newDoctorResponse.noteToPatient,
         vacancyNoteToCenter: newDoctorResponse.vacancyNoteToCenter,
         responseApplications: newDoctorResponse.responseApplications,

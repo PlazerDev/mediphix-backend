@@ -25,6 +25,7 @@ public type NewDoctorResponse record {
     int responseId?;
     string submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
@@ -35,6 +36,7 @@ public type DoctorResponse record {
     int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
@@ -73,7 +75,7 @@ public type Repetition record {
 };
 
 public type DoctorResponseApplication record {
-    int appliedVacancySessionId;
+    int appliedOpenSessionId;
     boolean isAccepted;
     decimal expectedPaymentAmount;
     PatientCountPerTimeSlot[] numberOfPatientsPerTimeSlot;
