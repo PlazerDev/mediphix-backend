@@ -5,7 +5,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Created|model:InternalError|error? {
+public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns model:AppointmentResponse|model:InternalError|error? {
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;
 
@@ -41,12 +41,12 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
         doctorName: newAppointmentRecord.doctorName,
         medicalCenterId: newAppointmentRecord.medicalCenterId,
         medicalCenterName: newAppointmentRecord.medicalCenterName,
-        aptCreatedTimestamp: time:utcToCivil(time:utcNow()),
+        aptCreatedTimestamp: time:utcToCivil(time:utcAddSeconds(time:utcNow(), 5 * 3600 + 30 * 60)),
         aptStatus: "ACTIVE"
     };
 
-    http:Created|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
-    if (appointmentResult is http:Created) {
+    model:AppointmentResponse|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
+    if (appointmentResult is model:AppointmentResponse) {
         return appointmentResult;
     }
 

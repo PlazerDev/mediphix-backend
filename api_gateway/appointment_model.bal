@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -229,4 +230,9 @@ public enum TimeSlotStatus{
     NOT_STARTED,
     STARTED,
     FINISHED
+};
+
+public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
 };
