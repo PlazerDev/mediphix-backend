@@ -238,7 +238,7 @@ service / on new http:Listener(9090) {
     }
 
     resource function get getSessionDetailsByDoctorId/[string doctorId]() returns http:Response|error? {
-        model:Session[]|model:InternalError session = check 'service:getSessionDetailsByDoctorId(doctorId);
+        model:Session[]|model:InternalError|model:NotFoundError|error? session = check 'service:getSessionDetailsByDoctorId(doctorId);
 
         http:Response response = new;
         if session is model:Session[] {
@@ -250,6 +250,39 @@ service / on new http:Listener(9090) {
             response.setJsonPayload(session.body.toJson());
         }
         return response;
+
+    }
+
+    resource function get getOngoingSessionQueue/[string doctorId]() returns http:Response|error? {
+       model:Session[]|model:InternalError|model:NotFoundError|error? session = check 'service:getOngoingSessionQueue(doctorId);
+
+        http:Response response = new;
+        if session is model:Session[] {
+            response.statusCode = 200;
+            response.setJsonPayload(session.toJson());
+            io:println("Function responde successfully");
+        } else if (session is model:InternalError) {
+            response.statusCode = 500;
+            response.setJsonPayload(session.body.toJson());
+        }
+        return response;
+
+    }
+
+    resource function get getPatientDetailsForOngoingSessions/[int refNumber]() returns http:Response|error? {
+       model:Patient|model:InternalError|model:NotFoundError|error? patient = check 'service:getPatientDetailsForOngoingSessions(refNumber);
+
+        http:Response response = new;
+        if patient is model:Patient {
+            response.statusCode = 200;
+            response.setJsonPayload(patient.toJson());
+            
+        } else if (patient is model:InternalError) {
+            response.statusCode = 500;
+            response.setJsonPayload(patient.body.toJson());
+        }
+        return response;
+        
 
     }
 
