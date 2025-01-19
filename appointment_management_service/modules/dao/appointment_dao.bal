@@ -184,6 +184,52 @@ public function getUpcomingAppointmentsByUserId(string userId) returns model:Upc
 
 }
 
+public function getPreviousAppointmentsByUserId(string userId) returns model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<json> filter = {
+        "patientId": userId,
+        "aptStatus": "OVER"
+    };
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1,
+        "medicalRecord": 1
+    };
+
+    stream<model:AppointmentRecord, error?> findResults = check appointmentCollection->find(filter, {}, projection);
+
+    model:AppointmentRecord[]|error appointments = from model:AppointmentRecord appointment in findResults
+        select appointment;
+    if appointments is model:AppointmentRecord[] {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find appointments for the user",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+
+}
+
 public function getSessionDetailsByDoctorId(string doctorId) returns
 model:Session[]|model:InternalError|model:NotFoundError|error? {
     io:println("Inside dao");
