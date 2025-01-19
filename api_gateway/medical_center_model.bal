@@ -11,7 +11,21 @@ public type NewSessionVacancy record {
 
 public type SessionVacancy record {
     string _id?;
-    DoctorResponse[] responses?;
+    int[] responses?;
+    string[] aptCategories;
+    string medicalCenterId;
+    string mobile;
+    string vacancyNoteToDoctors;
+    OpenSession[] openSessions;
+    time:Date vacancyOpenedTimestamp;
+    time:Date vacancyClosedTimestamp?;
+    string centerName?;
+    string profileImage?;
+};
+
+public type McaSessionVacancy record {
+    string _id?;
+    McaDoctorResponse[] responses?;
     string[] aptCategories;
     string medicalCenterId;
     string mobile;
@@ -21,10 +35,30 @@ public type SessionVacancy record {
     time:Date vacancyClosedTimestamp?;
 };
 
+public type McaSessionVacancyDoctorDetails record{
+    string name;
+    string mobile;
+    string email;
+    string profileImage;
+};
+
+public type McaDoctorResponse record {
+    int responseId?;
+    time:Date submittedTimestamp;
+    string doctorId;
+    McaSessionVacancyDoctorDetails doctorDetails;
+    string sessionVacancyId;
+    string noteToPatient;
+    string vacancyNoteToCenter;
+    DoctorResponseApplication[] responseApplications;
+    boolean isCompletelyRejected;
+};
+
 public type NewDoctorResponse record {
     int responseId?;
     string submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
@@ -35,11 +69,13 @@ public type DoctorResponse record {
     int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
     boolean isCompletelyRejected;
 };
+
 
 public type NewOpenSession record {
     int sessionId?;
@@ -73,7 +109,7 @@ public type Repetition record {
 };
 
 public type DoctorResponseApplication record {
-    int appliedVacancySessionId;
+    int appliedOpenSessionId;
     boolean isAccepted;
     decimal expectedPaymentAmount;
     PatientCountPerTimeSlot[] numberOfPatientsPerTimeSlot;

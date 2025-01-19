@@ -15,11 +15,11 @@ public function mcaGetUserIdByEmail(string email) returns error|string|model:Int
 
 // get all medical center staff memebrs details
 public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|model:McsFinalUserDataWithAssignedSession[] { 
-    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
-    if mcaData is model:medicalCenterAdmin {
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
         model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
         if centerData is model:MedicalCenterBrief {
-            model:medicalCenterStaff[] | mongodb:Error ? userData = dao:getInfoMCSByCenterId(centerData._id);
+            model:MedicalCenterStaff[] | mongodb:Error ? userData = dao:getInfoMCSByCenterId(centerData._id);
             if userData is null {
                 return initNotFoundError("Center Staff Member data not found!");
             }else if userData is mongodb:Error {
@@ -69,8 +69,8 @@ public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|m
 // get all sessions in active
 public function mcsGetActiveSessions(string userId) returns error|model:NotFoundError|model:McsSessionWithDoctorDetails[] { 
     
-    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
-    if mcaData is model:medicalCenterAdmin {
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
         model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
         if centerData is model:MedicalCenterBrief {
            // change from here
@@ -95,12 +95,12 @@ public function mcsGetActiveSessions(string userId) returns error|model:NotFound
 }
 
 // get all medical center reception memebrs details
-public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|model:medicalCenterReceptionist[] { 
-    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
-    if mcaData is model:medicalCenterAdmin {
+public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|model:MedicalCenterReceptionist[] { 
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
         model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
         if centerData is model:MedicalCenterBrief {
-            model:medicalCenterReceptionist[] | mongodb:Error ? userData = dao:getInfoMCRByCenterId(centerData._id);
+            model:MedicalCenterReceptionist[] | mongodb:Error ? userData = dao:getInfoMCRByCenterId(centerData._id);
             if userData is null {
                 return initNotFoundError("Center Staff Reception data not found!");
             }else if userData is mongodb:Error {
@@ -122,11 +122,11 @@ public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|m
 
 // assign a session to the mcs member
 public function mcaAssignSession(string sessionId,string mcsId, string userId) returns error|model:NotFoundError ? { 
-    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
-    if mcaData is model:medicalCenterAdmin {
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
         model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
         if centerData is model:MedicalCenterBrief {
-            model:medicalCenterStaff | mongodb:Error ? userData = dao:getInfoMCSWithAssignedSession(mcsId);
+            model:MedicalCenterStaff | mongodb:Error ? userData = dao:getInfoMCSWithAssignedSession(mcsId);
             if userData is null {
                 return initNotFoundError("Center Staff Member data not found!");
             }else if userData is mongodb:Error {
@@ -238,4 +238,42 @@ public function createSessions(model:SessionVacancy vacancy) returns http:Create
 
     model:InternalError internalError = {body: errorDetails};
     return internalError;
+}
+
+public function getMcaUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:getMcaUserIdByEmail(email);
+    return result;
+}
+
+public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError {
+    model:SessionVacancy[]|model:InternalError|error result = dao:getMcaSessionVacancies(userId);
+
+    if (result is model:SessionVacancy[]) {
+        return result;
+    }
+    model:InternalError internalError = {
+        body: {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA session vacancies",
+            timeStamp: time:utcNow()
+        }
+    };
+
+    return internalError;
+}
+
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+    http:Ok|model:InternalError|error result = dao:mcaAcceptDoctorResponseApplicationToOpenSession(sessionVacancyId, responseId, appliedOpenSessionId);
+    io:println("result: ", result);
+    if !(result is http:Ok) {
+        model:InternalError internalError = {
+            body: {
+                message: "Internal Error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            }
+        };
+        return internalError;
+    }
+    return result;
 }

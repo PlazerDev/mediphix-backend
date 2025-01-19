@@ -12,7 +12,7 @@ public type Session record {
     string noteFromCenter?;
     string noteFromDoctor?;
     SessionStatus overallSessionStatus?;
-    TimeSlot timeSlots;
+    TimeSlot[] timeSlots;
 };
 
 public enum SessionStatus {
@@ -27,6 +27,7 @@ public enum SessionStatus {
 public type TimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     TimeSlotStatus status;
     Queue queue;

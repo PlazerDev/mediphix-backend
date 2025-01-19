@@ -34,7 +34,7 @@ public function getUserData(string email) returns model:User|mongodb:Error ? {
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, profileImage, medicalCernterEmail, userId
 
-public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongodb:Error ? {
+public function getInfoMCA(string userId) returns model:MedicalCenterAdmin|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_admin");
 
     map<json> filter = {
@@ -51,7 +51,7 @@ public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongo
         "userId": 1
     };
 
-    model:medicalCenterAdmin ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterAdmin ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -63,7 +63,7 @@ public function getInfoMCA(string userId) returns model:medicalCenterAdmin|mongo
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongodb:Error ? {
+public function getInfoMCS(string userId) returns model:MedicalCenterStaff|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
 
     map<json> filter = {
@@ -81,7 +81,7 @@ public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongo
         "userId": 1
     };
 
-    model:medicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -93,7 +93,7 @@ public function getInfoMCS(string userId) returns model:medicalCenterStaff|mongo
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCR(string userId) returns model:medicalCenterReceptionist|mongodb:Error ? {
+public function getInfoMCR(string userId) returns model:MedicalCenterReceptionist|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_receptionist");
 
     map<json> filter = {
@@ -111,7 +111,7 @@ public function getInfoMCR(string userId) returns model:medicalCenterReceptionis
         "userId": 1
     };
 
-    model:medicalCenterReceptionist ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterReceptionist ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -123,7 +123,7 @@ public function getInfoMCR(string userId) returns model:medicalCenterReceptionis
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCLS(string userId) returns model:medicalCenterLabStaff|mongodb:Error ? {
+public function getInfoMCLS(string userId) returns model:MedicalCenterLabStaff|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_lab_staff");
 
     map<json> filter = {
@@ -141,7 +141,7 @@ public function getInfoMCLS(string userId) returns model:medicalCenterLabStaff|m
         "userId": 1
     };
 
-    model:medicalCenterLabStaff ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterLabStaff ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }
@@ -203,7 +203,7 @@ public function getInfoCenterByEmail(string centerEmail) returns model:MedicalCe
     # + centerId - center ID
     # + return - on sucess return list of name, nic, mobile, empId, centerId, profileImage, userId, assignedSessions
 
-public function getInfoMCSByCenterId(string centerId) returns model:medicalCenterStaff[]|mongodb:Error ? {
+public function getInfoMCSByCenterId(string centerId) returns model:MedicalCenterStaff[]|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
 
     map<json> filter = {
@@ -222,10 +222,10 @@ public function getInfoMCSByCenterId(string centerId) returns model:medicalCente
         "assignedSessions": 1
     };
 
-    stream<model:medicalCenterStaff, error?> result = check collection->find(filter, {}, projection, model:medicalCenterStaff);
+    stream<model:MedicalCenterStaff, error?> result = check collection->find(filter, {}, projection, model:MedicalCenterStaff);
     
-    model:medicalCenterStaff[]|error finalResult = from model:medicalCenterStaff userData in result select userData;
-    if finalResult is model:medicalCenterStaff[] {
+    model:MedicalCenterStaff[]|error finalResult = from model:MedicalCenterStaff userData in result select userData;
+    if finalResult is model:MedicalCenterStaff[] {
         return finalResult;
     } else {
         return null;
@@ -240,7 +240,7 @@ public function getInfoMCSByCenterId(string centerId) returns model:medicalCente
     # + centerId - center ID
     # + return - on sucess return list of name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCRByCenterId(string centerId) returns model:medicalCenterReceptionist[]|mongodb:Error ? {
+public function getInfoMCRByCenterId(string centerId) returns model:MedicalCenterReceptionist[]|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_receptionist");
 
     map<json> filter = {
@@ -258,9 +258,9 @@ public function getInfoMCRByCenterId(string centerId) returns model:medicalCente
         "userId": 1
     };
 
-    stream<model:medicalCenterReceptionist, error?> result = check collection->find(filter, {}, projection, model:medicalCenterReceptionist);
-    model:medicalCenterReceptionist[]|error finalResult = from model:medicalCenterReceptionist userData in result select userData;
-    if finalResult is model:medicalCenterReceptionist[] {
+    stream<model:MedicalCenterReceptionist, error?> result = check collection->find(filter, {}, projection, model:MedicalCenterReceptionist);
+    model:MedicalCenterReceptionist[]|error finalResult = from model:MedicalCenterReceptionist userData in result select userData;
+    if finalResult is model:MedicalCenterReceptionist[] {
         return finalResult;
     } else {
         return null;
@@ -274,7 +274,7 @@ public function getInfoMCRByCenterId(string centerId) returns model:medicalCente
     # + userId - user ID
     # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
 
-public function getInfoMCSWithAssignedSession(string userId) returns model:medicalCenterStaff|mongodb:Error ? {
+public function getInfoMCSWithAssignedSession(string userId) returns model:MedicalCenterStaff|mongodb:Error ? {
     io:println("In DAO", userId);
     mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
 
@@ -294,7 +294,7 @@ public function getInfoMCSWithAssignedSession(string userId) returns model:medic
         "assignedSessions": 1
     };
 
-    model:medicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
+    model:MedicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
     
     return result;
 }

@@ -1,8 +1,8 @@
 import ballerina/time;
 
-public type McsUserID record {|
+public type McsUserID record {
     string _id;
-|};
+};
 
 public type McsSession record {|
     time:Date endTimestamp?;
@@ -59,6 +59,7 @@ public type McsTimeSlotList record {|
 public type McsTimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     string status;
     McsQueue queue;
@@ -87,6 +88,6 @@ public type McsSessionWithDoctorDetails record {|
 
 
 public type McsFinalUserDataWithAssignedSession record {|
-    medicalCenterStaff userData;
+    MedicalCenterStaff userData;
     McsSessionWithDoctorDetails[] assignedsessionData;
 |};

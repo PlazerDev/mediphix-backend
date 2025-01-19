@@ -3,6 +3,7 @@ import clinic_management_service.model;
 
 import ballerina/http;
 import ballerina/io;
+import ballerina/log;
 
 @http:ServiceConfig {
     cors: {
@@ -69,7 +70,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    resource function post signup/medicalCenterStaff(model:medicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
+    resource function post signup/MedicalCenterStaff(model:MedicalCenterStaffData data) returns http:Response|model:ReturnMsg|error? {
 
         io:println("Hello this is Medical Center");
 
@@ -145,7 +146,7 @@ service / on new http:Listener(9090) {
 
     }
 
-    // resource function post signup/medicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
+    // resource function post signup/MedicalCenterAdmin(model:otherSignupData data) returns http:Response|model:ReturnMsg|error? {
 
     //     io:println("Hello this is Medical Center");
 
@@ -256,8 +257,6 @@ service / on new http:Listener(9090) {
     // Get doctor details by id
     resource function get getDoctorDetails/[string id]() returns error|http:Response {
         model:Doctor|model:InternalError doctorDetails = check 'service:getDoctorDetails(id.trim());
-
-        io:println(doctorDetails);
 
         http:Response response = new;
         if (doctorDetails is model:Doctor) {
@@ -551,10 +550,8 @@ service / on new http:Listener(9090) {
 
     // MCS [END]  ###################################################################
 
+    // ******************************************************************************************************
 
-// ******************************************************************************************************
-    
-    
     // MCR [START] ###################################################################  
 
     resource function get mcrIdByEmail/[string email]() returns string|error? {
@@ -584,16 +581,16 @@ service / on new http:Listener(9090) {
     }
 
     resource function put mcrMarkToPay(int aptNumber, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcrMarkToPay(aptNumber, userId);
+
+        model:NotFoundError? result = check 'service:mcrMarkToPay(aptNumber, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
@@ -601,31 +598,29 @@ service / on new http:Listener(9090) {
     }
 
     // MCR [END] ###################################################################
-    
 
-// ******************************************************************************************************
-
+    // ******************************************************************************************************
 
     // ROLE [START] ###################################################################  
 
     resource function get findUserRole/[string userEmail]() returns http:Response|error {
-        
+
         model:NotFoundError|model:ValueError|model:FinalUserResult result = check 'service:findUserRole(userEmail);
-        
+
         http:Response response = new;
         if (result is model:FinalUserResult) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         } else if result is model:ValueError {
-            response.statusCode = 406; 
+            response.statusCode = 406;
             response.setJsonPayload(result.body.toJson());
         }
 
         return response;
-    }   
+    }
 
     // ROLE [END] ###################################################################  
 
@@ -673,10 +668,10 @@ service / on new http:Listener(9090) {
 
     resource function get mcaGetMCRdata/[string userId]() returns http:Response|error {
 
-        model:NotFoundError|model:medicalCenterReceptionist[] result = check 'service:mcaGetMCRdata(userId);
+        model:NotFoundError|model:MedicalCenterReceptionist[] result = check 'service:mcaGetMCRdata(userId);
         http:Response response = new;
 
-        if (result is model:medicalCenterReceptionist[]) {
+        if (result is model:MedicalCenterReceptionist[]) {
             response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
@@ -774,6 +769,43 @@ service / on new http:Listener(9090) {
             response.setJsonPayload({"message": "Internal server error!"});
         }
         return response;
+    }
+
+    // MCA -----------------------------------------------------------------------------------------------
+    resource function get getMcaSessionVacancies/[string userId]() returns error|http:Response {
+        io:println("in clinic controller before service call");
+        model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getMcaSessionVacancies(userId.trim());
+        io:println("in clinic controller after service call");
+        http:Response response = new;
+        if sessionVacancies is model:SessionVacancy[] {
+            log:printInfo("Session vacancy retrieval successful");
+            response.statusCode = 200;
+            response.setJsonPayload(sessionVacancies.toJson());
+        } else if sessionVacancies is model:InternalError {
+            io:println("in clinic controller sessionVacancies is model:InternalError");
+            response.statusCode = 500;
+            response.setJsonPayload(sessionVacancies.body.toJson());
+        }
+        return response;
+    }
+
+    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
+        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(sessionVacancyId, responseId, appliedOpenSessionId);
+
+        http:Response response = new;
+        if result is http:Ok {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Doctor response accepted successfully"});
+        } else if result is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error!"});
+        }
+
+        return response;
+
     }
 }
 

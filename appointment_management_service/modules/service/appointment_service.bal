@@ -5,7 +5,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/time;
 
-public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Created|model:InternalError|error? {
+public function createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns model:AppointmentResponse|model:InternalError|error? {
     int|model:InternalError|error nextAppointmentNumber = dao:getNextAppointmentNumber();
     int newAppointmentNumber = 0;
 
@@ -22,7 +22,7 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
     }
 
     model:Payment payment = {
-        isPayed: false,
+        isPaid: false,
         amount: newAppointmentRecord.paymentAmount,
         handleBy: "",
         paymentTimestamp: () 
@@ -41,12 +41,12 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
         doctorName: newAppointmentRecord.doctorName,
         medicalCenterId: newAppointmentRecord.medicalCenterId,
         medicalCenterName: newAppointmentRecord.medicalCenterName,
-        aptCreatedTimestamp: time:utcToCivil(time:utcNow()),
+        aptCreatedTimestamp: time:utcToCivil(time:utcAddSeconds(time:utcNow(), 5 * 3600 + 30 * 60)),
         aptStatus: "ACTIVE"
     };
 
-    http:Created|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
-    if (appointmentResult is http:Created) {
+    model:AppointmentResponse|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
+    if (appointmentResult is model:AppointmentResponse) {
         return appointmentResult;
     }
 
@@ -75,6 +75,39 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
     model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? appointments = dao:getAppointmentsByUserId(userId);
     if appointments is model:AppointmentRecord[] {
+        return appointments;
+    } else if appointments is model:InternalError {
+        return appointments;
+    } else if appointments is model:NotFoundError {
+        return appointments;
+    } else {
+        io:println(appointments);
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
+}
+
+public function getUpcomingAppointmentsByUserId(string userId) returns model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
+    if (userId.length() === 0) {
+        model:ErrorDetails errorDetails = {
+            message: "Please provide a valid mobile number",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:ValueError valueError = {
+            body: errorDetails
+        };
+        return valueError;
+    }
+
+    model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getUpcomingAppointmentsByUserId(userId);
+    if appointments is model:UpcomingAppointment[] {
         return appointments;
     } else if appointments is model:InternalError {
         return appointments;

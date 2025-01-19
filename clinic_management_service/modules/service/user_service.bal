@@ -7,8 +7,8 @@ public function findUserRole(string userEmail) returns error|model:NotFoundError
     if userData is model:User {
         if userData.role == "MCA" {
             // case :: role is MCA
-            model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(<string> userData._id);
-            if mcaData is model:medicalCenterAdmin {
+            model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(<string> userData._id);
+            if mcaData is model:MedicalCenterAdmin {
                 model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
                 if centerData is model:MedicalCenterBrief {
                     model:FinalUserResult result = {
@@ -29,8 +29,8 @@ public function findUserRole(string userEmail) returns error|model:NotFoundError
             }
         }else if userData.role == "MCS" {
             // case :: role is MCS
-            model:medicalCenterStaff|mongodb:Error ? mcsData = dao:getInfoMCS(<string> userData._id);
-            if mcsData is model:medicalCenterStaff {
+            model:MedicalCenterStaff|mongodb:Error ? mcsData = dao:getInfoMCS(<string> userData._id);
+            if mcsData is model:MedicalCenterStaff {
                 model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenter(mcsData.centerId);
                 if centerData is model:MedicalCenterBrief {
                     model:FinalUserResult result = {
@@ -51,8 +51,8 @@ public function findUserRole(string userEmail) returns error|model:NotFoundError
             }
         }else if userData.role == "MCR" {
             // case :: role is MCR
-            model:medicalCenterReceptionist|mongodb:Error ? mcrData = dao:getInfoMCR(<string> userData._id);
-            if mcrData is model:medicalCenterReceptionist {
+            model:MedicalCenterReceptionist|mongodb:Error ? mcrData = dao:getInfoMCR(<string> userData._id);
+            if mcrData is model:MedicalCenterReceptionist {
                 model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenter(mcrData.centerId);
                 if centerData is model:MedicalCenterBrief {
                     model:FinalUserResult result = {
@@ -73,8 +73,8 @@ public function findUserRole(string userEmail) returns error|model:NotFoundError
             }
         }else if userData.role == "MCLS"{
             // case :: role is MCLS
-            model:medicalCenterLabStaff|mongodb:Error ? mclsData = dao:getInfoMCLS(<string> userData._id);
-            if mclsData is model:medicalCenterLabStaff {
+            model:MedicalCenterLabStaff|mongodb:Error ? mclsData = dao:getInfoMCLS(<string> userData._id);
+            if mclsData is model:MedicalCenterLabStaff {
                 model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenter(mclsData.centerId);
                 if centerData is model:MedicalCenterBrief {
                     model:FinalUserResult result = {

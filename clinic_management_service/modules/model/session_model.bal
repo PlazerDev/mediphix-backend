@@ -18,6 +18,7 @@ public type Session record {
 public type TimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     TimeSlotStatus status;
     Queue queue;

@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -167,7 +168,7 @@ public type AppointmentRecord record {
 };
 
 public type Payment record {
-    boolean isPayed;
+    boolean isPaid;
     decimal amount;
     string handleBy;
     time:Date paymentTimestamp?;
@@ -245,3 +246,26 @@ public type TempMedicalRecord record {|
         int timeSlot;
         int queueNumber;
     };
+
+    public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
+};
+
+public type UpcomingAppointment record {
+    string _id;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    string[] aptCategories;
+    string doctorId;
+    string doctorName;
+    string medicalCenterId;
+    string medicalCenterName;
+    Payment payment;
+    time:Date aptCreatedTimestamp;
+    string aptStatus;
+    string patientId;
+    string patientName;
+    int queueNumber;
+};

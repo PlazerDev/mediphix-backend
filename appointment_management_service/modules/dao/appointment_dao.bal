@@ -13,7 +13,8 @@ configurable string cluster = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
-public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
+public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns model:AppointmentResponse|error? {
+
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
@@ -23,24 +24,32 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
 
     map<json> sessionFilter = {
         "_id": {"$oid": appointmentRecord.sessionId},
-        "timeSlot.slotId": appointmentRecord.timeSlot
+        "timeSlots.slotId": appointmentRecord.timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.appointments": appointmentRecord.aptNumber
+            "timeSlots.$.queue.appointments": appointmentRecord.aptNumber
         }
     };
 
-    mongodb:UpdateResult sessionResult = check sessionCollection->updateOne(
+    mongodb:UpdateResult|error updateResult = sessionCollection->updateOne(
         sessionFilter,
         sessionUpdate
     );
 
-    if (sessionResult.modifiedCount == 0) {
-        return error("Failed to update session. No matching session found.");
+    if updateResult is error {
+        return updateResult;
     }
 
-    return http:CREATED;
+    if updateResult.modifiedCount == 0 {
+        string errMsg = "Failed to update session. No matching session found.";
+        return error(errMsg);
+    }
+
+    return {
+        aptNumber: appointmentRecord.aptNumber,
+        status: http:CREATED
+    };
 }
 
 public function getNextAppointmentNumber() returns int|model:InternalError|error {
@@ -98,7 +107,7 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         "aptNumber": 1,
         "sessionId": 1,
         "timeSlot": 1,
-        "category": 1,
+        "aptCategories": 1,
         "doctorId": 1,
         "doctorName": 1,
         "medicalCenterId": 1,
@@ -106,11 +115,9 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         "payment": 1,
         "aptCreatedTimestamp": 1,
         "aptStatus": 1,
-        "patient": 1,
-        "isPaid": 1,
-        "queueNumber": 1,
-        "medicalRecord": 1,
-        "paymentTimeStamp": 1
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
     };
 
     stream<model:AppointmentRecord, error?> findResults = check appointmentCollection->find(filter, {}, projection, model:AppointmentRecord);
@@ -131,19 +138,65 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
 }
 
+
+public function getUpcomingAppointmentsByUserId(string userId) returns model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<json> filter = {
+        "patientId": userId,
+        "aptStatus": {"$in": ["ACTIVE", "PAID", "INQUEUE"]}
+    };
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
+    };
+
+    stream<model:UpcomingAppointment, error?> findResults = check appointmentCollection->find(filter, {}, projection);
+
+    model:UpcomingAppointment[]|error appointments = from model:UpcomingAppointment appointment in findResults
+        select appointment;
+    if appointments is model:UpcomingAppointment[] {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find appointments for the user",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+
+}
+
 public function getSessionDetailsByDoctorId(string doctorId) returns
 model:Session[]|model:InternalError|model:NotFoundError|error? {
-
+    io:println("Inside dao");
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
     map<json> filter = {"doctorId": doctorId};
-
+    io:println("Found doctor", filter);
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "endTimestamp": 1,
         "startTimestamp": 1,
-        "timeSlot": 1,
+        "timeSlots": 1,
         "doctorId": 1,
         "medicalCenterId": 1,
         "aptCategories": 1,
@@ -156,7 +209,14 @@ model:Session[]|model:InternalError|model:NotFoundError|error? {
 
     stream<model:Session, error?>|error findStream = sessionCollection->find(filter, {}, projection, model:Session);
     if findStream is error {
-        return findStream;
+        io:println("Error during find operation:", findStream.message());
+        model:ErrorDetails errorDetails = {
+            message: "Database error while finding sessions",
+            details: findStream.message(),
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
     }
 
     stream<model:Session, error?> findResults = check findStream;
@@ -164,6 +224,15 @@ model:Session[]|model:InternalError|model:NotFoundError|error? {
     model:Session[]|error sessions = from model:Session session in findResults
         select session;
     if sessions is model:Session[] {
+        if sessions.length() == 0 {
+            model:ErrorDetails errorDetails = {
+                message: "No sessions found for the doctor",
+                details: string `session/${doctorId}`,
+                timeStamp: time:utcNow()
+            };
+            model:NotFoundError notFound = {body: errorDetails};
+            return notFound;
+        }
         return sessions;
     } else {
         io:println("Error during stream processing:", sessions.message());
@@ -250,7 +319,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
     log:printInfo(string `Starting medical record update for appointment ${aptNumber}`);
 
     map<json> appointmentFilter = {"aptNumber": aptNumber};
-    // Define projection to only retrieve needed fields
     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "sessionId": 1,
@@ -260,7 +328,6 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     log:printInfo(string `Using appointment filter: ${appointmentFilter.toString()}`);
 
-    // Use projection in findOne
     model:ProjectedAppointment|error? appointmentDoc = appointmentCollection->
         findOne(appointmentFilter, {}, projection, model:ProjectedAppointment);
 
@@ -316,14 +383,14 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     map<json> sessionFilter = {
         "_id": {"$oid": sessionId},
-        "timeSlot.slotId": timeSlot
+        "timeSlots.slotId": timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.queueOperations.finished": queueNumber
+            "timeSlots.$.queue.queueOperations.finished": queueNumber
         },
         "set": {
-            "timeSlot.$.queue.queueOperations.ongoing": -1
+            "timeSlots.$.queue.queueOperations.ongoing": -1
         }
     };
 
