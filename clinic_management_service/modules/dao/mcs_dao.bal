@@ -2,6 +2,7 @@ import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
 import ballerina/io;
+import ballerina/log;
 
 
 
@@ -95,6 +96,7 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsA
 
     map<json> | error filter = initOngoingSessionFilter(sessionId);
     if filter is error {
+        log:printInfo("filter is error");
         return null;
     }
 
@@ -357,12 +359,16 @@ public function initDatabaseConnection(string collectionName) returns mongodb:Co
 }
 
 public function initOngoingSessionFilter(string sessionId) returns map<json> | error {
+    log:printInfo("In the filter");
     time:Civil currentTimeStamp = getCurrentCivilLKTime();
     time:Utc currentTimeStampInUTC = check time:utcFromCivil(currentTimeStamp);
 
     json currentTimeJson = currentTimeStamp.toJson();
     json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStampInUTC, 3600)).toJson();
     
+    log:printInfo("currentTimeJson", currentTimeJson=currentTimeJson);
+    log:printInfo("hourAfterTimeJson", hourAfterTimeJson=hourAfterTimeJson);
+
     map<json> filter = {
         "_id": {"$oid": sessionId},
         "$or": [

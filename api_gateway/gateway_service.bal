@@ -1193,6 +1193,30 @@ service /registration on httpListener {
 }
 service /mca on httpListener {
 
+
+    @http:ResourceConfig
+    resource function get MCSdata(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
 
@@ -1261,6 +1285,8 @@ public function getCachedUserId(string userEmail, string userType) returns strin
             id = check clinicServiceEP->/mcsIdByEmail/[userEmail];
         }else if (userType == "mcr") {
             id = check clinicServiceEP->/mcrIdByEmail/[userEmail];
+        }else if (userType == "mca") {
+            id = check clinicServiceEP->/mcaIdByEmail/[userEmail];
         }
         string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);

@@ -629,6 +629,15 @@ service / on new http:Listener(9090) {
 
     // ROLE [END] ###################################################################  
 
+    
+    resource function get mcaIdByEmail/[string email]() returns string|error? {
+        error|string|model:InternalError userId = 'service:mcaGetUserIdByEmail(email.trim());
+        if userId is string {
+            return userId;
+        } else {
+            return error("Error occurred while retrieving MCA id number");
+        }
+    }
 
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");

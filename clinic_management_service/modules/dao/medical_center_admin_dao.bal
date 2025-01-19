@@ -5,6 +5,33 @@ import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
+
+public function mcaGetUserIdByEmail(string email) returns string|error|model:InternalError {
+    mongodb:Collection userCollection = check initDatabaseConnection("user");
+
+    map<json> filter = {"email":email};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"}
+    
+    };
+
+    model:McsUserID|mongodb:Error? findResults = userCollection->findOne(filter, {}, projection);
+
+    if findResults is model:McsUserID {
+        return findResults._id;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving MCA ID",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
+}
+
 public function getMedicalCenterInfoByID(string id, string userId) returns model:MedicalCenter|model:NotFoundError|error? {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);

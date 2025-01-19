@@ -4,6 +4,14 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/time;
 
+
+// get the [userId] by [email]
+public function mcaGetUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:mcaGetUserIdByEmail(email);
+    return result;
+}
+
+
 public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Created|model:InternalError|error? {
     model:SessionVacancy sessionVacancy = {
         // initialize with required fields
