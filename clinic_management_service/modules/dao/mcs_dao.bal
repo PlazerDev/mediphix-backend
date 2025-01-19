@@ -8,7 +8,7 @@ import ballerina/log;
 
 
 public function mcsGetUserIdByEmail(string email) returns string|error|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
 
@@ -405,7 +405,7 @@ public function mcsGetAllSessionDataWithDoctorData(string sessionId) returns mod
 
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection collection = check mediphixDb->getCollection(collectionName);
     return collection;

@@ -20,7 +20,7 @@ configurable string laborataryRoleId = ?;
 configurable string AWS_REGION = ?;
 configurable string S3_BUCKET_NAME = ?;
 
-mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 string endPoint = string `https://api.asgardeo.io/t/mediphix`;
 
 # Description.
