@@ -11,7 +11,7 @@ configurable string password = ?;
 configurable string database = ?;
 configurable string cluster = ?;
 
-mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns model:AppointmentResponse|error? {
 

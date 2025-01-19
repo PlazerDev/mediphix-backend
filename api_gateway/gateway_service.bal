@@ -742,7 +742,7 @@ service /doctor on httpListener {
         string doctorEmail = check getUserEmailByJWT(req);
         string userType = "doctor";
         string doctorId = check getCachedUserId(doctorEmail, userType);
-         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -755,9 +755,9 @@ service /doctor on httpListener {
             errorResponse.setJsonPayload(internalError.body.toJson());
             return errorResponse;
         }
-        
+
         return response;
-    }  
+    }
 
 }
 
@@ -907,7 +907,7 @@ service /mcs on httpListener {
 
     @http:ResourceConfig
 
-    resource function put startAppointment (http:Request request, string sessionId, int slotId) returns http:Response{
+    resource function put startAppointment(http:Request request, string sessionId, int slotId) returns http:Response {
         do {
             string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
@@ -1280,24 +1280,6 @@ service /mca on httpListener {
         return errorResponse;
     }
 
-    @http:ResourceConfig
-    resource function get getSessionVacancies(string doctorId) returns http:Response|error {
-        http:Response|error response = check clinicServiceEP->/getSessionVacancies;
-        if response is http:Response {
-            return response;
-        }
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while retrieving session vacancies",
-            timeStamp: time:utcNow()
-        };
-
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-        return errorResponse;
-    }
-
     resource function get getMcaSessionVacancies(http:Request req) returns error|http:Response {
         do {
             string userEmail = check getUserEmailByJWT(req);
@@ -1320,7 +1302,7 @@ service /mca on httpListener {
         } on fail {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
-                details: "Error occurred while retrieving patient details",
+                details: "Error occurred while retrieving mca session vacancies",
                 timeStamp: time:utcNow()
             };
             http:Response errorResponse = new;
@@ -1329,6 +1311,22 @@ service /mca on httpListener {
             return errorResponse;
         }
 
+    }
+
+    resource function patch acceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
+        http:Response|error? response = check clinicServiceEP->/mcaAcceptDoctorResponseApplicationToOpenSession/[sessionVacancyId]/[responseId]/[appliedOpenSessionId].patch(appliedOpenSessionId);
+        if response is http:Response {
+            return response;
+        }
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while accepting doctor response to open session",
+            timeStamp: time:utcNow()
+        };
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+        return errorResponse;
     }
 
 }

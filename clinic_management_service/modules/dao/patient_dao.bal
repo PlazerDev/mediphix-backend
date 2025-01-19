@@ -126,7 +126,7 @@ public function getAppointments(string mobile) returns model:Appointment[]|error
 }
 
 public function getAllDoctors() returns error|model:Doctor[]|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
     map<json> projection = {
