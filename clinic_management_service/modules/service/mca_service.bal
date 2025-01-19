@@ -3,7 +3,164 @@ import clinic_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
+import ballerinax/mongodb;
 import ballerina/io;
+
+
+// get the [userId] by [email]
+public function mcaGetUserIdByEmail(string email) returns error|string|model:InternalError {
+    error|string|model:InternalError result = check dao:mcaGetUserIdByEmail(email);
+    return result;
+}
+
+// get all medical center staff memebrs details
+public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|model:McsFinalUserDataWithAssignedSession[] { 
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+            model:MedicalCenterStaff[] | mongodb:Error ? userData = dao:getInfoMCSByCenterId(centerData._id);
+            if userData is null {
+                return initNotFoundError("Center Staff Member data not found!");
+            }else if userData is mongodb:Error {
+                return initDatabaseError(userData);
+            }else{
+                model:McsFinalUserDataWithAssignedSession[] finalResult = [];
+
+                foreach var user in userData {
+                    model:McsSessionWithDoctorDetails[] result = [];
+                    if (user.assignedSessions is string[]) {
+                        string[] temp = user.assignedSessions ?: [];
+                        foreach var sessionId in temp {
+                            io:println("fetching details for this session id", sessionId);
+                            var sessionDataWithDoctorData = dao:mcsGetAllSessionDataWithDoctorData(sessionId);
+                            if (sessionDataWithDoctorData is model:McsSessionWithDoctorDetails) {
+                                result.push(sessionDataWithDoctorData);
+                            } else if (sessionDataWithDoctorData is null) {
+                                // Stop execution and propagate the error
+                                return initNotFoundError("Assigned Session Details Not Found");
+                            } else {
+                                // Stop execution and propagate the database error
+                                return initDatabaseError(sessionDataWithDoctorData);
+                            }
+                        }
+                    }
+                    model:McsFinalUserDataWithAssignedSession temp = {
+                        assignedsessionData: result,
+                        userData: user
+                    };
+                    finalResult.push(temp);
+                }
+
+                return finalResult;
+            }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
+
+// get all sessions in active
+public function mcsGetActiveSessions(string userId) returns error|model:NotFoundError|model:McsSessionWithDoctorDetails[] { 
+    
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+           // change from here
+           model:McsSessionWithDoctorDetails[]|mongodb:Error ? result = dao:mcsGetAllActiveSessionDataWithDoctorData(centerData._id);
+           if result is model:McsSessionWithDoctorDetails[]{
+            return result;
+           }else if result is null {
+            return initNotFoundError("Session Data Not Found");
+           }else {
+            return initDatabaseError(result);
+           }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
+
+// get all medical center reception memebrs details
+public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|model:MedicalCenterReceptionist[] { 
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+            model:MedicalCenterReceptionist[] | mongodb:Error ? userData = dao:getInfoMCRByCenterId(centerData._id);
+            if userData is null {
+                return initNotFoundError("Center Staff Reception data not found!");
+            }else if userData is mongodb:Error {
+                return initDatabaseError(userData);
+            }else{
+                return userData;
+            }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
+
+// assign a session to the mcs member
+public function mcaAssignSession(string sessionId,string mcsId, string userId) returns error|model:NotFoundError ? { 
+    model:MedicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+            model:MedicalCenterStaff | mongodb:Error ? userData = dao:getInfoMCSWithAssignedSession(mcsId);
+            if userData is null {
+                return initNotFoundError("Center Staff Member data not found!");
+            }else if userData is mongodb:Error {
+                return initDatabaseError(userData);
+            }else{
+                string[] temp = <string[]>userData.assignedSessions;
+                if temp.indexOf(sessionId) is null {
+                    // case :: can be added
+                    // update 
+                    temp.push(sessionId);
+                    mongodb:Error ? updateResult = check dao:updateAssignedSessionList(mcsId, temp);
+                    
+                    if updateResult is null {
+                        // case :: update sucess
+                        return null;
+                    } else if updateResult is mongodb:Error {
+                        return initDatabaseError(updateResult);
+                    }
+                }else{
+                    // case :: already found
+                    return error("Already added one");
+                }
+            }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
 
 public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Created|model:InternalError|error? {
     model:SessionVacancy sessionVacancy = {

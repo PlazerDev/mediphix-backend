@@ -1260,6 +1260,99 @@ service /registration on httpListener {
 }
 service /mca on httpListener {
 
+
+    @http:ResourceConfig
+    resource function get MCSdata(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcaGetMCSdata/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+      @http:ResourceConfig
+    resource function get activeSessions(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcsGetActiveSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    // change here
+    @http:ResourceConfig
+    resource function put assign(http:Request request, string sessionId, string mcsId) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            string url = string `/mcaAssignSession?sessionId=${sessionId}&mcsId=${mcsId}&userId=${userId}`;
+
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig
+    resource function get MCRdata(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcaGetMCRdata/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
 

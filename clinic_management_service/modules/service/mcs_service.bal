@@ -3,6 +3,7 @@ import clinic_management_service.model;
 
 import ballerina/io;
 import ballerina/time;
+import ballerina/log;
 import ballerinax/mongodb;
 
 public function mcsGetUserIdByEmail(string email) returns error|string|model:InternalError {
@@ -66,15 +67,18 @@ public function mcsGetOngoingSessionList(string userId) returns error|model:NotF
 
     if (sessionIdList is model:McsAssignedSessionIdList) {
         foreach string sessionId in sessionIdList.assignedSessions {
+            
+            log:printInfo("calling mcsGetOngoingSessionDetails to get session details", sessionId=sessionId);
+            model:McsAssignedSession|mongodb:Error ? sessionDetails = dao:mcsGetOngoingSessionDetails(sessionId);
+            log:printInfo("received");
 
-            model:McsAssignedSession|mongodb:Error? sessionDetails = dao:mcsGetOngoingSessionDetails(sessionId);
-
-            if (sessionDetails is mongodb:Error) {
+            if(sessionDetails is mongodb:Error){
                 return error("Database Error!: ", sessionDetails);
             }
 
             if (sessionDetails is model:McsAssignedSession) {
-                model:McsDoctorDetails|mongodb:Error? doctorDetails = dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
+                log:printInfo("calling mcsGetDoctorDetailsByID to get doctor details", sessionId=sessionId);
+                model:McsDoctorDetails|mongodb:Error ? doctorDetails = dao:mcsGetDoctorDetailsByID(sessionDetails.doctorId);
 
                 if doctorDetails is model:McsDoctorDetails {
                     model:McsAssignedSessionWithDoctorDetails temp = {

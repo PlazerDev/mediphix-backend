@@ -57,3 +57,4 @@ test/
 
 # ignore redis dump
 dump.rdb
+java_pid29900.hprof

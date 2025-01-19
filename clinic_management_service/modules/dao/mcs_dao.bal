@@ -2,6 +2,7 @@ import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
 import ballerina/io;
+import ballerina/log;
 
 
 
@@ -95,6 +96,7 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsA
 
     map<json> | error filter = initOngoingSessionFilter(sessionId);
     if filter is error {
+        log:printInfo("filter is error");
         return null;
     }
 
@@ -348,6 +350,115 @@ public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTime
     return result;
 }
 
+
+public function mcsGetAllSessionDataWithDoctorData(string sessionId) returns model:McsSessionWithDoctorDetails|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> sessionProjection = {
+        "_id": 0,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    model:McsAssignedSession ? sessionResult = check sessionCollection->findOne(sessionFilter, {}, sessionProjection);
+
+    if sessionResult is model:McsAssignedSession {
+        map<json> doctorFilter = {
+            "_id": {"$oid": sessionResult.doctorId }
+            };
+
+        map<json> doctorProjection = {
+            "_id": 0,
+            "name": 1,
+            "profilePhoto": {"$toString": "$profileImage"},
+            "education": 1,
+            "specialization": 1
+        };
+        model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+
+        if doctorResult is model:McsDoctorDetails {
+            model:McsSessionWithDoctorDetails result = {
+                doctorName: doctorResult.name,
+                endTimestamp: sessionResult.endTimestamp,
+                startTimestamp: sessionResult.startTimestamp
+            };
+            return result;
+        }else{
+            return null;
+        }
+    }else {
+        return null;
+    }
+}
+
+
+public function mcsGetAllActiveSessionDataWithDoctorData(string centerId) returns model:McsSessionWithDoctorDetails[]|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "medicalCenterId": centerId,
+        "overallSessionStatus": "ACTIVE"
+    };
+
+    map<json> sessionProjection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    stream<model:McsAssignedSession, error?> sessionsResult = check sessionCollection->find(sessionFilter, {}, sessionProjection, model:McsAssignedSession);
+    model:McsAssignedSession[] | error sessionResult = from model:McsAssignedSession data in sessionsResult select data;
+    if sessionResult is model:McsAssignedSession[] {
+        model:McsSessionWithDoctorDetails[] finalResult = [];
+        foreach var data in sessionResult {
+            map<json> doctorFilter = {
+                "_id": {"$oid": data.doctorId }
+                };
+
+            map<json> doctorProjection = {
+                "_id": 0,
+                "name": 1,
+                "profilePhoto": {"$toString": "$profileImage"},
+                "education": 1,
+                "specialization": 1
+            };
+            model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+            
+            if doctorResult is model:McsDoctorDetails {
+                model:McsSessionWithDoctorDetails temp = {
+                    doctorName: doctorResult.name,
+                    endTimestamp: data.endTimestamp,
+                    startTimestamp: data.startTimestamp,
+                    sessionId: data._id
+                };
+                finalResult.push(temp);
+            }else{
+                return null;
+            }
+        }
+        return finalResult;
+    }else{
+        return null;
+    }
+}
+
+
+
+
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
@@ -357,12 +468,16 @@ public function initDatabaseConnection(string collectionName) returns mongodb:Co
 }
 
 public function initOngoingSessionFilter(string sessionId) returns map<json> | error {
+    log:printInfo("In the filter");
     time:Civil currentTimeStamp = getCurrentCivilLKTime();
     time:Utc currentTimeStampInUTC = check time:utcFromCivil(currentTimeStamp);
 
     json currentTimeJson = currentTimeStamp.toJson();
     json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStampInUTC, 3600)).toJson();
     
+    log:printInfo("currentTimeJson", currentTimeJson=currentTimeJson);
+    log:printInfo("hourAfterTimeJson", hourAfterTimeJson=hourAfterTimeJson);
+
     map<json> filter = {
         "_id": {"$oid": sessionId},
         "$or": [
