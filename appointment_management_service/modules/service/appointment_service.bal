@@ -93,7 +93,7 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
 }
 
-public function getUpcomingAppointmentsByUserId(string userId) returns model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error {
+public function getUpcomingAppointmentsByUserId(string userId) returns model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|model:ValueError|error {
     if (userId.length() === 0) {
         model:ErrorDetails errorDetails = {
             message: "Please provide a valid mobile number",
@@ -106,8 +106,8 @@ public function getUpcomingAppointmentsByUserId(string userId) returns model:App
         return valueError;
     }
 
-    model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? appointments = dao:getUpcomingAppointmentsByUserId(userId);
-    if appointments is model:AppointmentRecord[] {
+    model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|error? appointments = dao:getUpcomingAppointmentsByUserId(userId);
+    if appointments is model:UpcomingAppointment[] {
         return appointments;
     } else if appointments is model:InternalError {
         return appointments;

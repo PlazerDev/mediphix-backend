@@ -54,11 +54,11 @@ service / on new http:Listener(9091) {
         return response;
     }
 
-    resource function get getUpcomingAppointments/[string userId]() returns http:Response|error {
-        model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getUpcomingAppointmentsByUserId(userId);
+    resource function get getUpcomingAppointmentsByUserId/[string userId]() returns http:Response|error {
+        model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getUpcomingAppointmentsByUserId(userId);
 
         http:Response response = new;
-        if appointments is model:AppointmentRecord[] {
+        if appointments is model:UpcomingAppointment[] {
             response.statusCode = 200;
             response.setJsonPayload(appointments.toJson());
         } else if appointments is model:InternalError {

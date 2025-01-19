@@ -251,3 +251,21 @@ public type TempMedicalRecord record {|
     int aptNumber;
     http:Created status;
 };
+
+public type UpcomingAppointment record {
+    string _id;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    string[] aptCategories;
+    string doctorId;
+    string doctorName;
+    string medicalCenterId;
+    string medicalCenterName;
+    Payment payment;
+    time:Date aptCreatedTimestamp;
+    string aptStatus;
+    string patientId;
+    string patientName;
+    int queueNumber;
+};
