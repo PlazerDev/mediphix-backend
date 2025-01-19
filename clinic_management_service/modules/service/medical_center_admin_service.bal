@@ -3,12 +3,39 @@ import clinic_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
+import ballerinax/mongodb;
 
 
 // get the [userId] by [email]
 public function mcaGetUserIdByEmail(string email) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:mcaGetUserIdByEmail(email);
     return result;
+}
+
+// get all medical center staff memebrs details
+public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|model:medicalCenterStaff[] { 
+    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:medicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+            model:medicalCenterStaff[] | mongodb:Error ? userData = dao:getInfoMCSByCenterId(centerData._id);
+            if userData is null {
+                return initNotFoundError("Center Staff Member data not found!");
+            }else if userData is mongodb:Error {
+                return initDatabaseError(userData);
+            }else{
+                return userData;
+            }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
 }
 
 

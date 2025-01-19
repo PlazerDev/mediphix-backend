@@ -1201,7 +1201,7 @@ service /mca on httpListener {
             string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mca");
 
-            http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
+            http:Response response = check clinicServiceEP->/mcaGetMCSdata/[userId];
             return response;
         } on fail {
             ErrorDetails errorDetails = {

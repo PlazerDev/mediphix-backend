@@ -639,6 +639,22 @@ service / on new http:Listener(9090) {
         }
     }
 
+    resource function get mcaGetMCSdata/[string userId]() returns http:Response|error {
+
+        model:NotFoundError|model:medicalCenterStaff[] result = check 'service:mcaGetMCSdata(userId);
+        http:Response response = new;
+
+        if (result is model:medicalCenterStaff[]) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
     resource function post uploadmedia/[string userType]/[string uploadType]/[string emailHead]/[string fileName]/[string fileType]/[string extension](byte[] fileBytes) returns http:Response|error? {
         io:println("Upload media function called");
         string|model:InternalError|error? result = 'service:uploadMedia(userType, uploadType, emailHead, fileBytes, fileName, fileType, extension);
