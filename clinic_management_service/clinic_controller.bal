@@ -722,5 +722,24 @@ service / on new http:Listener(9090) {
             return error("Error occurred while retrieving MCR id number");
         }
     }
+
+    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
+        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(sessionVacancyId, responseId, appliedOpenSessionId);
+
+        http:Response response = new;
+        if result is http:Ok {
+            response.statusCode = 200;
+            response.setJsonPayload({message: "Doctor response accepted successfully"});
+        } else if result is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(result.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error!"});
+        }
+
+        return response;
+
+    }
 }
 

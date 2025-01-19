@@ -1,12 +1,13 @@
 import clinic_management_service.model;
 
 import ballerina/http;
+import ballerina/io;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
 public function getMedicalCenterInfoByID(string id, string userId) returns model:MedicalCenter|model:NotFoundError|error? {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
 
@@ -247,4 +248,53 @@ public function getMcaAssociatedMedicalCenterId(string userId) returns string|er
         return error("Internal Error");
     }
     return findMedicalCenter._id;
+}
+
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
+    map<json> sessionVacancyResponseFilter = {
+        "_id": {"$oid": sessionVacancyId},
+        "responses.responseId": responseId,
+        "responses.responseApplications.appliedOpenSessionId": appliedOpenSessionId
+    };
+    io:println("Hello updating acceptance");
+    map<json> sessionVacancyProjection = {
+        "_id": {"$toString": "$_id"},
+        "responses": 1,
+        "aptCategories": 1,
+        "medicalCenterId": 1,
+        "mobile": 1,
+        "vacancyNoteToDoctors": 1,
+        "openSessions": 1,
+        "vacancyOpenedTimestamp": 1,
+        "vacancyClosedTimestamp": 1,
+        "centerName": 1,
+        "profileImage": 1
+    };
+    model:SessionVacancy|mongodb:Error? findResults = sessionVacancyCollection->findOne(sessionVacancyResponseFilter, {}, sessionVacancyProjection, model:SessionVacancy);
+    io:println("Doctor response application found", findResults);
+    
+
+    mongodb:Update update = {
+        "set": {
+            "responses.$.responseApplications.$.isAccepted": true
+        }
+    };
+
+    mongodb:UpdateResult|mongodb:Error? result = check sessionVacancyCollection->updateOne(sessionVacancyResponseFilter, update, {});
+
+    if result is mongodb:UpdateResult {
+        io:println("Doctor response application accepted successfully");
+        return http:OK;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while updating response status",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+
+        return internalError;
+    }
+
 }

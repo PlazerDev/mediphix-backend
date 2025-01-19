@@ -3,6 +3,7 @@ import clinic_management_service.model;
 
 import ballerina/http;
 import ballerina/time;
+import ballerina/io;
 
 public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Created|model:InternalError|error? {
     model:SessionVacancy sessionVacancy = {
@@ -102,4 +103,20 @@ public function getMcaSessionVacancies(string userId) returns model:SessionVacan
     };
 
     return internalError;
+}
+
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+    http:Ok|model:InternalError|error result = dao:mcaAcceptDoctorResponseApplicationToOpenSession(sessionVacancyId, responseId, appliedOpenSessionId);
+    io:println("result: ", result);
+    if !(result is http:Ok) {
+        model:InternalError internalError = {
+            body: {
+                message: "Internal Error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            }
+        };
+        return internalError;
+    }
+    return result;
 }
