@@ -19,7 +19,7 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
 
     check appointmentCollection->insertOne(appointmentRecord);
-    
+
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
     map<json> sessionFilter = {
@@ -36,7 +36,7 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
         sessionFilter,
         sessionUpdate
     );
-    
+
     if updateResult is error {
         return updateResult;
     }
@@ -45,7 +45,7 @@ public function createAppointmentRecord(model:AppointmentRecord appointmentRecor
         string errMsg = "Failed to update session. No matching session found.";
         return error(errMsg);
     }
-    
+
     return {
         aptNumber: appointmentRecord.aptNumber,
         status: http:CREATED
@@ -107,7 +107,7 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         "aptNumber": 1,
         "sessionId": 1,
         "timeSlot": 1,
-        "category": 1,
+        "aptCategories": 1,
         "doctorId": 1,
         "doctorName": 1,
         "medicalCenterId": 1,
@@ -115,11 +115,9 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
         "payment": 1,
         "aptCreatedTimestamp": 1,
         "aptStatus": 1,
-        "patient": 1,
-        "isPaid": 1,
-        "queueNumber": 1,
-        "medicalRecord": 1,
-        "paymentTimeStamp": 1
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
     };
 
     stream<model:AppointmentRecord, error?> findResults = check appointmentCollection->find(filter, {}, projection, model:AppointmentRecord);
@@ -127,6 +125,52 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
     model:AppointmentRecord[]|error appointments = from model:AppointmentRecord appointment in findResults
         select appointment;
     if appointments is model:AppointmentRecord[] {
+        return appointments;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find appointments for the user",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:NotFoundError userNotFound = {body: errorDetails};
+        return userNotFound;
+    }
+
+}
+
+
+public function getUpcomingAppointmentsByUserId(string userId) returns model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|error? {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+    map<json> filter = {
+        "patientId": userId,
+        "aptStatus": {"$in": ["ACTIVE", "PAID", "INQUEUE"]}
+    };
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
+    };
+
+    stream<model:UpcomingAppointment, error?> findResults = check appointmentCollection->find(filter, {}, projection);
+
+    model:UpcomingAppointment[]|error appointments = from model:UpcomingAppointment appointment in findResults
+        select appointment;
+    if appointments is model:UpcomingAppointment[] {
         return appointments;
     } else {
         model:ErrorDetails errorDetails = {
@@ -165,7 +209,7 @@ model:Session[]|model:InternalError|model:NotFoundError|error? {
 
     stream<model:Session, error?>|error findStream = sessionCollection->find(filter, {}, projection, model:Session);
     if findStream is error {
-         io:println("Error during find operation:", findStream.message());
+        io:println("Error during find operation:", findStream.message());
         model:ErrorDetails errorDetails = {
             message: "Database error while finding sessions",
             details: findStream.message(),
