@@ -182,6 +182,28 @@ service /patient on httpListener {
         }
     }
 
+    resource function get getUpcomingAppointments(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userId = check getCachedUserId(userEmail, userType);
+            
+            http:Response|error? response = check appointmentServiceEP->/getUpcomingAppointmentsByUserId/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
     resource function get getDoctorDetails/[string doctorId]() returns http:Response|error? {
         do {
             http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[doctorId];

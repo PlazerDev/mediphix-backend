@@ -93,6 +93,39 @@ public function getAppointmentsByUserId(string userId) returns model:Appointment
 
 }
 
+public function getUpcomingAppointmentsByUserId(string userId) returns model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error {
+    if (userId.length() === 0) {
+        model:ErrorDetails errorDetails = {
+            message: "Please provide a valid mobile number",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:ValueError valueError = {
+            body: errorDetails
+        };
+        return valueError;
+    }
+
+    model:AppointmentRecord[]|model:InternalError|model:NotFoundError|error? appointments = dao:getUpcomingAppointmentsByUserId(userId);
+    if appointments is model:AppointmentRecord[] {
+        return appointments;
+    } else if appointments is model:InternalError {
+        return appointments;
+    } else if appointments is model:NotFoundError {
+        return appointments;
+    } else {
+        io:println(appointments);
+        model:ErrorDetails errorDetails = {
+            message: "Unexpected internal error occurred, please retry!",
+            details: string `appointment/${userId}`,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+
+}
+
 public function getSessionDetailsByDoctorId(string doctorId) returns 
 model:Session[]|model:InternalError|model:NotFoundError|model:ValueError|error {
 
