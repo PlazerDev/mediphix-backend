@@ -350,6 +350,59 @@ public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTime
     return result;
 }
 
+
+public function mcsGetAllSessionDataWithDoctorData(string sessionId) returns model:McsSessionWithDoctorDetails|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> sessionProjection = {
+        "_id": 0,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    model:McsAssignedSession ? sessionResult = check sessionCollection->findOne(sessionFilter, {}, sessionProjection);
+
+    if sessionResult is model:McsAssignedSession {
+        map<json> doctorFilter = {
+            "_id": {"$oid": sessionResult.doctorId }
+            };
+
+        map<json> doctorProjection = {
+            "_id": 0,
+            "name": 1,
+            "profilePhoto": {"$toString": "$profileImage"},
+            "education": 1,
+            "specialization": 1
+        };
+        model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+
+        if doctorResult is model:McsDoctorDetails {
+            model:McsSessionWithDoctorDetails result = {
+                doctorName: doctorResult.name,
+                endTimestamp: sessionResult.endTimestamp,
+                startTimestamp: sessionResult.startTimestamp
+            };
+            return result;
+        }else{
+            return null;
+        }
+    }else {
+        return null;
+    }
+}
+
+
+
+
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);

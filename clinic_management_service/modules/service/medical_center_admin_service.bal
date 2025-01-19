@@ -4,6 +4,7 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 
 // get the [userId] by [email]
@@ -13,7 +14,7 @@ public function mcaGetUserIdByEmail(string email) returns error|string|model:Int
 }
 
 // get all medical center staff memebrs details
-public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|model:medicalCenterStaff[] { 
+public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|model:McsFinalUserDataWithAssignedSession[] { 
     model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
     if mcaData is model:medicalCenterAdmin {
         model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
@@ -24,7 +25,34 @@ public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|m
             }else if userData is mongodb:Error {
                 return initDatabaseError(userData);
             }else{
-                return userData;
+                model:McsFinalUserDataWithAssignedSession[] finalResult = [];
+
+                foreach var user in userData {
+                    model:McsSessionWithDoctorDetails[] result = [];
+                    if (user.assignedSessions is string[]) {
+                        string[] temp = user.assignedSessions ?: [];
+                        foreach var sessionId in temp {
+                            io:println("fetching details for this session id", sessionId);
+                            var sessionDataWithDoctorData = dao:mcsGetAllSessionDataWithDoctorData(sessionId);
+                            if (sessionDataWithDoctorData is model:McsSessionWithDoctorDetails) {
+                                result.push(sessionDataWithDoctorData);
+                            } else if (sessionDataWithDoctorData is null) {
+                                // Stop execution and propagate the error
+                                return initNotFoundError("Assigned Session Details Not Found");
+                            } else {
+                                // Stop execution and propagate the database error
+                                return initDatabaseError(sessionDataWithDoctorData);
+                            }
+                        }
+                    }
+                    model:McsFinalUserDataWithAssignedSession temp = {
+                        assignedsessionData: result,
+                        userData: user
+                    };
+                    finalResult.push(temp);
+                }
+
+                return finalResult;
             }
         }else if centerData is null {
             return initNotFoundError("Medical center data not found");

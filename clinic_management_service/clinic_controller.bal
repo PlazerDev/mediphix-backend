@@ -641,10 +641,10 @@ service / on new http:Listener(9090) {
 
     resource function get mcaGetMCSdata/[string userId]() returns http:Response|error {
 
-        model:NotFoundError|model:medicalCenterStaff[] result = check 'service:mcaGetMCSdata(userId);
+        model:NotFoundError|model:McsFinalUserDataWithAssignedSession[] result = check 'service:mcaGetMCSdata(userId);
         http:Response response = new;
 
-        if (result is model:medicalCenterStaff[]) {
+        if (result is model:McsFinalUserDataWithAssignedSession[]) {
             response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {

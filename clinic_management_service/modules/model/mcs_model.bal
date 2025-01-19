@@ -77,3 +77,14 @@ public type McsQueueOperations record {|
     int[] finished;
     int[] absent;
 |};
+
+public type McsSessionWithDoctorDetails record {|
+    time:Date endTimestamp;
+    time:Date startTimestamp;
+    string doctorName;
+|};
+
+public type McsFinalUserDataWithAssignedSession record {|
+    medicalCenterStaff userData;
+    McsSessionWithDoctorDetails[] assignedsessionData;
+|};
