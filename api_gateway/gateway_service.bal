@@ -1216,6 +1216,28 @@ service /mca on httpListener {
         }
     }
 
+      @http:ResourceConfig
+    resource function get activeSessions(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcsGetActiveSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
     @http:ResourceConfig
     resource function get MCRdata(http:Request request) returns http:Response {
         do {

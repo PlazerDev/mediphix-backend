@@ -401,6 +401,62 @@ public function mcsGetAllSessionDataWithDoctorData(string sessionId) returns mod
 }
 
 
+public function mcsGetAllActiveSessionDataWithDoctorData(string centerId) returns model:McsSessionWithDoctorDetails[]|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "medicalCenterId": centerId,
+        "overallSessionStatus": "ACTIVE"
+    };
+
+    map<json> sessionProjection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    stream<model:McsAssignedSession, error?> sessionsResult = check sessionCollection->find(sessionFilter, {}, sessionProjection, model:McsAssignedSession);
+    model:McsAssignedSession[] | error sessionResult = from model:McsAssignedSession data in sessionsResult select data;
+    if sessionResult is model:McsAssignedSession[] {
+        model:McsSessionWithDoctorDetails[] finalResult = [];
+        foreach var data in sessionResult {
+            map<json> doctorFilter = {
+                "_id": {"$oid": data.doctorId }
+                };
+
+            map<json> doctorProjection = {
+                "_id": 0,
+                "name": 1,
+                "profilePhoto": {"$toString": "$profileImage"},
+                "education": 1,
+                "specialization": 1
+            };
+            model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+            
+            if doctorResult is model:McsDoctorDetails {
+                model:McsSessionWithDoctorDetails temp = {
+                    doctorName: doctorResult.name,
+                    endTimestamp: data.endTimestamp,
+                    startTimestamp: data.startTimestamp,
+                    sessionId: data._id
+                };
+                finalResult.push(temp);
+            }else{
+                return null;
+            }
+        }
+        return finalResult;
+    }else{
+        return null;
+    }
+}
+
+
 
 
 // HELPERS ............................................................................................................

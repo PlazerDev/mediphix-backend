@@ -79,10 +79,12 @@ public type McsQueueOperations record {|
 |};
 
 public type McsSessionWithDoctorDetails record {|
+    string sessionId?;
     time:Date endTimestamp;
     time:Date startTimestamp;
     string doctorName;
 |};
+
 
 public type McsFinalUserDataWithAssignedSession record {|
     medicalCenterStaff userData;

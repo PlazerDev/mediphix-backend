@@ -66,6 +66,34 @@ public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|m
     }
 }
 
+// get all sessions in active
+public function mcsGetActiveSessions(string userId) returns error|model:NotFoundError|model:McsSessionWithDoctorDetails[] { 
+    
+    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:medicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+           // change from here
+           model:McsSessionWithDoctorDetails[]|mongodb:Error ? result = dao:mcsGetAllActiveSessionDataWithDoctorData(centerData._id);
+           if result is model:McsSessionWithDoctorDetails[]{
+            return result;
+           }else if result is null {
+            return initNotFoundError("Session Data Not Found");
+           }else {
+            return initDatabaseError(result);
+           }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
+
 // get all medical center reception memebrs details
 public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|model:medicalCenterReceptionist[] { 
     model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
