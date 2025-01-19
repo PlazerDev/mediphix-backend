@@ -38,6 +38,31 @@ public function mcaGetMCSdata(string userId) returns error|model:NotFoundError|m
     }
 }
 
+// get all medical center reception memebrs details
+public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|model:medicalCenterReceptionist[] { 
+    model:medicalCenterAdmin|mongodb:Error ? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:medicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error ? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+            model:medicalCenterReceptionist[] | mongodb:Error ? userData = dao:getInfoMCRByCenterId(centerData._id);
+            if userData is null {
+                return initNotFoundError("Center Staff Reception data not found!");
+            }else if userData is mongodb:Error {
+                return initDatabaseError(userData);
+            }else{
+                return userData;
+            }
+        }else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        }else {
+            return initDatabaseError(centerData);
+        }
+    }else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    }else {
+        return initDatabaseError(mcaData);
+    }
+}
 
 public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) returns http:Created|model:InternalError|error? {
     model:SessionVacancy sessionVacancy = {

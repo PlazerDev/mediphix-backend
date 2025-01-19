@@ -200,7 +200,7 @@ public function getInfoCenterByEmail(string centerEmail) returns model:MedicalCe
     # 
     # 
     # + centerId - center ID
-    # + return - on sucess return list of name, nic, mobile, empId, centerId, profileImage, userId
+    # + return - on sucess return list of name, nic, mobile, empId, centerId, profileImage, userId, assignedSessions
 
 public function getInfoMCSByCenterId(string centerId) returns model:medicalCenterStaff[]|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
@@ -217,13 +217,49 @@ public function getInfoMCSByCenterId(string centerId) returns model:medicalCente
         "empId": 1,
         "profileImage": 1,
         "centerId": 1,
-        "userId": 1
+        "userId": 1,
+        "assignedSessions": 1
     };
 
     stream<model:medicalCenterStaff, error?> result = check collection->find(filter, {}, projection, model:medicalCenterStaff);
     
     model:medicalCenterStaff[]|error finalResult = from model:medicalCenterStaff userData in result select userData;
     if finalResult is model:medicalCenterStaff[] {
+        return finalResult;
+    } else {
+        return null;
+    }
+}
+
+
+
+  # Fetch all center receptionist info by medical center ID
+    # 
+    # 
+    # + centerId - center ID
+    # + return - on sucess return list of name, nic, mobile, empId, centerId, profileImage, userId
+
+public function getInfoMCRByCenterId(string centerId) returns model:medicalCenterReceptionist[]|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("medical_center_receptionist");
+
+    map<json> filter = {
+        "centerId": centerId
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "name": 1,
+        "nic": 1,
+        "mobile": 1,
+        "empId": 1,
+        "profileImage": 1,
+        "centerId": 1,
+        "userId": 1
+    };
+
+    stream<model:medicalCenterReceptionist, error?> result = check collection->find(filter, {}, projection, model:medicalCenterReceptionist);
+    model:medicalCenterReceptionist[]|error finalResult = from model:medicalCenterReceptionist userData in result select userData;
+    if finalResult is model:medicalCenterReceptionist[] {
         return finalResult;
     } else {
         return null;
