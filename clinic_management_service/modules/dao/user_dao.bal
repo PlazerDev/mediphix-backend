@@ -1,5 +1,6 @@
 import clinic_management_service.model;
 import ballerinax/mongodb;
+import ballerina/io;
 
 
   # Fetch user data from given user email
@@ -264,4 +265,62 @@ public function getInfoMCRByCenterId(string centerId) returns model:medicalCente
     } else {
         return null;
     }
+}
+
+
+  # Fetch center staff info by userId (with assign session list)
+    # 
+    # 
+    # + userId - user ID
+    # + return - on sucess return name, nic, mobile, empId, centerId, profileImage, userId
+
+public function getInfoMCSWithAssignedSession(string userId) returns model:medicalCenterStaff|mongodb:Error ? {
+    io:println("In DAO", userId);
+    mongodb:Collection collection = check initDatabaseConnection("medical_center_staff");
+
+    map<json> filter = {
+        "userId": userId
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "name": 1,
+        "nic": 1,
+        "mobile": 1,
+        "empId": 1,
+        "profileImage": 1,
+        "centerId": 1,
+        "userId": 1,
+        "assignedSessions": 1
+    };
+
+    model:medicalCenterStaff ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Update the assigned session list in MCS
+    # 
+    # 
+    # + userId - user id of the medical center staff
+    # + assignedSessionList - new assigned session list
+    # + return - on sucess return null
+public function updateAssignedSessionList(string userId, string[] assignedSessionList) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("medical_center_staff");
+  
+    map<json> filter = {
+        "userId": userId
+    };
+
+    mongodb:Update update = {
+        "set": { "assignedSessions": assignedSessionList}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
 }
