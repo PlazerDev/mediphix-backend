@@ -6,14 +6,13 @@ import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
 
-
 public function mcaGetUserIdByEmail(string email) returns string|error|model:InternalError {
     mongodb:Collection userCollection = check initDatabaseConnection("user");
 
-    map<json> filter = {"email":email};
+    map<json> filter = {"email": email};
     map<json> projection = {
         "_id": {"$toString": "$_id"}
-    
+
     };
 
     model:McsUserID|mongodb:Error? findResults = userCollection->findOne(filter, {}, projection);
@@ -210,7 +209,7 @@ public function getMcaUserIdByEmail(string email) returns string|error|model:Int
     }
 }
 
-public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError|error {
+public function getMcaSessionVacancies(string userId) returns model:McaSessionVacancy[]|model:InternalError|error {
     string medicalCenterId = check getMcaAssociatedMedicalCenterId(userId);
 
     mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
@@ -231,12 +230,7 @@ public function getMcaSessionVacancies(string userId) returns model:SessionVacan
 
     stream<model:SessionVacancy, error?>|mongodb:Error? findResults = check sessionVacancyCollection->find(filter, {}, sessionProjection, model:SessionVacancy);
 
-    if findResults is stream<model:SessionVacancy, error?> {
-
-        model:SessionVacancy[]|error sessionVacancies = from model:SessionVacancy vacancy in findResults
-            select vacancy;
-        return sessionVacancies;
-    } else {
+    if !(findResults is stream<model:SessionVacancy, error?>) {
         model:ErrorDetails errorDetails = {
             message: "Internal Error",
             details: "Error occurred while retrieving MCA session vacancies",
@@ -245,7 +239,93 @@ public function getMcaSessionVacancies(string userId) returns model:SessionVacan
         model:InternalError sessionVacancyNotFound = {body: errorDetails};
 
         return sessionVacancyNotFound;
+
     }
+    model:SessionVacancy[]|error sessionVacancies = from model:SessionVacancy vacancy in findResults
+        select vacancy;
+
+    if sessionVacancies is error {
+        return sessionVacancies;
+    }
+
+    model:McaSessionVacancy[] mcaSessionVacancies = [];
+
+    foreach model:SessionVacancy vacancy in sessionVacancies {
+        model:McaDoctorResponse[] doctorResponses = [];
+        foreach int responseId in vacancy.responses {
+
+            map<json> doctorResponsesFilter = {
+                "responseId": responseId
+            };
+
+            mongodb:Collection doctorResponseCollection = check initDatabaseConnection("doctor_response");
+
+            map<json> doctorResponseProjection = {
+                "responseId": 1,
+                "submittedTimestamp": 1,
+                "doctorId": 1,
+                "sessionVacancyId": 1,
+                "noteToPatient": 1,
+                "vacancyNoteToCenter": 1,
+                "responseApplications": 1,
+                "isCompletelyRejected": 1
+            };
+
+            model:DoctorResponse|mongodb:Error? doctorResponse = check doctorResponseCollection->findOne(doctorResponsesFilter, {}, doctorResponseProjection, model:DoctorResponse);
+
+            if !(doctorResponse is model:DoctorResponse) {
+                return error("Internal Error");
+            }
+
+            map<json> doctorDetailsFilter = {
+                "_id": {"$oid": doctorResponse.doctorId}
+            };
+
+            map<json> mcaSessionVacancyDoctorDetailsProjection = {
+                "name": 1,
+                "mobile": 1,
+                "email": 1,
+                "profileImage": 1
+            };
+
+            mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+            model:McaSessionVacancyDoctorDetails|mongodb:Error? mcaSessionVacancyDoctorDetails = check doctorCollection->findOne(doctorDetailsFilter, {}, mcaSessionVacancyDoctorDetailsProjection, model:McaSessionVacancyDoctorDetails);
+
+            if !(mcaSessionVacancyDoctorDetails is model:McaSessionVacancyDoctorDetails) {
+                return error("Internal Error");
+            }
+
+            model:McaDoctorResponse mcaDoctorResponse = {
+                responseId: doctorResponse.responseId,
+                submittedTimestamp: doctorResponse.submittedTimestamp,
+                doctorId: doctorResponse.doctorId,
+                doctorDetails: mcaSessionVacancyDoctorDetails,
+                sessionVacancyId: doctorResponse.sessionVacancyId,
+                noteToPatient: doctorResponse.noteToPatient,
+                vacancyNoteToCenter: doctorResponse.vacancyNoteToCenter,
+                responseApplications: doctorResponse.responseApplications,
+                isCompletelyRejected: doctorResponse.isCompletelyRejected
+            };
+
+            doctorResponses.push(mcaDoctorResponse);
+        }
+
+        model:McaSessionVacancy mcaSessionVacancy = {
+            _id: vacancy._id,
+            responses: doctorResponses,
+            aptCategories: vacancy.aptCategories,
+            medicalCenterId: vacancy.medicalCenterId,
+            mobile: vacancy.mobile,
+            vacancyNoteToDoctors: vacancy.vacancyNoteToDoctors,
+            openSessions: vacancy.openSessions,
+            vacancyOpenedTimestamp: vacancy.vacancyOpenedTimestamp,
+            vacancyClosedTimestamp: vacancy.vacancyClosedTimestamp
+        };
+        mcaSessionVacancies.push(mcaSessionVacancy);
+    }
+
+    return mcaSessionVacancies;
+
 }
 
 public function getMcaAssociatedMedicalCenterId(string userId) returns string|error {
@@ -300,7 +380,6 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string sessionVa
     };
     model:SessionVacancy|mongodb:Error? findResults = sessionVacancyCollection->findOne(sessionVacancyResponseFilter, {}, sessionVacancyProjection, model:SessionVacancy);
     io:println("Doctor response application found", findResults);
-    
 
     mongodb:Update update = {
         "set": {
