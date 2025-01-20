@@ -774,10 +774,10 @@ service / on new http:Listener(9090) {
     // MCA -----------------------------------------------------------------------------------------------
     resource function get getMcaSessionVacancies/[string userId]() returns error|http:Response {
         io:println("in clinic controller before service call");
-        model:SessionVacancy[]|model:InternalError sessionVacancies = check 'service:getMcaSessionVacancies(userId.trim());
+        model:McaSessionVacancy[]|model:InternalError sessionVacancies = check 'service:getMcaSessionVacancies(userId.trim());
         io:println("in clinic controller after service call");
         http:Response response = new;
-        if sessionVacancies is model:SessionVacancy[] {
+        if sessionVacancies is model:McaSessionVacancy[] {
             log:printInfo("Session vacancy retrieval successful");
             response.statusCode = 200;
             response.setJsonPayload(sessionVacancies.toJson());

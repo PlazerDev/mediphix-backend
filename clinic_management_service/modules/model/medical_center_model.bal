@@ -44,7 +44,7 @@ public type NewSessionVacancy record {
 //
 public type SessionVacancy record {
     string _id?;
-    int[] responses?;
+    int[] responses;
     string[] aptCategories;
     string medicalCenterId;
     string mobile;
@@ -58,7 +58,7 @@ public type SessionVacancy record {
 
 public type McaSessionVacancy record {
     string _id?;
-    McaDoctorResponse[] responses?;
+    McaDoctorResponse[] responses;
     string[] aptCategories;
     string medicalCenterId;
     string mobile;

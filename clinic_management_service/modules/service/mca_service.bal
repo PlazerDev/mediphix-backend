@@ -245,10 +245,10 @@ public function getMcaUserIdByEmail(string email) returns error|string|model:Int
     return result;
 }
 
-public function getMcaSessionVacancies(string userId) returns model:SessionVacancy[]|model:InternalError {
-    model:SessionVacancy[]|model:InternalError|error result = dao:getMcaSessionVacancies(userId);
+public function getMcaSessionVacancies(string userId) returns model:McaSessionVacancy[]|model:InternalError {
+    model:McaSessionVacancy[]|model:InternalError|error result = dao:getMcaSessionVacancies(userId);
 
-    if (result is model:SessionVacancy[]) {
+    if (result is model:McaSessionVacancy[]) {
         return result;
     }
     model:InternalError internalError = {
