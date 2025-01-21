@@ -224,6 +224,7 @@ public function getMcaSessionVacancies(string userId) returns model:McaSessionVa
         "openSessions": 1,
         "vacancyOpenedTimestamp": 1,
         "vacancyClosedTimestamp": 1,
+        "vacancyStatus": 1,
         "centerName": 1,
         "profileImage": 1
     };
@@ -319,7 +320,8 @@ public function getMcaSessionVacancies(string userId) returns model:McaSessionVa
             vacancyNoteToDoctors: vacancy.vacancyNoteToDoctors,
             openSessions: vacancy.openSessions,
             vacancyOpenedTimestamp: vacancy.vacancyOpenedTimestamp,
-            vacancyClosedTimestamp: vacancy.vacancyClosedTimestamp
+            vacancyClosedTimestamp: vacancy.vacancyClosedTimestamp,
+            vacancyStatus: vacancy.vacancyStatus
         };
         mcaSessionVacancies.push(mcaSessionVacancy);
     }
@@ -357,37 +359,34 @@ public function getMcaAssociatedMedicalCenterId(string userId) returns string|er
     return findMedicalCenter._id;
 }
 
-public function mcaAcceptDoctorResponseApplicationToOpenSession(string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
-    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
-    map<json> sessionVacancyResponseFilter = {
-        "_id": {"$oid": sessionVacancyId},
-        "responses.responseId": responseId,
-        "responses.responseApplications.appliedOpenSessionId": appliedOpenSessionId
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+    mongodb:Collection doctorResponseCollection = check initDatabaseConnection("doctor_response");
+    map<json> doctorResponseFilter = {
+        "responseId": responseId,
+        "responseApplications.appliedOpenSessionId": appliedOpenSessionId
     };
-    io:println("Hello updating acceptance");
-    map<json> sessionVacancyProjection = {
-        "_id": {"$toString": "$_id"},
-        "responses": 1,
-        "aptCategories": 1,
-        "medicalCenterId": 1,
-        "mobile": 1,
-        "vacancyNoteToDoctors": 1,
-        "openSessions": 1,
-        "vacancyOpenedTimestamp": 1,
-        "vacancyClosedTimestamp": 1,
-        "centerName": 1,
-        "profileImage": 1
+
+    map<json> doctorResponseProjection = {
+        "responseId": 1,
+        "submittedTimestamp": 1,
+        "doctorId": 1,
+        "sessionVacancyId": 1,
+        "noteToPatient": 1,
+        "vacancyNoteToCenter": 1,
+        "responseApplications": 1,
+        "isCompletelyRejected": 1
     };
-    model:SessionVacancy|mongodb:Error? findResults = sessionVacancyCollection->findOne(sessionVacancyResponseFilter, {}, sessionVacancyProjection, model:SessionVacancy);
+
+    model:DoctorResponse|mongodb:Error? findResults = doctorResponseCollection->findOne(doctorResponseFilter, {}, doctorResponseProjection, model:DoctorResponse);
     io:println("Doctor response application found", findResults);
 
     mongodb:Update update = {
         "set": {
-            "responses.$.responseApplications.$.isAccepted": true
+            "responseApplications.$.isAccepted": true
         }
     };
 
-    mongodb:UpdateResult|mongodb:Error? result = check sessionVacancyCollection->updateOne(sessionVacancyResponseFilter, update, {});
+    mongodb:UpdateResult|mongodb:Error? result = check doctorResponseCollection->updateOne(doctorResponseFilter, update, {});
 
     if result is mongodb:UpdateResult {
         io:println("Doctor response application accepted successfully");

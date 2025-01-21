@@ -1427,8 +1427,12 @@ service /mca on httpListener {
 
     }
 
-    resource function patch acceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
-        http:Response|error? response = check clinicServiceEP->/mcaAcceptDoctorResponseApplicationToOpenSession/[sessionVacancyId]/[responseId]/[appliedOpenSessionId].patch(appliedOpenSessionId);
+    resource function patch acceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId](http:Request request) returns http:Response|error {
+        string userEmail = check getUserEmailByJWT(request);
+        string userType = "mca";
+        string userId = check getCachedUserId(userEmail, userType);
+
+        http:Response|error? response = check clinicServiceEP->/mcaAcceptDoctorResponseApplicationToOpenSession/[userId]/[sessionVacancyId]/[responseId]/[appliedOpenSessionId].patch(appliedOpenSessionId);
         if response is http:Response {
             return response;
         }
@@ -1480,7 +1484,7 @@ public function getCachedUserId(string userEmail, string userType) returns strin
         userId = id;
     }
     if (userId == "") {
-        return error("Error occurred while retrieving user mobile number");
+        return error("Error occurred while retrieving user id");
     }
     return userId;
 }
