@@ -1,6 +1,5 @@
 import ballerina/time;
 
-
 public type MedicalCenter record {|
     string _id?;
     string name;
@@ -32,7 +31,6 @@ public type UnregisteredMedicalCEnter record {|
     decimal fee;
 |};
 
-
 public type NewSessionVacancy record {
     string[] aptCategories;
     string medicalCenterId;
@@ -52,9 +50,14 @@ public type SessionVacancy record {
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
     time:Date vacancyClosedTimestamp?;
+    SessionVacancyStatus vacancyStatus?;
     string centerName?;
     string profileImage?;
 };
+
+public enum SessionVacancyStatus {
+    OPEN, CLOSED, CANCELLED
+}
 
 public type McaSessionVacancy record {
     string _id?;
@@ -66,9 +69,10 @@ public type McaSessionVacancy record {
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
     time:Date vacancyClosedTimestamp?;
+    SessionVacancyStatus vacancyStatus?;
 };
 
-public type McaSessionVacancyDoctorDetails record{
+public type McaSessionVacancyDoctorDetails record {
     string name;
     string mobile;
     string email;
@@ -86,8 +90,8 @@ public type McaDoctorResponse record {
     DoctorResponseApplication[] responseApplications;
     boolean isCompletelyRejected;
 };
-//
 
+//
 
 public type NewDoctorResponse record {
     int responseId?;
@@ -114,8 +118,8 @@ public type DoctorResponse record {
 
 public type NewOpenSession record {
     int sessionId?;
-    string startTime;  // accepted string format -> 2024-10-03T10:15:30.00+05:30
-    string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string startTime; // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string endTime; // accepted string format -> 2024-10-03T10:15:30.00+05:30
     string rangeStartTimestamp;
     string rangeEndTimestamp;
     NewRepetition repetition;

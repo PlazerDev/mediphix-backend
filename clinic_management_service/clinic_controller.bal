@@ -624,7 +624,6 @@ service / on new http:Listener(9090) {
 
     // ROLE [END] ###################################################################  
 
-    
     resource function get mcaIdByEmail/[string email]() returns string|error? {
         error|string|model:InternalError userId = 'service:mcaGetUserIdByEmail(email.trim());
         if userId is string {
@@ -650,7 +649,7 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-     resource function get mcsGetActiveSessions/[string userId]() returns http:Response|error {
+    resource function get mcsGetActiveSessions/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McsSessionWithDoctorDetails[] result = check 'service:mcsGetActiveSessions(userId);
         http:Response response = new;
@@ -682,17 +681,17 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function put mcaAssignSession(string sessionId,string mcsId, string userId) returns http:Response|error {
-       
-        model:NotFoundError ? result = check 'service:mcaAssignSession(sessionId, mcsId, userId);
+    resource function put mcaAssignSession(string sessionId, string mcsId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcaAssignSession(sessionId, mcsId, userId);
 
         http:Response response = new;
 
         if (result is null) {
-            response.statusCode = 200; 
+            response.statusCode = 200;
             response.setJsonPayload(result.toJson());
         } else if (result is model:NotFoundError) {
-            response.statusCode = 404; 
+            response.statusCode = 404;
             response.setJsonPayload(result.body.toJson());
         }
 
@@ -789,8 +788,8 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
-        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(sessionVacancyId, responseId, appliedOpenSessionId);
+    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string userId]/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
+        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(userId, sessionVacancyId, responseId, appliedOpenSessionId);
 
         http:Response response = new;
         if result is http:Ok {
