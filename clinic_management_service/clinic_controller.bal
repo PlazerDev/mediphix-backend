@@ -788,8 +788,8 @@ service / on new http:Listener(9090) {
         return response;
     }
 
-    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string userId]/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId]() returns http:Response|error {
-        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(userId, sessionVacancyId, responseId, appliedOpenSessionId);
+    resource function patch mcaAcceptDoctorResponseApplicationToOpenSession/[string userId]/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId](model:SessionCreationDetails sessionCreationDetails) returns http:Response|error {
+        http:Ok|model:InternalError|error? result = check 'service:mcaAcceptDoctorResponseApplicationToOpenSession(userId, sessionVacancyId, responseId, appliedOpenSessionId, sessionCreationDetails);
 
         http:Response response = new;
         if result is http:Ok {

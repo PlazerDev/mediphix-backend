@@ -123,3 +123,9 @@ public type PatientCountPerTimeSlot record {
     int slotNumber;
     int maxNumOfPatients;
 };
+
+public type SessionCreationDetails record{
+    string noteFromCenter;
+    string hallNumber;
+    int payment;
+};

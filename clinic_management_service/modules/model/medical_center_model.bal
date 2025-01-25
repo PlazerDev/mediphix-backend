@@ -55,6 +55,7 @@ public type SessionVacancy record {
     string profileImage?;
 };
 
+
 public enum SessionVacancyStatus {
     OPEN, CLOSED, CANCELLED
 }
