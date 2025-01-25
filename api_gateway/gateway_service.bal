@@ -1219,7 +1219,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post MedicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/MedicalCenterStaff.post(data);
 
