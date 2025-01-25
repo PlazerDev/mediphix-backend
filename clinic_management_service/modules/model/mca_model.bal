@@ -11,3 +11,4 @@ public type McaMedicalCenterEmail record {
 public type McaMedicalCenterId record {
     string _id;
 };
+

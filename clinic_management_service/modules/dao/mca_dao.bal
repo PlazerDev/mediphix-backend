@@ -71,17 +71,56 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     return http:CREATED;
 }
 
-public function createSessions(model:SessionVacancy sessionVacancy) returns http:Created|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+public function createSessions(model:SessionVacancy sessionVacancy, model:SessionCreationDetails sessionCreationDetails) returns http:Created|error? {
+
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
 
     model:MedicalCenter|model:NotFoundError|error? medicalCenter = getMedicalCenterInfoByID(sessionVacancy.medicalCenterId, "");
+
+    foreach model:OpenSession openSession in sessionVacancy.openSessions {
+        time:DayOfWeek dayOfTheWeek;
+        if openSession.repetition.isRepeat {
+
+            foreach string day in openSession.repetition.days {
+                match day {
+                    "SUN" => {
+                        dayOfTheWeek = 0;
+                    }
+                    "MON" => {
+                        dayOfTheWeek = 1;
+                    }
+                    "TUE" => {
+                        dayOfTheWeek = 2;
+                    }
+                    "WED" => {
+                        dayOfTheWeek = 3;
+                    }
+                    "THU" => {
+                        dayOfTheWeek = 4;
+                    }
+                    "FRI" => {
+                        dayOfTheWeek = 5;
+                    }
+                    "SAT" => {
+                        dayOfTheWeek = 6;
+                    }
+                }
+
+            }
+        } else {
+
+        }
+    }
 
     if (!(medicalCenter is model:MedicalCenter)) {
         return error("Medical center not found");
     }
 
     return http:CREATED;
+}
+
+function isContainString(string[] array, string id) returns boolean {
+    return array.indexOf(id) != ();
 }
 
 public function createTimeslots(model:Session session) returns http:Created|error? {
@@ -359,7 +398,7 @@ public function getMcaAssociatedMedicalCenterId(string userId) returns string|er
     return findMedicalCenter._id;
 }
 
-public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, string sessionVacancyId, int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, string sessionVacancyId, int responseId, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails) returns http:Ok|model:InternalError|error {
     mongodb:Collection doctorResponseCollection = check initDatabaseConnection("doctor_response");
     map<json> doctorResponseFilter = {
         "responseId": responseId,
@@ -388,10 +427,8 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
 
     mongodb:UpdateResult|mongodb:Error? result = check doctorResponseCollection->updateOne(doctorResponseFilter, update, {});
 
-    if result is mongodb:UpdateResult {
-        io:println("Doctor response application accepted successfully");
-        return http:OK;
-    } else {
+    if !(result is mongodb:UpdateResult) {
+
         model:ErrorDetails errorDetails = {
             message: "Internal Error",
             details: "Error occurred while updating response status",
@@ -401,5 +438,40 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
 
         return internalError;
     }
+    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
+    map<json> filter = {
+        _id: sessionVacancyId
+    };
+    map<json> sessionVacancyProjection = {
+        "_id": {"$toString": "$_id"},
+        "responses": 1,
+        "aptCategories": 1,
+        "medicalCenterId": 1,
+        "mobile": 1,
+        "vacancyNoteToDoctors": 1,
+        "openSessions": 1,
+        "vacancyOpenedTimestamp": 1,
+        "vacancyClosedTimestamp": 1,
+        "vacancyStatus": 1,
+        "centerName": 1,
+        "profileImage": 1
+    };
 
+    model:SessionVacancy|mongodb:Error? findResult = sessionVacancyCollection->findOne(filter, {}, sessionVacancyProjection, model:SessionVacancy);
+    if (findResult is model:SessionVacancy) {
+        // createSessions(findResult, sessionCreationDetails);
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving session vacancy",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+
+        return internalError;
+    }
+
+    io:println("Doctor response application accepted successfully");
+
+    return http:OK;
 }

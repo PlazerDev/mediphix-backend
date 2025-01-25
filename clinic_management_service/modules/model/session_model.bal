@@ -15,6 +15,12 @@ public type Session record {
     TimeSlot[] timeSlots;
 };
 
+public type SessionCreationDetails record{
+    string noteFromCenter;
+    string hallNumber;
+    int payment;
+};
+
 public type TimeSlot record {|
     int slotId;
     string startTime;

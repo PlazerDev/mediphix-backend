@@ -224,8 +224,8 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
     return internalError;
 }
 
-public function createSessions(model:SessionVacancy vacancy) returns http:Created|model:InternalError|error? {
-    http:Created|error? result = dao:createSessions(vacancy);
+public function createSessions(model:SessionVacancy vacancy, model:SessionCreationDetails sessionCreationDetails) returns http:Created|model:InternalError|error? {
+    http:Created|error? result = dao:createSessions(vacancy, sessionCreationDetails);
     if (result is http:Created) {
         return result;
     }
@@ -262,9 +262,9 @@ public function getMcaSessionVacancies(string userId) returns model:McaSessionVa
     return internalError;
 }
 
-public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, string sessionVacancyId,int responseId, int appliedOpenSessionId) returns http:Ok|model:InternalError|error {
+public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, string sessionVacancyId,int responseId, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails) returns http:Ok|model:InternalError|error {
     io:println("In service: mcaAcceptDoctorResponseApplicationToOpenSession");
-    http:Ok|model:InternalError|error result = dao:mcaAcceptDoctorResponseApplicationToOpenSession(userId, sessionVacancyId,responseId, appliedOpenSessionId);
+    http:Ok|model:InternalError|error result = dao:mcaAcceptDoctorResponseApplicationToOpenSession(userId, sessionVacancyId,responseId, appliedOpenSessionId, sessionCreationDetails);
     io:println("result: ", result);
     if !(result is http:Ok) {
         model:InternalError internalError = {
