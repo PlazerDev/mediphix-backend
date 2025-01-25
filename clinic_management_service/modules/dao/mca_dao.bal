@@ -126,11 +126,11 @@ function isContainString(string[] array, string id) returns boolean {
 public function createTimeslots(model:Session session) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection timeSlotCollection = check mediphixDb->getCollection("time_slot");
-
-    foreach model:TimeSlot timeSlot in session.timeSlots {
-        // timeSlot.slotId = timeSlot.timeSlotNumber ?: 0;
-        mongodb:Error? result = check timeSlotCollection->insertOne(timeSlot);
-    }
+    
+    // foreach model:TimeSlot timeSlot in session.timeSlots {
+    //     // timeSlot.slotId = timeSlot.timeSlotNumber ?: 0;
+    //     mongodb:Error? result = check timeSlotCollection->insertOne(timeSlot);
+    // }
 
     return http:CREATED;
 }
