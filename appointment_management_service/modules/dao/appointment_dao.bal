@@ -11,7 +11,7 @@ configurable string password = ?;
 configurable string database = ?;
 configurable string cluster = ?;
 
-mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
 public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -316,14 +316,14 @@ public function updateMedicalRecord(model:MedicalRecord medicalRecord)
 
     map<json> sessionFilter = {
         "_id": {"$oid": sessionId},
-        "timeSlot.slotId": timeSlot
+        "timeSlots.slotId": timeSlot
     };
     mongodb:Update sessionUpdate = {
         "push": {
-            "timeSlot.$.queue.queueOperations.finished": queueNumber
+            "timeSlots.$.queue.queueOperations.finished": queueNumber
         },
         "set": {
-            "timeSlot.$.queue.queueOperations.ongoing": -1
+            "timeSlots.$.queue.queueOperations.ongoing": -1
         }
     };
 
