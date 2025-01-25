@@ -8,7 +8,7 @@ import ballerina/io;
 
 //get doctorId by email
 public function doctorIdByEmail(string email) returns string|error|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -258,7 +258,7 @@ public function getNextDoctorResponseId() returns int|model:InternalError|error 
 }
 
 public function getDoctorDetails(string id) returns error|model:Doctor|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -304,7 +304,7 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
 }
 
 public function getDoctorDetails2(string id) returns error|model:Doctor|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -349,7 +349,7 @@ public function getDoctorDetails2(string id) returns error|model:Doctor|model:In
     }
 }
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
     map<json> projection = {
@@ -408,12 +408,13 @@ public function getPatientIdByRefNumber(int refNumber)
         "aptStatus": 1,
         "patientId": 1,
         "patientName": 1,
-        "queueNumber": 1,
-        "medicalRecord": 1
+        "queueNumber": 1
     };
 
-    model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
+   
 
+    model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
+  
     if appointment is model:AppointmentRecord {
         return appointment.patientId;
     } else {
@@ -468,7 +469,7 @@ public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) retur
 }
 
 public function getOngoingSessionQueue(string doctorId) returns error|model:InternalError|model:Session[] {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
@@ -496,6 +497,7 @@ public function getOngoingSessionQueue(string doctorId) returns error|model:Inte
             }
         }
     };
+
     stream<model:Session, error?>|mongodb:Error? findResults = check sessionCollection->find(filter, {}, projection, model:Session);
 
     if findResults is stream<model:Session, error?> {
