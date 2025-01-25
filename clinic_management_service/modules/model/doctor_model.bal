@@ -91,16 +91,39 @@ public type Payment record {
     time:Date paymentTimestamp?;
 };
 
+public type NewMedicalRecord record {
+    int aptNumber;
+    string startedTimestamp?;
+    string endedTimestamp?;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
+    string noteToPatient?;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
 public type MedicalRecord record {
     int aptNumber;
-    time:Date startedTimestamp;
-    time:Date endedTimestamp;
-    string[] symptoms;
-    Diagnosis diagnosis;
-    Treatment treatments;
+    time:Date startedTimestamp?;
+    time:Date endedTimestamp?;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
     string noteToPatient?;
-    boolean isLabReportRequired;
-    LabReport? labReport;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
+public type Treatment record {
+    string medication?;
+    string description?;
+    string noteToPatient?;
+};
+
+public type Diagnosis record {
+    string category?;
+    string description?;
 };
 
 public type LabReport record {
@@ -120,15 +143,6 @@ public type ReportDetails record {
     string[]? resultFiles;
 };
 
-public type Treatment record {
-    string[] medications;
-    string[] description;
-};
-
-public type Diagnosis record {
-    string[] category;
-    string[] description;
-};
 
 public type TempMedicalRecord record {|
     int aptNumber;
