@@ -636,7 +636,7 @@ service /doctor on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["submit_patient_records"]
+            scopes: ["retrive_appoinments"]
         }
     }
 
@@ -654,7 +654,7 @@ service /doctor on httpListener {
             return createResponse(400, errorDetails);
         }
 
-        TempMedicalRecord|error tempRecord = jsonPayload.fromJsonWithType(TempMedicalRecord);
+        NewMedicalRecord|error tempRecord = jsonPayload.fromJsonWithType(NewMedicalRecord);
         if tempRecord is error {
             ErrorDetails errorDetails = {
                 message: "Invalid medical record format",
@@ -779,6 +779,54 @@ service /doctor on httpListener {
 
         return response;
     }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getOngoingSessionQueue(http:Request req) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+    
+         http:Response|error? response = check clinicServiceEP->/getOngoingSessionQueue/[userId]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    } 
+
+     @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+    resource function get getPatientDetailsForOngoingSessions/[int refNumber](http:Request req) returns http:Response|error? {
+         http:Response|error? response = check clinicServiceEP->/getPatientDetailsForOngoingSessions/[refNumber]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    } 
 
 }
 
