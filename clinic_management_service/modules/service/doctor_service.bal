@@ -41,9 +41,27 @@ public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) retur
     return result;
 }
 
-public function getSessionDetailsByDoctorId(string doctorId) returns error|model:Session[]|model:InternalError {
-    model:Session[]|model:InternalError result = check dao:getSessionDetailsByDoctorId(doctorId);
+public function getSessionDetailsByDoctorId(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
+    io:print("inside service getSessionDetailsByDoctorId");
+    model:Session[]|model:InternalError|model:NotFoundError|error? result = check dao:getSessionDetailsByDoctorId(doctorId);
     return result;
+
+}
+public function getOngoingSessionQueue(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
+    model:Session[]|model:InternalError|model:NotFoundError|error? result = check dao:getOngoingSessionQueue(doctorId);
+    return result;
+
+}
+
+public function getPatientDetailsForOngoingSessions(int refNumber) returns model:Patient|model:InternalError|model:NotFoundError|error? {
+    string|model:InternalError|error result = check dao:getPatientIdByRefNumber(refNumber);
+    if result is string{
+       model:Patient|model:NotFoundError|error? patinetResult = check dao:getPatientById(result);
+         return patinetResult;
+    }
+    else{
+        return result;
+    }
 
 }
 

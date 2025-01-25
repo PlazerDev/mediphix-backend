@@ -12,13 +12,15 @@ public type Session record {
     string noteFromCenter?;
     string noteFromDoctor?;
     SessionStatus overallSessionStatus?;
-    TimeSlot[] timeSlots;
+    TimeSlot[] timeSlots?;
+
 };
 
 public type SessionCreationDetails record{
     string noteFromCenter;
     string hallNumber;
     int payment;
+
 };
 
 public type TimeSlot record {|

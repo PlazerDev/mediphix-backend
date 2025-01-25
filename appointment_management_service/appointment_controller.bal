@@ -126,7 +126,7 @@ service / on new http:Listener(9091) {
         return response;
     }
 
-    resource function patch appointments/[int aptNumber]/medicalRecord(model:TempMedicalRecord tempRecord)
+    resource function patch appointments/[int aptNumber]/medicalRecord(model:NewMedicalRecord tempRecord)
     returns http:Response|error {
         http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error? result = 'service:updateMedicalRecord(aptNumber, tempRecord);
 

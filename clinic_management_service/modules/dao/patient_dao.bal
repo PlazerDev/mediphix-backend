@@ -2,6 +2,7 @@ import clinic_management_service.model;
 
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 public function savePatient(model:Patient patient) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -14,40 +15,27 @@ public function savePatient(model:Patient patient) returns error? {
 public function getPatientById(string userId) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
+     map<json> filter = { "_id": { "$oid": userId } }; // Validate userId before passing it here
 
-    map<json> filter = {"_id": {"$oid": userId}};
-
-    map<json> projection = {
+    // map<json> filter = { "nic" : "200011504872"};
+     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "mobile_number": 1,
         "first_name": 1,
         "last_name": 1,
         "nic": 1,
         "birthday": 1,
+        "gender":1,
         "email": 1,
         "address": 1,
         "nationality": 1,
         "allergies": 1,
-        "special_notes": 1,
-        "doctors": {
-            "$map": {
-                "input": "$doctors",
-                "as": "doctor",
-                "in": {"$toString": "$$doctor"}
-            }
-        },
-        "gender": 1,
-        "appointments": 1,
-        "lab_reports": 1,
-        "medical_centers": 1,
-        "medical_records": 1
+        "special_notes": 1
     };
 
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
 
-    if findResults is error {
-        return findResults;
-    }
+    model:Patient|mongodb:Error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
+       io:println("\n inside getpatine dao \n");
 
     if findResults !is model:Patient {
 

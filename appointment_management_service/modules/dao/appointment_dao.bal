@@ -13,7 +13,9 @@ configurable string cluster = ?;
 
 mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 
+
 public function createAppointmentRecord(model:AppointmentRecord appointmentRecord) returns model:AppointmentResponse|error? {
+
 
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");

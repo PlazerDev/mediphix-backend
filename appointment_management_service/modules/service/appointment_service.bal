@@ -268,7 +268,7 @@ public function updateAppointmentStatus(string mobile, int appointmentNumber, mo
     }
 }
 
-public function updateMedicalRecord(int aptNumber, model:TempMedicalRecord tempRecord)
+public function updateMedicalRecord(int aptNumber, model:NewMedicalRecord tempRecord)
 returns http:Ok|model:InternalError|model:NotFoundError|model:ValueError|error {
 
     // Create final MedicalRecord with converted timestamps
