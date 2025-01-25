@@ -135,7 +135,8 @@ public function getAllDoctors() returns error|model:Doctor[]|model:InternalError
         "channellings": [{"$toString": "$_id"}],
         "medical_records": [{"$toString": "$_id"}],
         "lab_reports": [{"$toString": "$_id"}],
-        "media_storage": 1
+        "media_storage": 1,
+        "profileImage": 1
     };
 
     stream<model:Doctor, error?>|mongodb:Error? findResults = check doctorCollection->find({}, {}, projection, model:Doctor);

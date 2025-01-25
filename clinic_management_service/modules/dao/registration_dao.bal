@@ -405,7 +405,7 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
                 name: data.mcaData.name,
                 nic: data.mcaData.nic,
                 mobile: data.mcaData.mobile,
-                profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mc-resources/" + emaiHead + "/profileImage",
+                profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mca-resources/" + emaiHead + "/profileImage",
                 medicalCenterEmail: data.mcData.email,
                 userId: <string>userId
             };

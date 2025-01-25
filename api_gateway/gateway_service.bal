@@ -600,27 +600,7 @@ service /doctor on httpListener {
         }
     }
 
-    resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
-        io:println("Doctor data: ", data);
-        http:Response|error? response = check clinicServiceEP->/signup/patient.post(data);
-
-        if (response is http:Response) {
-            return response;
-        }
-
-        ErrorDetails errorDetails = {
-            message: "Internal server error",
-            details: "Error occurred while registering doctor",
-            timeStamp: time:utcNow()
-        };
-
-        http:Response errorResponse = new;
-        errorResponse.statusCode = 500;
-        errorResponse.setJsonPayload(errorDetails.toJson());
-
-        return errorResponse;
-    }
-
+   
     resource function post upload/doctoridfront(http:Request request) returns http:Response|error? {
         io:println("Inside upload/doctoridfront in gateway");
         io:println("Payload", request.getJsonPayload());
@@ -1248,6 +1228,27 @@ service /user on httpListener {
 }
 service /registration on httpListener {
 
+     resource function post doctor/registration(DoctorSignupData data) returns http:Response|error? {
+        io:println("Doctor data: ", data);
+        http:Response|error? response = check clinicServiceEP->/signup/doctor.post(data);
+
+        if (response is http:Response) {
+            return response;
+        }
+
+        ErrorDetails errorDetails = {
+            message: "Internal server error",
+            details: "Error occurred while registering doctor",
+            timeStamp: time:utcNow()
+        };
+
+        http:Response errorResponse = new;
+        errorResponse.statusCode = 500;
+        errorResponse.setJsonPayload(errorDetails.toJson());
+
+        return errorResponse;
+    }
+
     resource function post medicalCenter(MedicalCenterSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/medicalCenter.post(data);
@@ -1266,7 +1267,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post MedicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
         http:Response|error? response = check clinicServiceEP->/signup/MedicalCenterStaff.post(data);
 
@@ -1328,6 +1329,47 @@ service /registration on httpListener {
     }
 }
 service /mca on httpListener {
+
+    @http:ResourceConfig
+    resource function get getOngoingSessionQueue(http:Request req) returns http:Response|error? {
+        string userEmail = check getUserEmailByJWT(req);
+        string userType = "doctor";
+        string userId = check getCachedUserId(userEmail, userType);
+    
+         http:Response|error? response = check clinicServiceEP->/getOngoingSessionQueue/[userId]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    } 
+
+     @http:ResourceConfig
+    resource function get getPatientDetailsForOngoingSessions/[int refNumber](http:Request req) returns http:Response|error? {
+         http:Response|error? response = check clinicServiceEP->/getPatientDetailsForOngoingSessions/[refNumber]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    } 
+
 
 
     @http:ResourceConfig
@@ -1622,4 +1664,7 @@ service /media on httpListener {
         return errorResponse;
     }
 
+
+
 }
+

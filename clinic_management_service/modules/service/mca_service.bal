@@ -170,7 +170,7 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
         mobile: newSessionVacancy.mobile,
         vacancyNoteToDoctors: newSessionVacancy.vacancyNoteToDoctors,
         openSessions: [],
-        vacancyOpenedTimestamp: time:utcToCivil(time:utcNow()),
+        vacancyOpenedTimestamp: getCurrentCivilLKTime(),
         vacancyStatus: "OPEN"
     };
     foreach model:NewOpenSession newOpenSession in newSessionVacancy.openSessions {
