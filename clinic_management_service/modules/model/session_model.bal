@@ -13,11 +13,20 @@ public type Session record {
     string noteFromDoctor?;
     SessionStatus overallSessionStatus?;
     TimeSlot[] timeSlots?;
+
+};
+
+public type SessionCreationDetails record{
+    string noteFromCenter;
+    string hallNumber;
+    int payment;
+
 };
 
 public type TimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     TimeSlotStatus status;
     Queue queue;

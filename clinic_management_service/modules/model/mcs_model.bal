@@ -1,8 +1,8 @@
 import ballerina/time;
 
-public type McsUserID record {|
+public type McsUserID record {
     string _id;
-|};
+};
 
 public type McsSession record {|
     time:Date endTimestamp?;
@@ -15,7 +15,7 @@ public type McsSession record {|
     string noteFromCenter?;
     string noteFromDoctor?;
     string overallSessionStatus?;
-    McsTimeSlot[] timeSlot?;
+    McsTimeSlot[] timeSlots?;
 |};
 
 public type McsAssignedSessionIdList record {|
@@ -31,7 +31,7 @@ public type McsAssignedSession record {|
     string noteFromCenter;
     string noteFromDoctor;
     string overallSessionStatus?;
-    McsTimeSlot[] timeSlot?;
+    McsTimeSlot[] timeSlots?;
 |};
 
 public type McsAssignedSessionWithDoctorDetails record {|
@@ -53,14 +53,15 @@ public type McsDoctorDetails record {|
 |};
 
 public type McsTimeSlotList record {|
-    McsTimeSlot[] timeSlot;
+    McsTimeSlot[] timeSlots;
 |};
 
 public type McsTimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
-    TimeSlotStatus status;
+    string status;
     McsQueue queue;
 |};
 
@@ -76,4 +77,17 @@ public type McsQueueOperations record {|
     int nextPatient2;
     int[] finished;
     int[] absent;
+|};
+
+public type McsSessionWithDoctorDetails record {|
+    string sessionId?;
+    time:Date endTimestamp;
+    time:Date startTimestamp;
+    string doctorName;
+|};
+
+
+public type McsFinalUserDataWithAssignedSession record {|
+    MedicalCenterStaff userData;
+    McsSessionWithDoctorDetails[] assignedsessionData;
 |};

@@ -1,6 +1,6 @@
 
 public type Patient record {|
-    string _id;
+    string _id?;
     string mobile_number;
     string first_name;
     string last_name;
@@ -18,7 +18,6 @@ public type Patient record {|
     string[] medical_records?;
     string[] lab_reports?;
 |};
-
 
 public type JWTPayload record {
     string iss; // Issuer of the token

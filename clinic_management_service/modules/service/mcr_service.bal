@@ -53,7 +53,7 @@ public function mcrSearchPayment(int aptNumber) returns error|model:NotFoundErro
                             aptCreatedTimestamp: aptDetails.aptCreatedTimestamp
                         },
                         paymentDetails: {
-                            isPaid: false, 
+                            isPaid: aptDetails.payment.isPaid, 
                             paymentTimestamp: aptDetails.payment.paymentTimestamp, 
                             handleBy: aptDetails.payment.handleBy, 
                             amount: aptDetails.payment.amount}
@@ -113,7 +113,7 @@ public function mcrMarkToPay(int aptNumber, string userId) returns error|model:N
                     
                     // model:McrPayment paymentData = aptDetails.payment.clone();
                     model:McrUpdatePayment paymentData = {
-                        paymentTimestamp: time:utcToCivil(time:utcNow()).toJson(),
+                        paymentTimestamp: getCurrentCivilLKTime().toJson(),
                         handleBy: userId,
                         isPaid: true,
                         amount: aptDetails.payment.amount
@@ -180,4 +180,12 @@ public function calculateAgeFromBirthday(string birthday) returns string {
     }else {
         return "N/A";
     }
+}
+
+public function getCurrentCivilLKTime() returns time:Civil {
+    time:Utc utcNow = time:utcNow();
+    time:Seconds offsetInSeconds = (5 * 60 * 60) + (30 * 60);
+    time:Utc sriLankaUtcTime = time:utcAddSeconds(utcNow, offsetInSeconds);
+    time:Civil sriLankaTime = time:utcToCivil(sriLankaUtcTime);
+    return sriLankaTime;
 }

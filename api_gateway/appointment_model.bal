@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -107,7 +108,7 @@ public type AppointmentRecord record {
 };
 
 public type Payment record {
-    boolean isPayed;
+    boolean isPaid;
     decimal amount;
     string handleBy;
     time:Date paymentTimestamp?;
@@ -219,6 +220,7 @@ public enum SessionStatus {
 public type TimeSlot record {|
     int slotId;
     string startTime;
+    string endTime?;
     int maxNoOfPatients;
     TimeSlotStatus status;
     Queue queue;
@@ -242,4 +244,9 @@ public enum TimeSlotStatus{
     NOT_STARTED,
     STARTED,
     FINISHED
+};
+
+public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
 };

@@ -11,12 +11,15 @@ import ballerina/http;
 service / on new http:Listener(9091) {
 
     resource function post createAppointmentRecord(model:NewAppointmentRecord newAppointmentRecord) returns http:Response {
-        http:Created|model:InternalError|error? result = 'service:createAppointmentRecord(newAppointmentRecord);
+        model:AppointmentResponse|model:InternalError|error? result = 'service:createAppointmentRecord(newAppointmentRecord);
 
         http:Response response = new;
-        if (result is http:Created) {
+        if (result is model:AppointmentResponse) {
             response.statusCode = 200;
-            response.setJsonPayload({"message": "Appointment created successfully"});
+            response.setJsonPayload({
+                "message": "Appointment created successfully",
+                "appointmentNumber": result.aptNumber
+            });
         } else if (result is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(result.body.toJson());
@@ -29,6 +32,54 @@ service / on new http:Listener(9091) {
 
     resource function get appointments/[string userId]() returns http:Response|error {
         model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getAppointmentsByUserId(userId);
+
+        http:Response response = new;
+        if appointments is model:AppointmentRecord[] {
+            response.statusCode = 200;
+            response.setJsonPayload(appointments.toJson());
+        } else if appointments is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(appointments.body.toJson());
+        } else if appointments is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(appointments.body.toJson());
+        } else if appointments is model:ValueError {
+            response.statusCode = 406;
+            response.setJsonPayload(appointments.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error"});
+        }
+
+        return response;
+    }
+
+    resource function get getUpcomingAppointmentsByUserId/[string userId]() returns http:Response|error {
+        model:UpcomingAppointment[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getUpcomingAppointmentsByUserId(userId);
+
+        http:Response response = new;
+        if appointments is model:UpcomingAppointment[] {
+            response.statusCode = 200;
+            response.setJsonPayload(appointments.toJson());
+        } else if appointments is model:InternalError {
+            response.statusCode = 500;
+            response.setJsonPayload(appointments.body.toJson());
+        } else if appointments is model:NotFoundError {
+            response.statusCode = 404;
+            response.setJsonPayload(appointments.body.toJson());
+        } else if appointments is model:ValueError {
+            response.statusCode = 406;
+            response.setJsonPayload(appointments.body.toJson());
+        } else {
+            response.statusCode = 500;
+            response.setJsonPayload({message: "Internal server error"});
+        }
+
+        return response;
+    }
+
+    resource function get getPreviousAppointmentsByUserId/[string userId]() returns http:Response|error {
+        model:AppointmentRecord[]|model:InternalError|model:NotFoundError|model:ValueError|error? appointments = 'service:getPreviousAppointmentsByUserId(userId);
 
         http:Response response = new;
         if appointments is model:AppointmentRecord[] {

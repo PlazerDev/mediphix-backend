@@ -134,6 +134,12 @@ service /patient on httpListener {
         return response;
     }
 
+    //    resource function get getDoctorName(string doctorId) returns http:Response|error? {
+    //     io:println("Inside getDoctorName in gateway");
+    //     http:Response|error? doctorName = check clinicServiceEP->/getDoctorName/[doctorId];
+    //     return doctorName;
+    // }
+
     resource function get centerdata() returns http:Response|error? {
         http:Response|error? response = check clinicServiceEP->/getAllMedicalCenters;
         if (response !is http:Response) {
@@ -175,9 +181,70 @@ service /patient on httpListener {
             return errorResponse;
         }
     }
-    
+
+    resource function get getUpcomingAppointments(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userId = check getCachedUserId(userEmail, userType);
+            
+            http:Response|error? response = check appointmentServiceEP->/getUpcomingAppointmentsByUserId/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    resource function get getPreviousAppointments(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "patient";
+            string userId = check getCachedUserId(userEmail, userType);
+            
+            http:Response|error? response = check appointmentServiceEP->/getPreviousAppointmentsByUserId/[userId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointment details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+    resource function get getDoctorDetails/[string doctorId]() returns http:Response|error? {
+        do {
+            http:Response|error? response = check clinicServiceEP->/getDoctorDetails/[doctorId];
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving patient details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
     resource function post appointment(NewAppointmentRecord newAppointmentRecord) returns http:Response|error {
-   
+
         http:Response|error? response = check appointmentServiceEP->/createAppointmentRecord.post(newAppointmentRecord);
 
         if response is http:Response {
@@ -193,10 +260,10 @@ service /patient on httpListener {
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(errorDetails.toJson());
         return errorResponse;
-    } 
+    }
 
     resource function get appointment/[string doctorId]/sessiondetails(http:Request req) returns http:Response|error? {
-         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -210,7 +277,7 @@ service /patient on httpListener {
             return errorResponse;
         }
         return response;
-    }  
+    }
 }
 
 @http:ServiceConfig {
@@ -696,7 +763,7 @@ service /doctor on httpListener {
         string doctorEmail = check getUserEmailByJWT(req);
         string userType = "doctor";
         string doctorId = check getCachedUserId(doctorEmail, userType);
-         http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
+        http:Response|error? response = check appointmentServiceEP->/getSessionDetailsByDoctorId/[doctorId]();
         if (response !is http:Response) {
             ErrorDetails errorDetails = {
                 message: "Internal server error",
@@ -709,9 +776,9 @@ service /doctor on httpListener {
             errorResponse.setJsonPayload(internalError.body.toJson());
             return errorResponse;
         }
-        
+
         return response;
-    }  
+    }
 
 }
 
@@ -791,7 +858,6 @@ service /receptionist on httpListener {
 
 }
 
-
 // MCS [START] .......................................................................................
 @http:ServiceConfig {
     cors: {
@@ -803,8 +869,7 @@ service /mcs on httpListener {
     @http:ResourceConfig
     resource function get upcomingClinicSessions(http:Request request) returns http:Response {
         do {
-            // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             http:Response response = check clinicServiceEP->/mcsUpcomingClinicSessions/[userId];
@@ -825,8 +890,7 @@ service /mcs on httpListener {
     @http:ResourceConfig
     resource function get ongoingClinicSessions(http:Request request) returns http:Response {
         do {
-            // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             http:Response response = check clinicServiceEP->/mcsOngoingClinicSessions/[userId];
@@ -863,9 +927,10 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put startAppointment (string sessionId, int slotId) returns http:Response{
+
+    resource function put startAppointment(http:Request request, string sessionId, int slotId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsStartAppointment?sessionId=${sessionId}&slotId=${slotId}&userId=${userId}`;
@@ -886,9 +951,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put startTimeSlot(string sessionId) returns http:Response {
+    resource function put startTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsStartTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -909,9 +974,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put endTimeSlot(string sessionId) returns http:Response {
+    resource function put endTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsEndTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -932,9 +997,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put endLastTimeSlot(string sessionId) returns http:Response {
+    resource function put endLastTimeSlot(http:Request request, string sessionId) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsEndLastTimeSlot?sessionId=${sessionId}&userId=${userId}`;
@@ -955,9 +1020,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put moveToAbsent(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put moveToAbsent(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsMoveToAbsent?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
@@ -978,9 +1043,9 @@ service /mcs on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put revertFromAbsent(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put revertFromAbsent(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsRevertFromAbsent?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
@@ -999,11 +1064,11 @@ service /mcs on httpListener {
             return errorResponse;
         }
     }
-    
+
     @http:ResourceConfig
-    resource function put addToEnd(string sessionId, int slotId, int aptNumber) returns http:Response {
+    resource function put addToEnd(http:Request request, string sessionId, int slotId, int aptNumber) returns http:Response {
         do {
-            string userEmail = "mcs1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcs");
 
             string url = string `/mcsAddToEnd?sessionId=${sessionId}&slotId=${slotId}&aptNumber=${aptNumber}&userId=${userId}`;
@@ -1026,7 +1091,6 @@ service /mcs on httpListener {
 
 // MCS [END] .......................................................................................
 
-
 // MCR [START] .......................................................................................
 @http:ServiceConfig {
     cors: {
@@ -1034,12 +1098,12 @@ service /mcs on httpListener {
     }
 }
 service /mcr on httpListener {
-    
+
     @http:ResourceConfig
     resource function get searchPayment/[int aptNumber](http:Request request) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcr1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcr");
 
             http:Response response = check clinicServiceEP->/mcrSearchPayment/[aptNumber]/[userId];
@@ -1058,10 +1122,10 @@ service /mcr on httpListener {
     }
 
     @http:ResourceConfig
-    resource function put markToPay/[int aptNumber](http:Request request) returns http:Response {
+    resource function put markToPay(http:Request request, int aptNumber) returns http:Response {
         do {
             // TODO :: get the {userEmail} from JWT
-            string userEmail = "mcr1@nawaloka.lk";
+            string userEmail = check getUserEmailByJWT(request);
             string userId = check getCachedUserId(userEmail, "mcr");
             string url = string `/mcrMarkToPay?aptNumber=${aptNumber}&userId=${userId}`;
 
@@ -1082,9 +1146,51 @@ service /mcr on httpListener {
 
 }
 
-
 // MCR [END] .......................................................................................
 
+// ROLE [START] .......................................................................................
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"]
+    },
+    auth: [
+        {
+            jwtValidatorConfig: {
+                issuer: issuer,
+                audience: audience,
+                signatureConfig: {
+                    jwksConfig: {
+                        url: jwksUrl
+                    }
+                }
+            }
+        }
+    ]
+}
+service /user on httpListener {
+
+    @http:ResourceConfig
+    resource function get find(http:Request request) returns http:Response {
+        do {
+            string userEmail = check getUserEmailByJWT(request);
+
+            http:Response response = check clinicServiceEP->/findUserRole/[userEmail];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+}
+
+// ROLE [END] .......................................................................................
 
 /// Registration Listener...........................................................................
 @http:ServiceConfig {
@@ -1112,9 +1218,9 @@ service /registration on httpListener {
         return errorResponse;
     }
 
-    resource function post medicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
+    resource function post MedicalCenterStaff(MedicalCenterStaffSignupData data) returns http:Response|error? {
         io:println("Inside Gateway Service", data); // COMMENT
-        http:Response|error? response = check clinicServiceEP->/signup/medicalCenterStaff.post(data);
+        http:Response|error? response = check clinicServiceEP->/signup/MedicalCenterStaff.post(data);
 
         if (response is http:Response) {
             return response;
@@ -1166,6 +1272,7 @@ service /registration on httpListener {
         return errorResponse;
     }
 }
+
 //Medical center admin
 @http:ServiceConfig {
     cors: {
@@ -1174,9 +1281,101 @@ service /registration on httpListener {
 }
 service /mca on httpListener {
 
+
+    @http:ResourceConfig
+    resource function get MCSdata(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcaGetMCSdata/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+      @http:ResourceConfig
+    resource function get activeSessions(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcsGetActiveSessions/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    // change here
+    @http:ResourceConfig
+    resource function put assign(http:Request request, string sessionId, string mcsId) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            string url = string `/mcaAssignSession?sessionId=${sessionId}&mcsId=${mcsId}&userId=${userId}`;
+
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig
+    resource function get MCRdata(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcaGetMCRdata/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
     @http:ResourceConfig
     resource function post createSessionVacancy(NewSessionVacancy newSessionVacancy) returns http:Response|error {
-
 
         http:Response|error? response = check clinicServiceEP->/createSessionVacancy.post(newSessionVacancy);
 
@@ -1195,18 +1394,53 @@ service /mca on httpListener {
         return errorResponse;
     }
 
-    @http:ResourceConfig
-    resource function get getSessionVacancies(string doctorId) returns http:Response|error {
-        http:Response|error response = check clinicServiceEP->/getSessionVacancies;
+    resource function get getMcaSessionVacancies(http:Request req) returns error|http:Response {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "mca";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response|error? response = check clinicServiceEP->/getMcaSessionVacancies/[userId];
+            if response is http:Response {
+                return response;
+            } else {
+                ErrorDetails errorDetails = {
+                    message: "Internal server error",
+                    details: "Error occurred while retrieving session vacancies",
+                    timeStamp: time:utcNow()
+                };
+                http:Response errorResponse = new;
+                errorResponse.statusCode = 500;
+                errorResponse.setJsonPayload(errorDetails.toJson());
+                return errorResponse;
+            }
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving mca session vacancies",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+
+    }
+
+    resource function patch acceptDoctorResponseApplicationToOpenSession/[string sessionVacancyId]/[int responseId]/[int appliedOpenSessionId](http:Request request, SessionCreationDetails sessionCreationDetails) returns http:Response|error {
+        string userEmail = check getUserEmailByJWT(request);
+        string userType = "mca";
+        string userId = check getCachedUserId(userEmail, userType);
+
+        http:Response|error? response = check clinicServiceEP->/mcaAcceptDoctorResponseApplicationToOpenSession/[userId]/[sessionVacancyId]/[responseId]/[appliedOpenSessionId].patch(sessionCreationDetails);
         if response is http:Response {
             return response;
         }
         ErrorDetails errorDetails = {
             message: "Internal server error",
-            details: "Error occurred while retrieving session vacancies",
+            details: "Error occurred while accepting doctor response to open session",
             timeStamp: time:utcNow()
         };
-
         http:Response errorResponse = new;
         errorResponse.statusCode = 500;
         errorResponse.setJsonPayload(errorDetails.toJson());
@@ -1240,15 +1474,17 @@ public function getCachedUserId(string userEmail, string userType) returns strin
             id = check clinicServiceEP->/doctorIdByEmail/[userEmail];
         } else if (userType == "mcs") {
             id = check clinicServiceEP->/mcsIdByEmail/[userEmail];
-        }else if (userType == "mcr") {
+        } else if (userType == "mcr") {
             id = check clinicServiceEP->/mcrIdByEmail/[userEmail];
+        } else if (userType == "mca") {
+            id = check clinicServiceEP->/mcaIdByEmail/[userEmail];
         }
         string stringResult = check redis->setEx(userEmail, id, DEFAULT_CACHE_EXPIRY);
         io:println("Cached: ", stringResult);
         userId = id;
     }
     if (userId == "") {
-        return error("Error occurred while retrieving user mobile number");
+        return error("Error occurred while retrieving user id");
     }
     return userId;
 }
