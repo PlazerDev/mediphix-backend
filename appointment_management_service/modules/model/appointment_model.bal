@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -167,22 +168,45 @@ public type AppointmentRecord record {
 };
 
 public type Payment record {
-    boolean isPayed;
+    boolean isPaid;
     decimal amount;
     string handleBy;
     time:Date paymentTimestamp?;
 };
 
+public type NewMedicalRecord record {
+    int aptNumber;
+    string startedTimestamp;
+    string endedTimestamp;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
+    string noteToPatient?;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
 public type MedicalRecord record {
     int aptNumber;
-    time:Date startedTimestamp;
-    time:Date endedTimestamp;
-    string[] symptoms;
-    Diagnosis diagnosis;
-    Treatment treatments;
+    time:Date startedTimestamp?;
+    time:Date endedTimestamp?;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
     string noteToPatient?;
-    boolean isLabReportRequired;
-    LabReport? labReport;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
+public type Treatment record {
+    string medication?;
+    string description?;
+    string noteToPatient?;
+};
+
+public type Diagnosis record {
+    string category?;
+    string description?;
 };
 
 public type LabReport record {
@@ -202,15 +226,6 @@ public type ReportDetails record {
     string[]? resultFiles;
 };
 
-public type Treatment record {
-    string[] medications;
-    string[] description;
-};
-
-public type Diagnosis record {
-    string[] category;
-    string[] description;
-};
 
 public type TempMedicalRecord record {|
     int aptNumber;
@@ -245,3 +260,26 @@ public type TempMedicalRecord record {|
         int timeSlot;
         int queueNumber;
     };
+
+    public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
+};
+
+public type UpcomingAppointment record {
+    string _id;
+    int aptNumber;
+    string sessionId;
+    int timeSlot;
+    string[] aptCategories;
+    string doctorId;
+    string doctorName;
+    string medicalCenterId;
+    string medicalCenterName;
+    Payment payment;
+    time:Date aptCreatedTimestamp;
+    string aptStatus;
+    string patientId;
+    string patientName;
+    int queueNumber;
+};

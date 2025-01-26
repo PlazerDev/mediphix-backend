@@ -1,8 +1,8 @@
 import clinic_management_service.model;
 
-import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 public function savePatient(model:Patient patient) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -15,16 +15,17 @@ public function savePatient(model:Patient patient) returns error? {
 public function getPatientById(string userId) returns model:Patient|model:NotFoundError|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
-    map<json> filter = {"_id": {"$oid": userId}};
-    map<json> projection = {
+     map<json> filter = { "_id": { "$oid": userId } }; // Validate userId before passing it here
+
+    // map<json> filter = { "nic" : "200011504872"};
+     map<json> projection = {
         "_id": {"$toString": "$_id"},
         "mobile_number": 1,
         "first_name": 1,
         "last_name": 1,
         "nic": 1,
         "birthday": 1,
-        "doctors": 1,
-        "gender": 1,
+        "gender":1,
         "email": 1,
         "address": 1,
         "nationality": 1,
@@ -32,10 +33,11 @@ public function getPatientById(string userId) returns model:Patient|model:NotFou
         "special_notes": 1
     };
 
-    model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
+
+    model:Patient|mongodb:Error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
+       io:println("\n inside getpatine dao \n");
 
     if findResults !is model:Patient {
-        log:printInfo("Failed to find user with user id " + userId);
 
         model:ErrorDetails errorDetails = {
             message: string `Failed to find user with user id ${userId}`,
@@ -60,7 +62,7 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
         "last_name": 1,
         "nic": 1,
         "birthday": 1,
-        "gender":1,
+        "gender": 1,
         "email": 1,
         "address": 1,
         "nationality": 1,
@@ -112,34 +114,35 @@ public function getAppointments(string mobile) returns model:Appointment[]|error
 }
 
 public function getAllDoctors() returns error|model:Doctor[]|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
     map<json> projection = {
-       "_id": {"$toString": "$_id"},
-        "name":1,
-        "slmc":1,
-        "nic":1,
-        "education":1,
-        "mobile":1,
-        "specialization":1,
-        "email":1,
-        "category":1,
-        "availability":1,
-        "verified":1,
-        "patients":  [{"$toString": "$_id"}],
-        "medical_centers":  [{"$toString": "$_id"}],
-        "sessions":  [{"$toString": "$_id"}],
-        "channellings":  [{"$toString": "$_id"}],
-        "medical_records":  [{"$toString": "$_id"}],
-        "lab_reports":[{"$toString": "$_id"}],
-        "media_storage":1
+        "_id": {"$toString": "$_id"},
+        "name": 1,
+        "slmc": 1,
+        "nic": 1,
+        "education": 1,
+        "mobile": 1,
+        "specialization": 1,
+        "email": 1,
+        "category": 1,
+        "availability": 1,
+        "verified": 1,
+        "patients": 1,
+        "medical_centers": 1,
+        "sessions": 1,
+        "channellings": 1,
+        "medical_records": 1,
+        "lab_reports": 1,
+        "media_storage": 1,
+        "profileImage": 1
     };
 
-    stream<model:Doctor, error?>|mongodb:Error? findResults =  check doctorCollection->find({},{},projection,model:Doctor);
+    stream<model:Doctor, error?>|mongodb:Error? findResults = check doctorCollection->find({}, {}, projection, model:Doctor);
     if findResults is stream<model:Doctor, error?> {
         model:Doctor[]|error doctors = from model:Doctor mc in findResults
-            select mc; 
+            select mc;
         return doctors;
     }
     else {

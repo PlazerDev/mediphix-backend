@@ -2,12 +2,13 @@ import clinic_management_service.model;
 import ballerina/time;
 import ballerinax/mongodb;
 import ballerina/io;
+import ballerina/log;
 
 
 
 
 public function mcsGetUserIdByEmail(string email) returns string|error|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
 
@@ -93,7 +94,11 @@ public function mcsGetDoctorDetailsByID(string doctorId) returns model:McsDoctor
 public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsAssignedSession|mongodb:Error ? {
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
 
-    map<json> filter = initOngoingSessionFilter(sessionId);
+    map<json> | error filter = initOngoingSessionFilter(sessionId);
+    if filter is error {
+        log:printInfo("filter is error");
+        return null;
+    }
 
     map<json> projection = {
         "_id": {"$toString": "$_id"},
@@ -112,12 +117,16 @@ public function mcsGetOngoingSessionDetails(string sessionId) returns model:McsA
 
 public function mcsGetOngoingSessionTimeSlotDetails(string sessionId) returns model:McsTimeSlotList|mongodb:Error ? {    
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    io:println("hello this in here");
 
-    map<json> filter = initOngoingSessionFilter(sessionId);
+    map<json> | error filter = initOngoingSessionFilter(sessionId);
+    if filter is error {
+        return null;
+    }
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -134,12 +143,12 @@ public function mcsGetTimeSlot(string sessionId, int slotId) returns model:McsTi
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
     
-    return result is null ? result : ((result.timeSlot.length() > slotId && slotId >= 0) ? result.timeSlot[slotId] : null);
+    return result is null ? result : ((result.timeSlots.length() > slotId && slotId >= 0) ? result.timeSlots[slotId] : null);
 }
 
 // get all timeslot list
@@ -152,7 +161,7 @@ public function mcsGetAllTimeSlotList(string sessionId) returns model:McsTimeSlo
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsTimeSlotList ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -180,7 +189,7 @@ public function mcsGetAllSessionData(string sessionId) returns model:McsSession|
         "noteFromCenter": 1,
         "noteFromDoctor": 1,
         "overallSessionStatus": 1,
-        "timeSlot": 1
+        "timeSlots": 1
     };
 
     model:McsSession ? result = check sessionCollection->findOne(filter, {}, projection);
@@ -199,7 +208,7 @@ public function mcsGetAllSessionDetails(string sessionId) returns model:McsAssig
 
     map<json> projection = {
         "_id": 0,
-        "timeSlot": 1,
+        "timeSlots": 1,
         "endTimestamp": 1,
         "startTimestamp": 1,
         "doctorId": 1,
@@ -242,7 +251,7 @@ public function mcsUpdateQueueOperations(string sessionId, int slotId, model:Mcs
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": data }
+        "set": { "timeSlots": data }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -260,7 +269,7 @@ public function mcsUpdateSessionToStartAppointment(string sessionId, model:McsTi
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "ONGOING" }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -296,7 +305,7 @@ public function mcsUpdateTimeSlotStatus(string sessionId, model:McsTimeSlot[] ti
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "ONGOING" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "ONGOING" }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -314,7 +323,7 @@ public function mcsUpdateTimeSlot(string sessionId, model:McsTimeSlot[] timeSlot
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot}
+        "set": { "timeSlots": timeSlot}
     };
 
     mongodb:UpdateOptions options = {};    
@@ -332,7 +341,7 @@ public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTime
     };
 
     mongodb:Update update = {
-        "set": { "timeSlot": timeSlot, "overallSessionStatus": "OVER" }
+        "set": { "timeSlots": timeSlot, "overallSessionStatus": "OVER" }
     };
 
     mongodb:UpdateOptions options = {};    
@@ -341,19 +350,133 @@ public function mcsUpdateSessionToEndAppointment(string sessionId, model:McsTime
     return result;
 }
 
+
+public function mcsGetAllSessionDataWithDoctorData(string sessionId) returns model:McsSessionWithDoctorDetails|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "_id": {"$oid": sessionId}
+    };
+
+    map<json> sessionProjection = {
+        "_id": 0,
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    model:McsAssignedSession ? sessionResult = check sessionCollection->findOne(sessionFilter, {}, sessionProjection);
+
+    if sessionResult is model:McsAssignedSession {
+        map<json> doctorFilter = {
+            "_id": {"$oid": sessionResult.doctorId }
+            };
+
+        map<json> doctorProjection = {
+            "_id": 0,
+            "name": 1,
+            "profilePhoto": {"$toString": "$profileImage"},
+            "education": 1,
+            "specialization": 1
+        };
+        model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+
+        if doctorResult is model:McsDoctorDetails {
+            model:McsSessionWithDoctorDetails result = {
+                doctorName: doctorResult.name,
+                endTimestamp: sessionResult.endTimestamp,
+                startTimestamp: sessionResult.startTimestamp
+            };
+            return result;
+        }else{
+            return null;
+        }
+    }else {
+        return null;
+    }
+}
+
+
+public function mcsGetAllActiveSessionDataWithDoctorData(string centerId) returns model:McsSessionWithDoctorDetails[]|mongodb:Error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("session");
+    mongodb:Collection doctorCollection = check initDatabaseConnection("doctor");
+
+    map<json> sessionFilter = {
+        "medicalCenterId": centerId,
+        "overallSessionStatus": "ACTIVE"
+    };
+
+    map<json> sessionProjection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "doctorId": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1
+    };
+
+    stream<model:McsAssignedSession, error?> sessionsResult = check sessionCollection->find(sessionFilter, {}, sessionProjection, model:McsAssignedSession);
+    model:McsAssignedSession[] | error sessionResult = from model:McsAssignedSession data in sessionsResult select data;
+    if sessionResult is model:McsAssignedSession[] {
+        model:McsSessionWithDoctorDetails[] finalResult = [];
+        foreach var data in sessionResult {
+            map<json> doctorFilter = {
+                "_id": {"$oid": data.doctorId }
+                };
+
+            map<json> doctorProjection = {
+                "_id": 0,
+                "name": 1,
+                "profilePhoto": {"$toString": "$profileImage"},
+                "education": 1,
+                "specialization": 1
+            };
+            model:McsDoctorDetails ? doctorResult = check doctorCollection->findOne(doctorFilter, {}, doctorProjection);
+            
+            if doctorResult is model:McsDoctorDetails {
+                model:McsSessionWithDoctorDetails temp = {
+                    doctorName: doctorResult.name,
+                    endTimestamp: data.endTimestamp,
+                    startTimestamp: data.startTimestamp,
+                    sessionId: data._id
+                };
+                finalResult.push(temp);
+            }else{
+                return null;
+            }
+        }
+        return finalResult;
+    }else{
+        return null;
+    }
+}
+
+
+
+
 // HELPERS ............................................................................................................
 public function initDatabaseConnection(string collectionName) returns mongodb:Collection|mongodb:Error {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection collection = check mediphixDb->getCollection(collectionName);
     return collection;
 }
 
-public function initOngoingSessionFilter(string sessionId) returns map<json> {
-    time:Utc currentTimeStamp = time:utcNow();
+public function initOngoingSessionFilter(string sessionId) returns map<json> | error {
+    log:printInfo("In the filter");
+    time:Civil currentTimeStamp = getCurrentCivilLKTime();
+    time:Utc currentTimeStampInUTC = check time:utcFromCivil(currentTimeStamp);
 
-    json currentTimeJson = time:utcToCivil(currentTimeStamp).toJson();
-    json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStamp, 3600)).toJson();
+    json currentTimeJson = currentTimeStamp.toJson();
+    json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStampInUTC, 3600)).toJson();
+    
+    log:printInfo("currentTimeJson", currentTimeJson=currentTimeJson);
+    log:printInfo("hourAfterTimeJson", hourAfterTimeJson=hourAfterTimeJson);
 
     map<json> filter = {
         "_id": {"$oid": sessionId},
@@ -375,4 +498,12 @@ public function initOngoingSessionFilter(string sessionId) returns map<json> {
     };
 
     return filter;
+}
+
+public function getCurrentCivilLKTime() returns time:Civil {
+    time:Utc utcNow = time:utcNow();
+    time:Seconds offsetInSeconds = (5 * 60 * 60) + (30 * 60);
+    time:Utc sriLankaUtcTime = time:utcAddSeconds(utcNow, offsetInSeconds);
+    time:Civil sriLankaTime = time:utcToCivil(sriLankaUtcTime);
+    return sriLankaTime;
 }

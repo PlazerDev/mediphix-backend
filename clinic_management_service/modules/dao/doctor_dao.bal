@@ -4,10 +4,11 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
+import ballerina/io;
 
 //get doctorId by email
 public function doctorIdByEmail(string email) returns string|error|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -48,51 +49,38 @@ public function doctorIdByEmail(string email) returns string|error|model:Interna
     }
 }
 
-public function getSessionDetailsByDoctorId(string doctorId) returns error|model:InternalError|model:Session[] {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+
+public function getSessionDetailsByDoctorId(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
+
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
 
-    map<json> sessionProjection = {
-        "_id": {"$toString": "$_id"}, // Convert sessionId to string
-        "doctorId": {"$toString": "$doctorId"}, // Convert doctorId to string
-        "doctorName": 1, // Include doctorName as is
-        "doctorMobile": 1, // Include doctorMobile as is
-        "category": 1, // Include category as is
-        "medicalCenterId": {"$toString": "$medicalCenterId"}, // Convert medicalCenterId to string
-        "medicalCenterName": 1, // Include medicalCenterName as is
-        "medicalCenterMobile": 1, // Include medicalCenterMobile as is
-        "doctorNote": 1, // Include doctorNote as is
-        "medicalCenterNote": 1, // Include medicalCenterNote as is
-        "sessionDate": 1, // Include sessionDate as is
-        "sessionStatus": 1, // Include sessionStatus as is
-        "location": 1, // Include location as is
-        "payment": 1, // Include payment as is
-        "maxPatientCount": 1, // Include maxPatientCount as is
-        "reservedPatientCount": 1, // Include reservedPatientCount as is
-        "timeSlotId": [{"$toString": "$timeSlotId"}],
-        "medicalStaffId": [{"$toString": "$medicalStaffId"}]
+    map<json> filter = {"doctorId": "673dad048e55ba9fafc9520f"};
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"}
     };
-
-    map<json> filter = {"_id": {"$oid": doctorId}};
-    stream<model:Session, error?>|mongodb:Error? findResults = check sessionCollection->find(filter, {}, sessionProjection, model:Session);
-
+        
+    stream<model:Session, error?>|mongodb:Error? findResults = check sessionCollection->find(filter, {}, projection, model:Session);
     if findResults is stream<model:Session, error?> {
-        model:Session[]|error Session = from model:Session ses in findResults
-            select ses;
-        return Session;
-    }
-    else {
+        
+        model:Session[]|error? sessions = from model:Session se in findResults
+            select se;
+        io:println(sessions);
+        return sessions;
+    } else {
+        io:println("Error during stream processing:");
         model:ErrorDetails errorDetails = {
-            message: "Internal Error",
-            details: "Error occurred while retrieving session details",
+            message: "Failed to find sessions for the doctor",
+            details: string `session/${doctorId}`,
             timeStamp: time:utcNow()
         };
-        model:InternalError userNotFound = {body: errorDetails};
-
+        model:NotFoundError userNotFound = {body: errorDetails};
         return userNotFound;
     }
-
+   
 }
 
 //get my medical centers.in this method we find medical centers doctor array and find the medical centers which has the doctor
@@ -118,7 +106,7 @@ public function getMyMedicalCenters(string id) returns error|model:InternalError
         "doctors": 1,
         "appointments": 1,
         "patients": 1,
-        "medicalCenterStaff": 1,
+        "MedicalCenterStaff": 1,
         "description": 1
     };
 
@@ -149,6 +137,7 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
 
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("session_vacancy");
+    mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
 
     model:SessionVacancy[] sessionVacancies = [];
 
@@ -174,6 +163,30 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
                 select sv;
             if sessionVacanciesTemp is model:SessionVacancy[] {
                 foreach model:SessionVacancy sv in sessionVacanciesTemp {
+                    map<json> mcFilter = {"_id": {"$oid": sv.medicalCenterId}};
+                    map<json> mcProjection = {
+                        "_id": {"$toString": "$_id"},
+                        "name": 1,
+                        "address": 1,
+                        "mobile": 1,
+                        "email": 1,
+                        "district": 1,
+                        "verified": 1,
+                        "profileImage": 1,
+                        "appointmentCategories": 1,
+                        "mediaStorage": 1,
+                        "specialNotes": 1,
+                        "doctors": 1,
+                        "appointments": 1,
+                        "patients": 1,
+                        "MedicalCenterStaff": 1,
+                        "description": 1
+                    };
+                    model:MedicalCenter|mongodb:Error? mcfindResults = check medicalCenterCollection->findOne(mcFilter, {}, mcProjection, model:MedicalCenter);
+                    if (mcfindResults is model:MedicalCenter) {
+                        sv.centerName = mcfindResults.name;
+                        sv.profileImage = mcfindResults.profileImage;
+                    }
                     sessionVacancies.push(sv);
                 }
             }
@@ -192,8 +205,7 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:I
 }
 
 public function respondDoctorToSessionVacancy(model:DoctorResponse response) returns http:Created|model:InternalError|error? {
-    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
-    mongodb:Collection sessionVacancyCollection = check mediphixDb->getCollection("doctor_response");
+    mongodb:Collection doctorResponseCollection = check initDatabaseConnection("doctor_response");
     int|model:InternalError|error nextDoctorResponseId = getNextDoctorResponseId();
     if nextDoctorResponseId is int {
         response.responseId = nextDoctorResponseId;
@@ -202,7 +214,32 @@ public function respondDoctorToSessionVacancy(model:DoctorResponse response) ret
     } else {
         return error("Failed to get next doctor response id");
     }
-    check sessionVacancyCollection->insertOne(response);
+    check doctorResponseCollection->insertOne(response);
+    mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
+
+    map<json> sessionVacancyFilter = {
+        "_id": {"$oid": response.sessionVacancyId}
+    };
+    mongodb:Update sessionVacancyUpdate = {
+        "push": {
+            "responses": response.responseId
+        }
+    };
+
+    mongodb:UpdateResult|error updateResult = sessionVacancyCollection->updateOne(
+        sessionVacancyFilter,
+        sessionVacancyUpdate
+    );
+
+    if updateResult is error {
+        return updateResult;
+    }
+
+    if updateResult.modifiedCount == 0 {
+        string errMsg = "Failed to update session vacancy. No matching session vacancy found.";
+        return error(errMsg);
+    }
+
     return http:CREATED;
 }
 
@@ -248,7 +285,7 @@ public function getNextDoctorResponseId() returns int|model:InternalError|error 
 }
 
 public function getDoctorDetails(string id) returns error|model:Doctor|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -294,7 +331,7 @@ public function getDoctorDetails(string id) returns error|model:Doctor|model:Int
 }
 
 public function getDoctorDetails2(string id) returns error|model:Doctor|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection doctorCollection = check mediphixDb->getCollection("doctor");
 
@@ -338,8 +375,9 @@ public function getDoctorDetails2(string id) returns error|model:Doctor|model:In
         return userNotFound;
     }
 }
+
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
-    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
     map<json> projection = {
@@ -357,7 +395,7 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
         "doctors": [{"$toString": "$_id"}],
         "appointments": [{"$toString": "$_id"}],
         "patients": [{"$toString": "$_id"}],
-        "medicalCenterStaff": [{"$toString": "$_id"}],
+        "MedicalCenterStaff": [{"$toString": "$_id"}],
         "description": 1
     };
     stream<model:MedicalCenter, error?>|mongodb:Error? findResults = check medicalCenterCollection->find({}, {}, projection, model:MedicalCenter);
@@ -377,36 +415,114 @@ public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model
     }
 }
 
-public function getPatientIdByRefNumber(string refNumber)
+public function getPatientIdByRefNumber(int refNumber)
     returns string|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    io:println(refNumber);
+    map<json> filter = {"aptNumber": refNumber};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
+    };
 
-    map<anydata>? appointment = check appointmentCollection->findOne({appointmentNumber: refNumber});
+   
 
-    if appointment is map<anydata> {
-        anydata patientId = appointment["patientId"];
-        if patientId is string {
-            return patientId;
-        } else {
-            model:ErrorDetails errorDetails = {
-                message: "Patient ID is not a string in the database.",
-                details: "refNumber/" + refNumber,
-                timeStamp: time:utcNow()
-            };
-            model:InternalError internalError = {body: errorDetails};
-            return internalError;
-        }
+    model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
+  
+    if appointment is model:AppointmentRecord {
+        return appointment.patientId;
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",
-            details: "refNumber/" + refNumber,
+            details: "refNumber/" ,
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
 }
+
+public function getAptDetailsForOngoingSessions(int refNumber) returns model:AppointmentRecord|model:InternalError|error {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    map<json> filter = {"aptNumber": refNumber};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
+    };
+
+    model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
+    if appointment is model:AppointmentRecord {
+        return appointment;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find the appointment for the given reference number.",
+            details: "refNumber/" ,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
+
+// public function getPatientIdByRefNumber(string refNumber)
+//     returns string|model:InternalError|error {
+//     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+//     mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+
+//     map<anydata>? appointment = check appointmentCollection->findOne({appointmentNumber: refNumber});
+
+//     if appointment is map<anydata> {
+//         anydata patientId = appointment["patientId"];
+//         if patientId is string {
+//             return patientId;
+//         } else {
+//             model:ErrorDetails errorDetails = {
+//                 message: "Patient ID is not a string in the database.",
+//                 details: "refNumber/" + refNumber,
+//                 timeStamp: time:utcNow()
+//             };
+//             model:InternalError internalError = {body: errorDetails};
+//             return internalError;
+//         }
+//     } else {
+//         model:ErrorDetails errorDetails = {
+//             message: "Failed to find the appointment for the given reference number.",
+//             details: "refNumber/" + refNumber,
+//             timeStamp: time:utcNow()
+//         };
+//         model:InternalError internalError = {body: errorDetails};
+//         return internalError;
+//     }
+// }
 
 public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
@@ -415,3 +531,54 @@ public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) retur
     check doctorRequestCollection->insertOne(req);
     return http:CREATED;
 }
+
+public function getOngoingSessionQueue(string doctorId) returns error|model:InternalError|model:Session[] {
+    mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection sessionCollection = check mediphixDb->getCollection("session");
+
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "endTimestamp": 1,
+        "startTimestamp": 1,
+        "timeSlots": 1,
+        "doctorId": 1,
+        "medicalCenterId": 1,
+        "aptCategories": 1,
+        "payment": 1,
+        "hallNumber": 1,
+        "noteFromCenter": 1,
+        "noteFromDoctor": 1,
+        "overallSessionStatus": 1
+    };
+
+     map<json> filter = {
+        "doctorId": doctorId,
+        "overallSessionStatus": "ONGOING",
+        "timeSlots": {
+            "$elemMatch": {
+                "status": "STARTED"
+            }
+        }
+    };
+
+    stream<model:Session, error?>|mongodb:Error? findResults = check sessionCollection->find(filter, {}, projection, model:Session);
+
+    if findResults is stream<model:Session, error?> {
+        model:Session[]|error Session = from model:Session ses in findResults
+            select ses;
+        return Session;
+    }
+    else {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving session details",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError userNotFound = {body: errorDetails};
+
+        return userNotFound;
+    }
+
+}
+

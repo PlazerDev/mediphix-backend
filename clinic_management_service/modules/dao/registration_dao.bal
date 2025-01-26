@@ -20,7 +20,7 @@ configurable string laborataryRoleId = ?;
 configurable string AWS_REGION = ?;
 configurable string S3_BUCKET_NAME = ?;
 
-mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.v5scrud.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
+mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
 string endPoint = string `https://api.asgardeo.io/t/mediphix`;
 
 # Description.
@@ -59,9 +59,9 @@ public isolated function addUser(string tokenEndpoint, string token, json payloa
     tokenRequest.setHeader("Content-Type", "application/scim+json");
     tokenRequest.setHeader("Accept", "application/scim+json");
     tokenRequest.setPayload(payload);
-    io:println("Before toker req in add user", tokenRequest); // comment
+    io:println("Before token req in add user", tokenRequest); // comment
     json resp = check clientEndpoint->post("/scim2/Users", tokenRequest);
-    
+
     io:println("Inside addUser DAO ........... END", resp); // comment
     return resp;
 }
@@ -241,12 +241,12 @@ public function patientRegistration(model:PatientSignupData data) returns error?
             }
         }
         else {
-             io:println("Before user role adding DAO"); // comment
+            io:println("Before user role adding DAO"); // comment
             string userId = check searchUser(endPoint, bToken, data.email);
-             io:println("After user user ID fetch DAO"); // comment
+            io:println("After user user ID fetch DAO"); // comment
 
             json|error? roleUpdateResponse = updateRole(bToken, userId, patientRoleId);
-             io:println("Role Updated", roleUpdateResponse); // comment
+            io:println("Role Updated", roleUpdateResponse); // comment
 
             if roleUpdateResponse is error {
                 mongodb:DeleteResult|mongodb:Error deleteOne = patientCollection->deleteOne(patient);
@@ -375,8 +375,9 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
     mongodb:Collection medicalCenterCollection = check mediphixDb->getCollection("medical_center");
-    mongodb:Collection medicalCenterAdminCollection = check mediphixDb->getCollection("medical_center_admin");
+    mongodb:Collection MedicalCenterAdminCollection = check mediphixDb->getCollection("medical_center_admin");
     string emaiHead = getEmailHead(data.mcaData.email);
+    string centerEmailHead = getEmailHead(data.mcData.email);
 
     model:User mcUser = {
         email: data.mcaData.email,
@@ -387,20 +388,20 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
     if (insertedUser is error) {
         return insertedUser;
     }
-    else{
+    else {
         map<json> filter = {"email": data.mcaData.email};
-        map<json>  projection ={
-             "_id": {"$toString": "$_id"},
-                "email": 1,
-                "role": 1
+        map<json> projection = {
+            "_id": {"$toString": "$_id"},
+            "email": 1,
+            "role": 1
         };
-        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter,{}, projection);
+        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter, {}, projection);
         if createdUser is mongodb:Error {
             return createdUser;
         }
-        if(createdUser is model:User){
+        if (createdUser is model:User) {
             string? userId = createdUser._id;
-            model:medicalCenterAdmin medicalCenterAdmin = {
+            model:MedicalCenterAdmin MedicalCenterAdmin = {
                 name: data.mcaData.name,
                 nic: data.mcaData.nic,
                 mobile: data.mcaData.mobile,
@@ -408,7 +409,7 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
                 medicalCenterEmail: data.mcData.email,
                 userId: <string>userId
             };
-            error? insertedMCA = check medicalCenterAdminCollection->insertOne(medicalCenterAdmin);
+            error? insertedMCA = check MedicalCenterAdminCollection->insertOne(MedicalCenterAdmin);
             if (insertedMCA is error) {
                 return insertedMCA;
             }
@@ -454,9 +455,9 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
                     if roleUpdateResponse is error {
                         return roleUpdateResponse;
                     }
-                
+
                 }
-            
+
             }
         }
 
@@ -469,12 +470,12 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
             verified: false,
             district: data.mcData.district,
             specialNotes: data.mcData.specialNotes,
-            profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/mc-resources/" + emaiHead + "/profileImage",
+            profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/medical-center-resources/" + centerEmailHead + "/logo",
             appointmentCategories: [],
             doctors: [],
             appointments: [],
             patients: [],
-            medicalCenterStaff: []
+            MedicalCenterStaff: []
         };
         error? insertedMC = check medicalCenterCollection->insertOne(medicalCenter);
         if (insertedMC is error) {
@@ -488,10 +489,10 @@ public function registerMedicalCenter(model:MedicalCenterSignupData data) return
 
 }
 
-public function registerMedicalCenterStaff(model:medicalCenterStaffData data) returns error? {
+public function registerMedicalCenterStaff(model:MedicalCenterStaffData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
-    mongodb:Collection medicalCenterStaffCollection = check mediphixDb->getCollection("medical_center_staff");
+    mongodb:Collection MedicalCenterStaffCollection = check mediphixDb->getCollection("medical_center_staff");
     string emaiHead = getEmailHead(data.email);
 
     model:User mcUser = {
@@ -503,20 +504,20 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
     if (insertedUser is error) {
         return insertedUser;
     }
-    else{
+    else {
         map<json> filter = {"email": data.email};
-        map<json>  projection ={
-             "_id": {"$toString": "$_id"},
-                "email": 1,
-                "role": 1
+        map<json> projection = {
+            "_id": {"$toString": "$_id"},
+            "email": 1,
+            "role": 1
         };
-        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter,{}, projection);
+        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter, {}, projection);
         if createdUser is mongodb:Error {
             return createdUser;
         }
-        if(createdUser is model:User){
+        if (createdUser is model:User) {
             string? userId = createdUser._id;
-            model:medicalCenterStaff medicalCenterStaff = {
+            model:MedicalCenterStaff MedicalCenterStaff = {
                 name: data.name,
                 nic: data.nic,
                 mobile: data.mobile,
@@ -526,7 +527,7 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
                 centerId: data.centerId,
                 assignedSessions: []
             };
-            error? insertedMCS = check medicalCenterStaffCollection->insertOne(medicalCenterStaff);
+            error? insertedMCS = check MedicalCenterStaffCollection->insertOne(MedicalCenterStaff);
             if (insertedMCS is error) {
                 return insertedMCS;
             }
@@ -575,9 +576,9 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
                     else {
                         return ();
                     }
-                
+
                 }
-            
+
             }
         }
 
@@ -588,7 +589,7 @@ public function registerMedicalCenterStaff(model:medicalCenterStaffData data) re
 public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionistSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
-    mongodb:Collection medicalCenterReceptionistCollection = check mediphixDb->getCollection("medical_center_receptionist");
+    mongodb:Collection MedicalCenterReceptionistCollection = check mediphixDb->getCollection("medical_center_receptionist");
     string emaiHead = getEmailHead(data.email);
 
     model:User mcUser = {
@@ -600,20 +601,20 @@ public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionis
     if (insertedUser is error) {
         return insertedUser;
     }
-    else{
+    else {
         map<json> filter = {"email": data.email};
-        map<json>  projection ={
-             "_id": {"$toString": "$_id"},
-                "email": 1,
-                "role": 1
+        map<json> projection = {
+            "_id": {"$toString": "$_id"},
+            "email": 1,
+            "role": 1
         };
-        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter,{}, projection);
+        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter, {}, projection);
         if createdUser is mongodb:Error {
             return createdUser;
         }
-        if(createdUser is model:User){
+        if (createdUser is model:User) {
             string? userId = createdUser._id;
-            model:medicalCenterReceptionist medicalCenterReceptionist = {
+            model:MedicalCenterReceptionist MedicalCenterReceptionist = {
                 name: data.name,
                 nic: data.nic,
                 mobile: data.mobile,
@@ -621,9 +622,9 @@ public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionis
                 userId: <string>userId,
                 empId: data.empId,
                 centerId: data.centerId
-               
+
             };
-            error? insertedMCR = check medicalCenterReceptionistCollection->insertOne(medicalCenterReceptionist);
+            error? insertedMCR = check MedicalCenterReceptionistCollection->insertOne(MedicalCenterReceptionist);
             if (insertedMCR is error) {
                 return insertedMCR;
             }
@@ -672,9 +673,9 @@ public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionis
                     else {
                         return ();
                     }
-                
+
                 }
-            
+
             }
         }
 
@@ -685,7 +686,7 @@ public function registerMedicalCenterReceptionist(model:MedicalCenterReceptionis
 public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupData data) returns error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection userCollection = check mediphixDb->getCollection("user");
-    mongodb:Collection medicalCenterLabStaffCollection = check mediphixDb->getCollection("medical_center_lab_staff");
+    mongodb:Collection MedicalCenterLabStaffCollection = check mediphixDb->getCollection("medical_center_lab_staff");
     string emaiHead = getEmailHead(data.email);
 
     model:User mcUser = {
@@ -697,20 +698,20 @@ public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupD
     if (insertedUser is error) {
         return insertedUser;
     }
-    else{
+    else {
         map<json> filter = {"email": data.email};
-        map<json>  projection ={
-             "_id": {"$toString": "$_id"},
-                "email": 1,
-                "role": 1
+        map<json> projection = {
+            "_id": {"$toString": "$_id"},
+            "email": 1,
+            "role": 1
         };
-        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter,{}, projection);
+        model:User|mongodb:Error? createdUser = check userCollection->findOne(filter, {}, projection);
         if createdUser is mongodb:Error {
             return createdUser;
         }
-        if(createdUser is model:User){
+        if (createdUser is model:User) {
             string? userId = createdUser._id;
-            model:medicalCenterLabStaff medicalCenterLabStaff = {
+            model:MedicalCenterLabStaff MedicalCenterLabStaff = {
                 name: data.name,
                 nic: data.nic,
                 mobile: data.mobile,
@@ -718,9 +719,9 @@ public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupD
                 userId: <string>userId,
                 empId: data.empId,
                 centerId: data.centerId
-               
+
             };
-            error? insertedMCR = check medicalCenterLabStaffCollection->insertOne(medicalCenterLabStaff);
+            error? insertedMCR = check MedicalCenterLabStaffCollection->insertOne(MedicalCenterLabStaff);
             if (insertedMCR is error) {
                 return insertedMCR;
             }
@@ -769,9 +770,9 @@ public function registerMedicalCenterLabStaff(model:MedicalCenterLabStaffSignupD
                     else {
                         return ();
                     }
-                
+
                 }
-            
+
             }
         }
 

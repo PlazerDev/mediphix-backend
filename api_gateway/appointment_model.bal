@@ -1,4 +1,5 @@
 import ballerina/time;
+import ballerina/http;
 
 public enum AppointmentStatus {
     ACTIVE,
@@ -71,16 +72,6 @@ public type Counter record {
     int sequenceValue;
 };
 
-public type Session record {
-    int sessionNumber;
-    string medicalCenterName;
-    string doctorEmail;
-    string hospital;
-    string appointmentDate;
-    string appointmentTime;
-    AppointmentCategory category;
-    string medicalCenterMobile;
-};
 
 //new appointment record for reviva
 public type NewAppointmentRecord record {
@@ -117,22 +108,45 @@ public type AppointmentRecord record {
 };
 
 public type Payment record {
-    boolean isPayed;
+    boolean isPaid;
     decimal amount;
     string handleBy;
     time:Date paymentTimestamp?;
 };
 
+public type NewMedicalRecord record {
+    int aptNumber;
+    string startedTimestamp;
+    string endedTimestamp;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
+    string noteToPatient?;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
 public type MedicalRecord record {
     int aptNumber;
-    time:Date startedTimestamp;
-    time:Date endedTimestamp;
-    string[] symptoms;
-    Diagnosis diagnosis;
-    Treatment treatments;
+    time:Date startedTimestamp?;
+    time:Date endedTimestamp?;
+    string[] symptoms?;
+    Diagnosis[] diagnosis?;
+    Treatment[] treatments?;
     string noteToPatient?;
-    boolean isLabReportRequired;
-    LabReport? labReport;
+    boolean isLabReportRequired?;
+    LabReport? labReport?;
+};
+
+public type Treatment record {
+    string medication?;
+    string description?;
+    string noteToPatient?;
+};
+
+public type Diagnosis record {
+    string category?;
+    string description?;
 };
 
 public type LabReport record {
@@ -152,15 +166,6 @@ public type ReportDetails record {
     string[]? resultFiles;
 };
 
-public type Treatment record {
-    string[] medications;
-    string[] description;
-};
-
-public type Diagnosis record {
-    string[] category;
-    string[] description;
-};
 
 public type TempMedicalRecord record {|
     int aptNumber;
@@ -186,3 +191,62 @@ public type TempMedicalRecord record {|
         |}? reportDetails;
     |}? labReport;
 |};
+
+// session models
+public type Session record {
+    string _id?;
+    time:Date endTimestamp?;
+    time:Date startTimestamp?;
+    string doctorId?;
+    string medicalCenterId?;
+    string[] aptCategories?;
+    int payment?;
+    string hallNumber?;
+    string noteFromCenter?;
+    string noteFromDoctor?;
+    SessionStatus overallSessionStatus?;
+    TimeSlot timeSlots;
+};
+
+public enum SessionStatus {
+    UNACCEPTED,
+    ACCEPTED,
+    ACTIVE,
+    ONGOING,
+    CANCELLED,
+    OVER
+};
+
+public type TimeSlot record {|
+    int slotId;
+    string startTime;
+    string endTime?;
+    int maxNoOfPatients;
+    TimeSlotStatus status;
+    Queue queue;
+|};
+
+public type Queue record {|
+    int[] appointments;
+    QueueOperations queueOperations;
+|};
+
+public type QueueOperations record {|
+    int defaultIncrementQueueNumber;
+    int ongoing;
+    int nextPatient1;
+    int nextPatient2;
+    int[] finished;
+    int[] absent;
+|};
+
+public enum TimeSlotStatus{
+    NOT_STARTED,
+    STARTED,
+    FINISHED
+};
+
+public type AppointmentResponse record {
+    int aptNumber;
+    http:Created status;
+};

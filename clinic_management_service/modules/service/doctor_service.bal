@@ -41,8 +41,33 @@ public function setDoctorJoinRequest(model:DoctorMedicalCenterRequest req) retur
     return result;
 }
 
-public function getSessionDetailsByDoctorId(string doctorId) returns error|model:Session[]|model:InternalError {
-    model:Session[]|model:InternalError result = check dao:getSessionDetailsByDoctorId(doctorId);
+public function getSessionDetailsByDoctorId(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
+    io:print("inside service getSessionDetailsByDoctorId");
+    model:Session[]|model:InternalError|model:NotFoundError|error? result = check dao:getSessionDetailsByDoctorId(doctorId);
+    return result;
+
+}
+public function getOngoingSessionQueue(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
+    model:Session[]|model:InternalError|model:NotFoundError|error? result = check dao:getOngoingSessionQueue(doctorId);
+    return result;
+
+}
+
+public function getPatientDetailsForOngoingSessions(int refNumber) returns model:Patient|model:InternalError|model:NotFoundError|error? {
+    string|model:InternalError|error result = check dao:getPatientIdByRefNumber(refNumber);
+    if result is string{
+       model:Patient|model:NotFoundError|error? patinetResult = check dao:getPatientById(result);
+         return patinetResult;
+    }
+    else{
+        return result;
+    }
+
+}
+
+public function getAptDetailsForOngoingSessions(int refNumber) returns model:AppointmentRecord|model:InternalError|model:NotFoundError|error? {
+    model:AppointmentRecord|model:InternalError|model:NotFoundError|error? result = check dao:getAptDetailsForOngoingSessions(refNumber);
+    io:print("result in service",result);
     return result;
 
 }
@@ -69,6 +94,7 @@ public function respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorR
         responseId: newDoctorResponse.responseId ?: 0,
         submittedTimestamp: check time:civilFromString(newDoctorResponse.submittedTimestamp),
         doctorId: newDoctorResponse.doctorId,
+        sessionVacancyId: newDoctorResponse.sessionVacancyId,
         noteToPatient: newDoctorResponse.noteToPatient,
         vacancyNoteToCenter: newDoctorResponse.vacancyNoteToCenter,
         responseApplications: newDoctorResponse.responseApplications,
@@ -109,6 +135,14 @@ public function uploadMedia(string userType, string uploadType, string email, by
         fileNameNew = "patient-resources/" + emailHead + "/" + "reports" + "/" + fileName;
     } else if (userType === "patient" && uploadType === "profileImage") {
         fileNameNew = "patient-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcs" && uploadType === "profileImage") {
+        fileNameNew = "mcs-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mca" && uploadType === "profileImage") {
+        fileNameNew = "mca-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcr" && uploadType === "profileImage") {
+        fileNameNew = "mcr-resources/" + emailHead + "/" + "profileImage";
+    } else if (userType === "mcls" && uploadType === "profileImage") {
+        fileNameNew = "mcls-resources/" + emailHead + "/" + "profileImage";
     } else {
         model:ErrorDetails errorDetails = {
             message: "Invalid upload type",

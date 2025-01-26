@@ -5,7 +5,7 @@ public type User record {|
     string role;
 |};
 
-public type medicalCenterAdmin record {
+public type MedicalCenterAdmin record {
     string _id?;
     string name;
     string nic;
@@ -15,7 +15,7 @@ public type medicalCenterAdmin record {
     string userId;
 };
 
-public type medicalCenterStaff record {
+public type MedicalCenterStaff record {
     string _id?;
     string name;
     string nic;
@@ -27,7 +27,7 @@ public type medicalCenterStaff record {
     string[] assignedSessions?;
 };
 
-public type medicalCenterReceptionist record {
+public type MedicalCenterReceptionist record {
     string _id?;
     string name;
     string nic;
@@ -38,7 +38,7 @@ public type medicalCenterReceptionist record {
     string userId;
 };
 
-public type medicalCenterLabStaff record {
+public type MedicalCenterLabStaff record {
     string _id?;
     string name;
     string nic;
@@ -48,3 +48,15 @@ public type medicalCenterLabStaff record {
     string profileImage?;
     string userId;
 };
+
+public type FinalUserResult record {|
+    string role;
+    MedicalCenterAdmin|MedicalCenterStaff|MedicalCenterReceptionist|MedicalCenterReceptionist userData;
+    MedicalCenterBrief medicalCenterData;
+|};
+
+public type MedicalCenterBrief record {|
+    string _id;
+    string name;
+    string profileImage;
+|};

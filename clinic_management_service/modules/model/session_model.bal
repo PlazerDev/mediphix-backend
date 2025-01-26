@@ -2,48 +2,52 @@ import ballerina/time;
 
 public type Session record {
     string _id?;
-    int sessionNumber?;
+    time:Date endTimestamp?;
+    time:Date startTimestamp?;
     string doctorId?;
-    string doctorName?;
-    string doctorMobile?;
-    string category;
-    string medicalCenterId;
-    string medicalCenterName?;
-    string medicalCenterMobile?;
-    string doctorNote?;
-    string medicalCenterNote?;
-    string sessionDate;
-    SessionStatus sessionStatus?;
-    string location?;
-    decimal payment?;
-    boolean isAccepted?;
-    int maxPatientCount?;
-    int reservedPatientCount?;
-    boolean isFull;
-    string[] reservedPatientIds?;
-    TimeSlot[] timeSlots;
-    string[] timeSlotIds;
-    string[] medicalStaffId?;
-    time:Date createdTime?;
-    time:Date lastModifiedTime?;
+    string medicalCenterId?;
+    string[] aptCategories?;
+    int payment?;
+    string hallNumber?;
+    string noteFromCenter?;
+    string noteFromDoctor?;
+    SessionStatus overallSessionStatus?;
+    TimeSlot[] timeSlots?;
+
 };
 
-public type TimeSlot record {
-    string _id?;
-    int timeSlotNumber?;
-    time:Date startTime;
-    time:Date endTime;
-    int maxPatientCount;
-    int reservedPatientCount;
-    boolean isFull;
-    string[] appointmentIds;
-    string[] patientId;
-    string[] medicalStaffId;
-    string[] patients;
+public type SessionCreationDetails record{
+    string noteFromCenter;
+    string hallNumber;
+    int payment;
+
 };
 
-public enum TimeslotStatus{
-    NOTSTARTED,
+public type TimeSlot record {|
+    int slotId;
+    string startTime;
+    string endTime?;
+    int maxNoOfPatients;
+    TimeSlotStatus status;
+    Queue queue;
+|};
+
+public type Queue record {|
+    int[] appointments;
+    QueueOperations queueOperations;
+|};
+
+public type QueueOperations record {|
+    int defaultIncrementQueueNumber;
+    int ongoing;
+    int nextPatient1;
+    int nextPatient2;
+    int[] finished;
+    int[] absent;
+|};
+
+public enum TimeSlotStatus{
+    NOT_STARTED,
     STARTED,
     FINISHED
 };

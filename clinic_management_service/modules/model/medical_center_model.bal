@@ -1,6 +1,5 @@
 import ballerina/time;
 
-
 public type MedicalCenter record {|
     string _id?;
     string name;
@@ -16,7 +15,7 @@ public type MedicalCenter record {|
     string[] doctors?;
     string[] appointments?;
     string[] patients?;
-    string[] medicalCenterStaff?;
+    string[] MedicalCenterStaff?;
     string description?;
 |};
 
@@ -32,7 +31,6 @@ public type UnregisteredMedicalCEnter record {|
     decimal fee;
 |};
 
-
 public type NewSessionVacancy record {
     string[] aptCategories;
     string medicalCenterId;
@@ -41,9 +39,10 @@ public type NewSessionVacancy record {
     NewOpenSession[] openSessions;
 };
 
+//
 public type SessionVacancy record {
     string _id?;
-    DoctorResponse[] responses?;
+    int[] responses;
     string[] aptCategories;
     string medicalCenterId;
     string mobile;
@@ -51,12 +50,55 @@ public type SessionVacancy record {
     OpenSession[] openSessions;
     time:Date vacancyOpenedTimestamp;
     time:Date vacancyClosedTimestamp?;
+    SessionVacancyStatus vacancyStatus?;
+    string centerName?;
+    string profileImage?;
 };
+
+
+public enum SessionVacancyStatus {
+    OPEN, CLOSED, CANCELLED
+}
+
+public type McaSessionVacancy record {
+    string _id?;
+    McaDoctorResponse[] responses;
+    string[] aptCategories;
+    string medicalCenterId;
+    string mobile;
+    string vacancyNoteToDoctors;
+    OpenSession[] openSessions;
+    time:Date vacancyOpenedTimestamp;
+    time:Date vacancyClosedTimestamp?;
+    SessionVacancyStatus vacancyStatus?;
+};
+
+public type McaSessionVacancyDoctorDetails record {
+    string name;
+    string mobile;
+    string email;
+    string profileImage;
+};
+
+public type McaDoctorResponse record {
+    int responseId?;
+    time:Date submittedTimestamp;
+    string doctorId;
+    McaSessionVacancyDoctorDetails doctorDetails;
+    string sessionVacancyId;
+    string noteToPatient;
+    string vacancyNoteToCenter;
+    DoctorResponseApplication[] responseApplications;
+    boolean isCompletelyRejected;
+};
+
+//
 
 public type NewDoctorResponse record {
     int responseId?;
     string submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
@@ -68,6 +110,7 @@ public type DoctorResponse record {
     int responseId?;
     time:Date submittedTimestamp;
     string doctorId;
+    string sessionVacancyId;
     string noteToPatient;
     string vacancyNoteToCenter;
     DoctorResponseApplication[] responseApplications;
@@ -76,8 +119,8 @@ public type DoctorResponse record {
 
 public type NewOpenSession record {
     int sessionId?;
-    string startTime;  // accepted string format -> 2024-10-03T10:15:30.00+05:30
-    string endTime;    // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string startTime; // accepted string format -> 2024-10-03T10:15:30.00+05:30
+    string endTime; // accepted string format -> 2024-10-03T10:15:30.00+05:30
     string rangeStartTimestamp;
     string rangeEndTimestamp;
     NewRepetition repetition;
@@ -102,11 +145,11 @@ public type NewRepetition record {
 public type Repetition record {
     boolean isRepeat;
     string[] days;
-    time:Date noRepeatDateTimestamp?;
+    time:Date noRepeatDateTimestamp;
 };
 
 public type DoctorResponseApplication record {
-    int appliedVacancySessionId;
+    int appliedOpenSessionId;
     boolean isAccepted;
     decimal expectedPaymentAmount;
     PatientCountPerTimeSlot[] numberOfPatientsPerTimeSlot;

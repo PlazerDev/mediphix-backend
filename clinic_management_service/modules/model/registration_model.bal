@@ -67,7 +67,7 @@ public type scimSearchResponse record {|
     string[] schemas;
 |};
 
-public type registerMcaData record {
+public type RegisterMcaData record {
     string name;
     string nic;
     string email;
@@ -77,7 +77,7 @@ public type registerMcaData record {
 
 };
 
-public type registereMcData record {
+public type RegistereMcData record {
     string name;
     string address;
     string mobile;
@@ -89,11 +89,11 @@ public type registereMcData record {
 };
 
 public type MedicalCenterSignupData record {
-    registerMcaData mcaData;
-    registereMcData mcData;
+    RegisterMcaData mcaData;
+    RegistereMcData mcData;
 };
 
-public type medicalCenterStaffData record {
+public type MedicalCenterStaffData record {
     string name;
     string nic;
     string email;
