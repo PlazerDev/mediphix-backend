@@ -696,6 +696,12 @@ service /doctor on httpListener {
     }
 
     //get upcoming appointments details
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
     resource function get upcomingAppointments(http:Request req) returns http:Response|error? {
         do {
             string doctorEmail = check getUserEmailByJWT(req);
@@ -736,6 +742,36 @@ service /doctor on httpListener {
             errorResponse.statusCode = 500;
             errorResponse.setJsonPayload(errorDetails.toJson());
             return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
+        }
+    }
+
+    resource function get getAptDetailsForOngoingSessions/[int refNumber](http:Request req) returns http:Response|error? {
+    
+         http:Response|error? response = check clinicServiceEP->/getAptDetailsForOngoingSessions/[refNumber]();
+        if (response !is http:Response) {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving appointments",
+                timeStamp: time:utcNow()
+            };
+            InternalError internalError = {body: errorDetails};
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(internalError.body.toJson());
+            return errorResponse;
+        }
+        return response;
+    }
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["retrive_appoinments"]
         }
     }
 
@@ -1370,8 +1406,7 @@ service /mca on httpListener {
         return response;
     } 
 
-
-
+     
     @http:ResourceConfig
     resource function get MCSdata(http:Request request) returns http:Response {
         do {
