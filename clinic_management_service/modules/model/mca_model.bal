@@ -31,3 +31,7 @@ public type DoctorReq record {|
     string profileImage;
     string[] medical_centers;
 |};
+
+public type CenterReq record {|
+    string[] doctors;
+|}

@@ -532,3 +532,135 @@ public function getBriefDoctorDataForJoinReq(string doctorId) returns model:Doct
     
     return result;
 }
+
+
+  # Fetch join reqs by req ID
+    # 
+    # 
+    # + reqId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getJoinReqById(string reqId) returns model:JoinReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor_join_request_to_mc");
+
+    map<json> filter = {
+         "_id": {"$oid": reqId}
+    };
+
+   map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "doctorId": 1,
+        "medicalCenterId": 1
+    };
+
+    model:JoinReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Fetch Center Doctor list by center ID
+    # 
+    # 
+    # + reqId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getJoinReqById(string centerId) returns model:CenterReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("medical_center");
+
+    map<json> filter = {
+         "_id": {"$oid": centerId}
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "doctors": 1
+    };
+
+    model:CenterReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Update the verify status in join req
+    # 
+    # 
+    # + reqId - Request Id
+    # + return - on sucess return null
+public function mcaUpdateVerified(int reqId) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("doctor_join_request_to_mc");
+  
+    map<json> filter = {
+         "_id": {"$oid": reqId}
+    };
+
+    mongodb:Update update = {
+        "set": { "verified": true}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("verify status update failed");
+}
+
+
+  # Update the verify status in join req
+    # 
+    # 
+    # + doctorId - doctor Id
+    # + centerlist - center list
+    # + return - on sucess return null
+public function mcaUpdateDoctorsCenterlist(string doctorId, string[] centerlist) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("doctor");
+  
+    map<json> filter = {
+         "_id": {"$oid": doctorId}
+    };
+
+    mongodb:Update update = {
+        "set": { "medical_centers": centerlist}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("medical center list update failed");
+}
+
+
+  # Update the verify status in join req
+    # 
+    # 
+    # + centerId - center Id
+    # + doctors - doctor list
+    # + return - on sucess return null
+public function mcaUpdateCentersDoctorlist(string centerId, string[] doctors) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("medical_center");
+  
+    map<json> filter = {
+         "_id": {"$oid": centerId}
+    };
+
+    mongodb:Update update = {
+        "set": { "doctors": doctors}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("doctor list update failed");
+}

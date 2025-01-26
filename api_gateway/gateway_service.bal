@@ -1353,6 +1353,30 @@ service /mca on httpListener {
         }
     }
 
+    @http:ResourceConfig
+    resource function put acceptRequest(http:Request request, string reqId) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            string url = string `/mcaAcceptRequest?reqId=${reqId}&userId=${userId}`;
+
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
 
     @http:ResourceConfig
     resource function get getOngoingSessionQueue(http:Request req) returns http:Response|error? {

@@ -163,6 +163,39 @@ public function mcaGetMCRdata(string userId) returns error|model:NotFoundError|m
     }
 }
 
+// accept join req
+public function mcaAcceptRequest(string reqId, string userId) returns error|model:NotFoundError? {
+    model:MedicalCenterAdmin|mongodb:Error? mcaData = dao:getInfoMCA(userId);
+    if mcaData is model:MedicalCenterAdmin {
+        model:MedicalCenterBrief|mongodb:Error? centerData = dao:getInfoCenterByEmail(mcaData.medicalCenterEmail);
+        if centerData is model:MedicalCenterBrief {
+           model:JoinReq|mongodb:Error ? reqData = dao:getJoinReqById(reqId);
+           if reqData is model:JoinReq {
+                if reqData.medicalCenterId == centerData._id {
+                    return error("Center Id is not match");
+                }else{
+                    // update to true
+                    // update the center
+                    // upadte the doctor
+                }
+           }else if reqData is null {
+                return initNotFoundError("Request data not found");
+           }else {
+                return initDatabaseError(reqData);
+           }
+
+        } else if centerData is null {
+            return initNotFoundError("Medical center data not found");
+        } else {
+            return initDatabaseError(centerData);
+        }
+    } else if mcaData is null {
+        return initNotFoundError("User specifc data not found");
+    } else {
+        return initDatabaseError(mcaData);
+    }
+}
+
 // assign a session to the mcs member
 public function mcaAssignSession(string sessionId, string mcsId, string userId) returns error|model:NotFoundError? {
     model:MedicalCenterAdmin|mongodb:Error? mcaData = dao:getInfoMCA(userId);
