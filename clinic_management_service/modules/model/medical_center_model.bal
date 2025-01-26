@@ -145,7 +145,7 @@ public type NewRepetition record {
 public type Repetition record {
     boolean isRepeat;
     string[] days;
-    time:Date noRepeatDateTimestamp?;
+    time:Date noRepeatDateTimestamp;
 };
 
 public type DoctorResponseApplication record {
