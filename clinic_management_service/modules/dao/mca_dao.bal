@@ -511,7 +511,7 @@ public function getAllJoinReq(string centerId) returns model:JoinReq[]|mongodb:E
   # Fetch breif doctor data for the joinReq by doctorId
     # 
     # 
-    # + doctorId - center ID
+    # + doctorId - doctor ID
     # + return -  on success centerlist, name, profile image
 
 public function getBriefDoctorDataForJoinReq(string doctorId) returns model:DoctorReq|mongodb:Error ? {
@@ -565,7 +565,7 @@ public function getJoinReqById(string reqId) returns model:JoinReq|mongodb:Error
     # + reqId - center ID
     # + return -  on success doctorId, reqId
 
-public function getJoinReqById(string centerId) returns model:CenterReq|mongodb:Error ? {
+public function getCenterDoctorList(string centerId) returns model:CenterReq|mongodb:Error ? {
     mongodb:Collection collection = check initDatabaseConnection("medical_center");
 
     map<json> filter = {
@@ -588,7 +588,7 @@ public function getJoinReqById(string centerId) returns model:CenterReq|mongodb:
     # 
     # + reqId - Request Id
     # + return - on sucess return null
-public function mcaUpdateVerified(int reqId) returns mongodb:Error|error ? {
+public function mcaUpdateVerified(string reqId) returns mongodb:Error|error ? {
     mongodb:Collection sessionCollection = check initDatabaseConnection("doctor_join_request_to_mc");
   
     map<json> filter = {
@@ -610,7 +610,7 @@ public function mcaUpdateVerified(int reqId) returns mongodb:Error|error ? {
 }
 
 
-  # Update the verify status in join req
+  # Update the center list of the doctor
     # 
     # 
     # + doctorId - doctor Id
@@ -638,7 +638,7 @@ public function mcaUpdateDoctorsCenterlist(string doctorId, string[] centerlist)
 }
 
 
-  # Update the verify status in join req
+  # Update the doctor list of the center
     # 
     # 
     # + centerId - center Id

@@ -34,4 +34,4 @@ public type DoctorReq record {|
 
 public type CenterReq record {|
     string[] doctors;
-|}
+|};

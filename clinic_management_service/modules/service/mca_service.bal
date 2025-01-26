@@ -177,6 +177,47 @@ public function mcaAcceptRequest(string reqId, string userId) returns error|mode
                     // update to true
                     // update the center
                     // upadte the doctor
+
+                    model:DoctorReq|mongodb:Error ? doctorData = dao:getBriefDoctorDataForJoinReq(reqData.doctorId);
+                    if doctorData is model:DoctorReq {
+                        model:CenterReq|mongodb:Error ? _centerData = dao:getCenterDoctorList(<string>reqData.medicalCenterId);
+                        if _centerData is mongodb:Error{
+                            return initDatabaseError(_centerData);
+                        }else if _centerData is model:CenterReq {
+                            string[] centerListForDoctor = doctorData.medical_centers;
+                            centerListForDoctor.push(<string>reqData.medicalCenterId);
+
+                            string[] doctorListForCenter = _centerData.doctors;
+                            doctorListForCenter.push(reqData.doctorId);
+                            
+                            mongodb:Error? verifyUpdate = check dao:mcaUpdateVerified(reqId);
+
+                            if verifyUpdate is null {
+                                
+                                mongodb:Error? centerUpdate = check dao:mcaUpdateCentersDoctorlist(<string>reqData.medicalCenterId ,doctorListForCenter);
+                                if centerUpdate is null {
+                                    mongodb:Error? doctorUpdate = check dao:mcaUpdateDoctorsCenterlist(reqData.doctorId, centerListForDoctor);
+                                    
+                                    if doctorUpdate is null {
+                                        return null;
+                                    }else{
+                                        return initDatabaseError(doctorUpdate);
+                                    }
+                                }else{
+                                    return initDatabaseError(centerUpdate);
+                                }
+                            } else if verifyUpdate is mongodb:Error {
+                                return initDatabaseError(verifyUpdate);
+                            }
+
+                        }else{
+                            return initNotFoundError("Relvent Center Data in Join Req not found");
+                        }
+                    } else if doctorData is mongodb:Error {
+                        return initDatabaseError(doctorData);
+                    }else{
+                        return initNotFoundError("Relevent Doctor data in join req not found");
+                    }
                 }
            }else if reqData is null {
                 return initNotFoundError("Request data not found");
