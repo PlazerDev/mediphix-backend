@@ -224,21 +224,6 @@ public function createSessionVacancy(model:NewSessionVacancy newSessionVacancy) 
     return internalError;
 }
 
-public function createSessions(model:SessionVacancy vacancy, model:SessionCreationDetails sessionCreationDetails) returns http:Created|model:InternalError|error? {
-    http:Created|error? result = dao:createSessions(vacancy, sessionCreationDetails);
-    if (result is http:Created) {
-        return result;
-    }
-
-    model:ErrorDetails errorDetails = {
-        message: "Unexpected internal error occurred, please retry!",
-        details: "sessions",
-        timeStamp: time:utcNow()
-    };
-
-    model:InternalError internalError = {body: errorDetails};
-    return internalError;
-}
 
 public function getMcaUserIdByEmail(string email) returns error|string|model:InternalError {
     error|string|model:InternalError result = check dao:getMcaUserIdByEmail(email);
