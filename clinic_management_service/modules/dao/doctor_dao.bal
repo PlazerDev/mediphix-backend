@@ -456,6 +456,42 @@ public function getPatientIdByRefNumber(int refNumber)
     }
 }
 
+public function getAptDetailsForOngoingSessions(int refNumber) returns model:AppointmentRecord|model:InternalError|error {
+    mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
+    mongodb:Collection appointmentCollection = check mediphixDb->getCollection("appointment");
+    map<json> filter = {"aptNumber": refNumber};
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1
+    };
+
+    model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
+    if appointment is model:AppointmentRecord {
+        return appointment;
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Failed to find the appointment for the given reference number.",
+            details: "refNumber/" ,
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
+
 
 // public function getPatientIdByRefNumber(string refNumber)
 //     returns string|model:InternalError|error {

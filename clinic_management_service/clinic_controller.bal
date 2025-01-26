@@ -287,6 +287,22 @@ service / on new http:Listener(9090) {
 
     }
 
+    resource function get getAptDetailsForOngoingSessions/[int refNumber]() returns http:Response|error? {
+       model:AppointmentRecord|model:InternalError|model:NotFoundError|error? patient = check 'service:getAptDetailsForOngoingSessions(refNumber);
+
+        http:Response response = new;
+        if patient is model:AppointmentRecord {
+            response.statusCode = 200;
+            response.setJsonPayload(patient.toJson());
+            
+        } else if (patient is model:InternalError) {
+            response.statusCode = 500;
+            response.setJsonPayload(patient.body.toJson());
+        }
+        return response;
+
+    }
+
     // Get doctor details by id
     resource function get getDoctorDetails/[string id]() returns error|http:Response {
         model:Doctor|model:InternalError doctorDetails = check 'service:getDoctorDetails(id.trim());
