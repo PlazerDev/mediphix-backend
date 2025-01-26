@@ -475,3 +475,60 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
 
     return http:OK;
 }
+
+
+  # Fetch join reqs by center ID
+    # 
+    # 
+    # + centerId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getAllJoinReq(string centerId) returns model:JoinReq[]|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor_join_request_to_mc");
+
+    map<json> filter = {
+        "medicalCenterId": centerId,
+        "verified": false
+    };
+
+   map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "doctorId": 1
+    };
+
+    stream<model:JoinReq, error?> result = check collection->find(filter, {}, projection, model:JoinReq);
+    
+    model:JoinReq[]|error finalResult = from model:JoinReq userData in result select userData;
+    if finalResult is model:JoinReq[] {
+        return finalResult;
+    } else {
+        return null;
+    }
+}
+
+
+
+  # Fetch breif doctor data for the joinReq by doctorId
+    # 
+    # 
+    # + doctorId - center ID
+    # + return -  on success centerlist, name, profile image
+
+public function getBriefDoctorDataForJoinReq(string doctorId) returns model:DoctorReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor");
+
+    map<json> filter = {
+         "_id": {"$oid": doctorId}
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "name": 1,
+        "profileImage": 1,
+        "medical_centers": 1
+    };
+
+    model:DoctorReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
