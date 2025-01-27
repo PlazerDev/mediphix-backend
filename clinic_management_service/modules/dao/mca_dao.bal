@@ -71,52 +71,148 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     return http:CREATED;
 }
 
-public function createSessions(model:SessionVacancy sessionVacancy, model:SessionCreationDetails sessionCreationDetails) returns http:Created|error? {
+public function convertUtcToString(time:Date utcTime) returns string {
+    // format 2024-10-03T10:15:30.00+05:30
+    string month = string `${utcTime.month}`;
+    string day = string `${utcTime.day}`;
+    string hour = string `${utcTime.hour ?: 0}`;
+    string minute = string `${utcTime.minute ?: 0}`;
+    string second = "00";
+    if(utcTime.month < 10) {
+        month = string `0${utcTime.month}`;
+    }
+    if (utcTime.day < 10) {
+        day = string `0${utcTime.day}`;
+    }
+    if (utcTime.hour < 10) {
+        hour = string `0${utcTime.hour ?: 0}`;
+    }
+    if (utcTime.minute < 10) {
+        minute = string `0${utcTime.minute ?: 0}`;
+    }
+    
+
+    string time = string `${utcTime.year}-${month}-${day}T${hour}:${minute}:${second}.00+05:30`;
+    io:println("Converted time", time); 
+    return time;
+} 
+
+
+public function createSessions(model:SessionVacancy sessionVacancy, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails, model:DoctorResponse doctorResponse) returns http:Created|error? {
 
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
-
-    model:MedicalCenter|model:NotFoundError|error? medicalCenter = getMedicalCenterInfoByID(sessionVacancy.medicalCenterId, "");
+    mongodb:Collection timeslotCollection = check initDatabaseConnection("session_timeslot");
 
     foreach model:OpenSession openSession in sessionVacancy.openSessions {
-        time:DayOfWeek dayOfTheWeek;
-        if openSession.repetition.isRepeat {
+        if (openSession.sessionId === appliedOpenSessionId) {
 
-            foreach string day in openSession.repetition.days {
-                match day {
-                    "SUN" => {
-                        dayOfTheWeek = 0;
+            time:DayOfWeek dayOfTheWeek;
+            if openSession.repetition.isRepeat {
+
+                foreach string day in openSession.repetition.days {
+                    match day {
+                        "SUN" => {
+                            dayOfTheWeek = 0;
+                        }
+                        "MON" => {
+                            dayOfTheWeek = 1;
+                        }
+                        "TUE" => {
+                            dayOfTheWeek = 2;
+                        }
+                        "WED" => {
+                            dayOfTheWeek = 3;
+                        }
+                        "THU" => {
+                            dayOfTheWeek = 4;
+                        }
+                        "FRI" => {
+                            dayOfTheWeek = 5;
+                        }
+                        "SAT" => {
+                            dayOfTheWeek = 6;
+                        }
                     }
-                    "MON" => {
-                        dayOfTheWeek = 1;
-                    }
-                    "TUE" => {
-                        dayOfTheWeek = 2;
-                    }
-                    "WED" => {
-                        dayOfTheWeek = 3;
-                    }
-                    "THU" => {
-                        dayOfTheWeek = 4;
-                    }
-                    "FRI" => {
-                        dayOfTheWeek = 5;
-                    }
-                    "SAT" => {
-                        dayOfTheWeek = 6;
+
+                }
+            } else {
+                time:Date sessionStartTimeStamp = openSession.startTime;
+                sessionStartTimeStamp.year = openSession.repetition.noRepeatDateTimestamp.year;
+                sessionStartTimeStamp.month = openSession.repetition.noRepeatDateTimestamp.month;
+                sessionStartTimeStamp.day = openSession.repetition.noRepeatDateTimestamp.day;
+
+                time:Date sessionEndTimeStamp = openSession.endTime;
+                sessionEndTimeStamp.year = openSession.repetition.noRepeatDateTimestamp.year;
+                sessionEndTimeStamp.month = openSession.repetition.noRepeatDateTimestamp.month;
+                sessionEndTimeStamp.day = openSession.repetition.noRepeatDateTimestamp.day;
+
+                model:TimeSlot[] sessionTimeSlots = [];
+                int noOfTimeSlots = openSession.numberOfTimeslots ?: 0;
+                int timeSlotIndex = 0;
+                foreach model:DoctorResponseApplication responseApplication in doctorResponse.responseApplications {
+                    if (responseApplication.appliedOpenSessionId === appliedOpenSessionId) {
+
+                        foreach model:PatientCountPerTimeSlot patientCountPerTimeSlot in responseApplication.numberOfPatientsPerTimeSlot {
+
+                            if (timeSlotIndex < noOfTimeSlots) {
+                                int|model:InternalError nextTimeSlotId = check getNextTimeSlotId();
+
+                                if !(nextTimeSlotId is int) {
+                                    return error("Failed to get next time slot id");
+                                }
+
+                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(sessionStartTimeStamp)), timeSlotIndex * 3600));
+                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(timeSlotStartTimeStamp)), 3600));
+                                io:println("Time slot start time", timeSlotStartTimeStamp);
+                                model:TimeSlot timeSlot = {                                   
+                                    slotId: nextTimeSlotId,
+                                    startTime: timeSlotStartTimeStamp.hour.toString(),
+                                    endTime: timeSlotEndTimeStamp.hour.toString(),
+                                    maxNoOfPatients: patientCountPerTimeSlot.maxNumOfPatients,
+                                    status: "NOT_STARTED",
+                                    queue: {
+                                        appointments: [],
+                                        queueOperations: {
+                                            defaultIncrementQueueNumber: 0,
+                                            ongoing: 0,
+                                            nextPatient1: 0,
+                                            nextPatient2: 0,
+                                            finished: [],
+                                            absent: []
+                                        }
+                                    }
+                                };
+                                io:println("Time slot created in backend", timeSlot);
+                                check timeslotCollection->insertOne(timeSlot);
+                                sessionTimeSlots.push(timeSlot);
+                                timeSlotIndex = timeSlotIndex + 1;
+                            }
+
+                        }
+
                     }
                 }
 
+                model:Session session = {
+                    endTimestamp: sessionEndTimeStamp,
+                    startTimestamp: sessionStartTimeStamp,
+                    doctorId: doctorResponse.doctorId,
+                    medicalCenterId: sessionVacancy.medicalCenterId,
+                    aptCategories: sessionVacancy.aptCategories,
+                    payment: sessionCreationDetails.payment,
+                    hallNumber: sessionCreationDetails.hallNumber,
+                    noteFromCenter: sessionCreationDetails.noteFromCenter,
+                    noteFromDoctor: doctorResponse.noteToPatient,
+                    overallSessionStatus: "ACTIVE",
+                    timeSlots: sessionTimeSlots
+                };
+                check sessionCollection->insertOne(session);
             }
-        } else {
-
         }
     }
 
-    if (!(medicalCenter is model:MedicalCenter)) {
-        return error("Medical center not found");
-    }
-
     return http:CREATED;
+
 }
 
 function isContainString(string[] array, string id) returns boolean {
@@ -126,7 +222,7 @@ function isContainString(string[] array, string id) returns boolean {
 public function createTimeslots(model:Session session) returns http:Created|error? {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection timeSlotCollection = check mediphixDb->getCollection("time_slot");
-    
+
     // foreach model:TimeSlot timeSlot in session.timeSlots {
     //     // timeSlot.slotId = timeSlot.timeSlotNumber ?: 0;
     //     mongodb:Error? result = check timeSlotCollection->insertOne(timeSlot);
@@ -135,7 +231,7 @@ public function createTimeslots(model:Session session) returns http:Created|erro
     return http:CREATED;
 }
 
-public function getNextTimeSlotNumber() returns int|model:InternalError|error {
+public function getNextTimeSlotId() returns int|model:InternalError|error {
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection counterCollection = check mediphixDb->getCollection("counters");
 
@@ -416,8 +512,19 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
         "isCompletelyRejected": 1
     };
 
-    model:DoctorResponse|mongodb:Error? findResults = doctorResponseCollection->findOne(doctorResponseFilter, {}, doctorResponseProjection, model:DoctorResponse);
-    io:println("Doctor response application found", findResults);
+    model:DoctorResponse|mongodb:Error? doctorResponse = doctorResponseCollection->findOne(doctorResponseFilter, {}, doctorResponseProjection, model:DoctorResponse);
+    io:println("Doctor response application found", doctorResponse);
+
+    if !(doctorResponse is model:DoctorResponse) {
+        model:ErrorDetails errorDetails = {
+            message: "Internal Error",
+            details: "Error occurred while retrieving doctor response application",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+
+        return internalError;
+    }
 
     mongodb:Update update = {
         "set": {
@@ -440,7 +547,7 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
     }
     mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
     map<json> filter = {
-        _id: sessionVacancyId
+        "_id": {"$oid": sessionVacancyId}
     };
     map<json> sessionVacancyProjection = {
         "_id": {"$toString": "$_id"},
@@ -457,9 +564,19 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
         "profileImage": 1
     };
 
-    model:SessionVacancy|mongodb:Error? findResult = sessionVacancyCollection->findOne(filter, {}, sessionVacancyProjection, model:SessionVacancy);
-    if (findResult is model:SessionVacancy) {
-        // createSessions(findResult, sessionCreationDetails);
+    model:SessionVacancy|mongodb:Error? sessionVacancy = sessionVacancyCollection->findOne(filter, {}, sessionVacancyProjection, model:SessionVacancy);
+    if (sessionVacancy is model:SessionVacancy) {
+        http:Created|error? sessionResult = createSessions(sessionVacancy, appliedOpenSessionId, sessionCreationDetails, doctorResponse);
+        if !(sessionResult is http:Created) {
+            model:ErrorDetails errorDetails = {
+                message: "Internal Error",
+                details: "Error occurred while creating sessions",
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+
+            return internalError;
+        }
     } else {
         model:ErrorDetails errorDetails = {
             message: "Internal Error",

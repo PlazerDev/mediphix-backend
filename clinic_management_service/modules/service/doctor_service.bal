@@ -65,6 +65,13 @@ public function getPatientDetailsForOngoingSessions(int refNumber) returns model
 
 }
 
+public function getAptDetailsForOngoingSessions(int refNumber) returns model:AppointmentRecord|model:InternalError|model:NotFoundError|error? {
+    model:AppointmentRecord|model:InternalError|model:NotFoundError|error? result = check dao:getAptDetailsForOngoingSessions(refNumber);
+    io:print("result in service",result);
+    return result;
+
+}
+
 public function getAllMedicalCenters() returns error|model:MedicalCenter[]|model:InternalError {
     model:MedicalCenter[]|model:InternalError result = check dao:getAllMedicalCenters();
     return result;

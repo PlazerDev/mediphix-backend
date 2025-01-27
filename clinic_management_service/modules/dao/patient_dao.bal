@@ -129,12 +129,12 @@ public function getAllDoctors() returns error|model:Doctor[]|model:InternalError
         "category": 1,
         "availability": 1,
         "verified": 1,
-        "patients": [{"$toString": "$_id"}],
-        "medical_centers": [{"$toString": "$_id"}],
-        "sessions": [{"$toString": "$_id"}],
-        "channellings": [{"$toString": "$_id"}],
-        "medical_records": [{"$toString": "$_id"}],
-        "lab_reports": [{"$toString": "$_id"}],
+        "patients": 1,
+        "medical_centers": 1,
+        "sessions": 1,
+        "channellings": 1,
+        "medical_records": 1,
+        "lab_reports": 1,
         "media_storage": 1,
         "profileImage": 1
     };
