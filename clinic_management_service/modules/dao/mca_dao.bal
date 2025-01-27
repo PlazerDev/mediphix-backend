@@ -78,7 +78,7 @@ public function convertUtcToString(time:Date utcTime) returns string {
     string hour = string `${utcTime.hour ?: 0}`;
     string minute = string `${utcTime.minute ?: 0}`;
     string second = "00";
-    if(utcTime.month < 10) {
+    if (utcTime.month < 10) {
         month = string `0${utcTime.month}`;
     }
     if (utcTime.day < 10) {
@@ -90,13 +90,11 @@ public function convertUtcToString(time:Date utcTime) returns string {
     if (utcTime.minute < 10) {
         minute = string `0${utcTime.minute ?: 0}`;
     }
-    
 
     string time = string `${utcTime.year}-${month}-${day}T${hour}:${minute}:${second}.00+05:30`;
-    io:println("Converted time", time); 
+    io:println("Converted time", time);
     return time;
-} 
-
+}
 
 public function createSessions(model:SessionVacancy sessionVacancy, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails, model:DoctorResponse doctorResponse) returns http:Created|error? {
 
@@ -160,23 +158,53 @@ public function createSessions(model:SessionVacancy sessionVacancy, int appliedO
                                 if !(nextTimeSlotId is int) {
                                     return error("Failed to get next time slot id");
                                 }
-
-                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(sessionStartTimeStamp)), timeSlotIndex * 3600));
-                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(timeSlotStartTimeStamp)), 3600));
+                                io:println("Session start timestamp", sessionStartTimeStamp);
+                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(sessionStartTimeStamp)), (timeSlotIndex * 3600 + (5 * 3600 + 30 * 60))));
                                 io:println("Time slot start time", timeSlotStartTimeStamp);
-                                model:TimeSlot timeSlot = {                                   
+                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(timeSlotStartTimeStamp)), (3600 + (5 * 3600 + 30 * 60))));
+                                io:println("Time slot end time", timeSlotEndTimeStamp);
+                                string slotStartTimeHour = "";
+                                string slotStartTimeMinute = "";
+                                string slotEndTimeHour = "";
+                                string slotEndTimeMinute = "";
+
+                                if (timeSlotStartTimeStamp.hour < 10) {
+                                    slotStartTimeHour = string `0${timeSlotStartTimeStamp.hour ?: 0}`;
+                                } else {
+                                    slotStartTimeHour = string `${timeSlotStartTimeStamp.hour ?: 0}`;
+                                }
+
+                                if (timeSlotStartTimeStamp.minute < 10) {
+                                    slotStartTimeMinute = string `0${timeSlotStartTimeStamp.minute ?: 0}`;
+                                } else {
+                                    slotStartTimeMinute = string `${timeSlotStartTimeStamp.minute ?: 0}`;
+                                }
+
+                                if (timeSlotEndTimeStamp.hour < 10) {
+                                    slotEndTimeHour = string `0${timeSlotEndTimeStamp.hour ?: 0}`;
+                                } else {
+                                    slotEndTimeHour = string `${timeSlotEndTimeStamp.hour ?: 0}`;
+                                }
+
+                                if (timeSlotEndTimeStamp.minute < 10) {
+                                    slotEndTimeMinute = string `0${timeSlotEndTimeStamp.minute ?: 0}`;
+                                } else {
+                                    slotEndTimeMinute = string `${timeSlotEndTimeStamp.minute ?: 0}`;
+                                }
+
+                                model:TimeSlot timeSlot = {
                                     slotId: nextTimeSlotId,
-                                    startTime: timeSlotStartTimeStamp.hour.toString(),
-                                    endTime: timeSlotEndTimeStamp.hour.toString(),
+                                    startTime: slotStartTimeHour + "." + slotStartTimeMinute,
+                                    endTime: slotEndTimeHour + "." + slotEndTimeMinute,
                                     maxNoOfPatients: patientCountPerTimeSlot.maxNumOfPatients,
                                     status: "NOT_STARTED",
                                     queue: {
                                         appointments: [],
                                         queueOperations: {
-                                            defaultIncrementQueueNumber: 0,
-                                            ongoing: 0,
-                                            nextPatient1: 0,
-                                            nextPatient2: 0,
+                                            defaultIncrementQueueNumber: 1,
+                                            ongoing: -1,
+                                            nextPatient1: 1,
+                                            nextPatient2: 2,
                                             finished: [],
                                             absent: []
                                         }
