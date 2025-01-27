@@ -171,7 +171,7 @@ public function mcaAcceptRequest(string reqId, string userId) returns error|mode
         if centerData is model:MedicalCenterBrief {
            model:JoinReq|mongodb:Error ? reqData = dao:getJoinReqById(reqId);
            if reqData is model:JoinReq {
-                if reqData.medicalCenterId == centerData._id {
+                if reqData.medicalCenterId != centerData._id {
                     return error("Center Id is not match");
                 }else{
                     // update to true
