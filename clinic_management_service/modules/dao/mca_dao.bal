@@ -71,12 +71,37 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     return http:CREATED;
 }
 
+public function convertUtcToString(time:Date utcTime) returns string {
+    // format 2024-10-03T10:15:30.00+05:30
+    string month = string `${utcTime.month}`;
+    string day = string `${utcTime.day}`;
+    string hour = string `${utcTime.hour ?: 0}`;
+    string minute = string `${utcTime.minute ?: 0}`;
+    string second = "00";
+    if(utcTime.month < 10) {
+        month = string `0${utcTime.month}`;
+    }
+    if (utcTime.day < 10) {
+        day = string `0${utcTime.day}`;
+    }
+    if (utcTime.hour < 10) {
+        hour = string `0${utcTime.hour ?: 0}`;
+    }
+    if (utcTime.minute < 10) {
+        minute = string `0${utcTime.minute ?: 0}`;
+    }
+    
+
+    string time = string `${utcTime.year}-${month}-${day}T${hour}:${minute}:${second}.00+05:30`;
+    io:println("Converted time", time); 
+    return time;
+} 
+
+
 public function createSessions(model:SessionVacancy sessionVacancy, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails, model:DoctorResponse doctorResponse) returns http:Created|error? {
 
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
     mongodb:Collection timeslotCollection = check initDatabaseConnection("session_timeslot");
-
-    model:MedicalCenter|model:NotFoundError|error? medicalCenter = getMedicalCenterInfoByID(sessionVacancy.medicalCenterId, "");
 
     foreach model:OpenSession openSession in sessionVacancy.openSessions {
         if (openSession.sessionId === appliedOpenSessionId) {
@@ -123,26 +148,26 @@ public function createSessions(model:SessionVacancy sessionVacancy, int appliedO
 
                 model:TimeSlot[] sessionTimeSlots = [];
                 int noOfTimeSlots = openSession.numberOfTimeslots ?: 0;
-                int timeSlotIndex = 1;
+                int timeSlotIndex = 0;
                 foreach model:DoctorResponseApplication responseApplication in doctorResponse.responseApplications {
                     if (responseApplication.appliedOpenSessionId === appliedOpenSessionId) {
 
                         foreach model:PatientCountPerTimeSlot patientCountPerTimeSlot in responseApplication.numberOfPatientsPerTimeSlot {
 
-                            if (timeSlotIndex <= noOfTimeSlots) {
+                            if (timeSlotIndex < noOfTimeSlots) {
                                 int|model:InternalError nextTimeSlotId = check getNextTimeSlotId();
 
                                 if !(nextTimeSlotId is int) {
                                     return error("Failed to get next time slot id");
                                 }
 
-                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromCivil(<time:Civil>sessionStartTimeStamp), timeSlotIndex * 3600));
-                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromCivil(<time:Civil>timeSlotStartTimeStamp), 3600));
-
-                                model:TimeSlot timeSlot = {
+                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(sessionStartTimeStamp)), timeSlotIndex * 3600));
+                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(timeSlotStartTimeStamp)), 3600));
+                                io:println("Time slot start time", timeSlotStartTimeStamp);
+                                model:TimeSlot timeSlot = {                                   
                                     slotId: nextTimeSlotId,
                                     startTime: timeSlotStartTimeStamp.hour.toString(),
-                                    endTime: sessionEndTimeStamp.hour.toString(),
+                                    endTime: timeSlotEndTimeStamp.hour.toString(),
                                     maxNoOfPatients: patientCountPerTimeSlot.maxNumOfPatients,
                                     status: "NOT_STARTED",
                                     queue: {
@@ -157,9 +182,10 @@ public function createSessions(model:SessionVacancy sessionVacancy, int appliedO
                                         }
                                     }
                                 };
-
+                                io:println("Time slot created in backend", timeSlot);
                                 check timeslotCollection->insertOne(timeSlot);
                                 sessionTimeSlots.push(timeSlot);
+                                timeSlotIndex = timeSlotIndex + 1;
                             }
 
                         }
@@ -521,7 +547,7 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
     }
     mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
     map<json> filter = {
-        _id: sessionVacancyId
+        "_id": {"$oid": sessionVacancyId}
     };
     map<json> sessionVacancyProjection = {
         "_id": {"$toString": "$_id"},
