@@ -73,6 +73,7 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
 
 public function convertUtcToString(time:Date utcTime) returns string {
     // format 2024-10-03T10:15:30.00+05:30
+    // format 2024-10-03T10:15:30.00+Z
     string month = string `${utcTime.month}`;
     string day = string `${utcTime.day}`;
     string hour = string `${utcTime.hour ?: 0}`;
