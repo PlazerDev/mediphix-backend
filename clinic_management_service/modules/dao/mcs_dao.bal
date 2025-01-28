@@ -459,16 +459,16 @@ public function initDatabaseConnection(string collectionName) returns mongodb:Co
     return collection;
 }
 
-public function initOngoingSessionFilter(string sessionId) returns map<json>|error {
+public function initOngoingSessionFilter(string sessionId) returns map<json> | error {
     log:printInfo("In the filter");
-    time:Date currentTimeStamp = getCurrentCivilLKTime();
-    time:Utc currentTimeStampInUTC = check time:utcFromString(convertUtcToString(currentTimeStamp));
+    time:Civil currentTimeStamp = getCurrentCivilLKTime();
+    time:Utc currentTimeStampInUTC = check time:utcFromCivil(currentTimeStamp);
 
     json currentTimeJson = currentTimeStamp.toJson();
     json hourAfterTimeJson = time:utcToCivil(time:utcAddSeconds(currentTimeStampInUTC, 3600)).toJson();
-
-    log:printInfo("currentTimeJson", currentTimeJson = currentTimeJson);
-    log:printInfo("hourAfterTimeJson", hourAfterTimeJson = hourAfterTimeJson);
+    
+    log:printInfo("currentTimeJson", currentTimeJson=currentTimeJson);
+    log:printInfo("hourAfterTimeJson", hourAfterTimeJson=hourAfterTimeJson);
 
     map<json> filter = {
         "_id": {"$oid": sessionId},
@@ -489,33 +489,15 @@ public function initOngoingSessionFilter(string sessionId) returns map<json>|err
         ]
     };
 
+    io:println("Filter: ", filter);
+
     return filter;
 }
 
-public function getCurrentCivilLKTime() returns time:Date {
+public function getCurrentCivilLKTime() returns time:Civil {
     time:Utc utcNow = time:utcNow();
     time:Seconds offsetInSeconds = (5 * 60 * 60) + (30 * 60);
     time:Utc sriLankaUtcTime = time:utcAddSeconds(utcNow, offsetInSeconds);
     time:Civil sriLankaTime = time:utcToCivil(sriLankaUtcTime);
-    string|time:Error dateString = time:civilToString(sriLankaTime);
-    if dateString is time:Error {
-        io:println("Error occurred while converting the time to string");
-        return sriLankaTime;
-    }
-    string:RegExp r = re `Z`;
-    string[] splittedDate = r.split(dateString);
-    dateString = splittedDate[0] + "+05:30";
-    io:println(dateString);
-    if dateString is time:Error {
-        io:println("Error occurred while converting the time to string");
-        return sriLankaTime;
-
-    }
-    time:Date|error date = time:civilFromString(dateString);
-    if date is error {
-        io:println("Error occurred while converting the string to time");
-        return sriLankaTime;
-    }
-    io:println(date);
-    return date;
+    return sriLankaTime;
 }

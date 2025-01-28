@@ -698,6 +698,23 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    resource function get mcaJoinReq/[string userId]() returns http:Response|error {
+
+        model:NotFoundError|model:McaJoinReq[] result = check 'service:mcaJoinReq(userId);
+        http:Response response = new;
+
+        if (result is model:McaJoinReq[]) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+
     resource function get mcsGetActiveSessions/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McsSessionWithDoctorDetails[] result = check 'service:mcsGetActiveSessions(userId);
@@ -733,6 +750,23 @@ service / on new http:Listener(9090) {
     resource function put mcaAssignSession(string sessionId, string mcsId, string userId) returns http:Response|error {
 
         model:NotFoundError? result = check 'service:mcaAssignSession(sessionId, mcsId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcaAcceptRequest(string reqId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcaAcceptRequest(reqId, userId);
 
         http:Response response = new;
 
