@@ -42,7 +42,7 @@ public function createAppointmentRecord(model:NewAppointmentRecord newAppointmen
         medicalCenterId: newAppointmentRecord.medicalCenterId,
         medicalCenterName: newAppointmentRecord.medicalCenterName,
         aptCreatedTimestamp: time:utcToCivil(time:utcAddSeconds(time:utcNow(), 5 * 3600 + 30 * 60)),
-        aptStatus: "ACTIVE"
+        aptStatus: newAppointmentRecord.aptStatus ?: "ACTIVE"
     };
 
     model:AppointmentResponse|error? appointmentResult = dao:createAppointmentRecord(appointmentRecord);
