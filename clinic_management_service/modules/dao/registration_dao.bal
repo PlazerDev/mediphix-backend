@@ -171,6 +171,7 @@ public function patientRegistration(model:PatientSignupData data) returns error?
     io:println("Inside patientRegistrationDAO"); // comment
     mongodb:Database mediphixDb = check mongoDb->getDatabase(string `${database}`);
     mongodb:Collection patientCollection = check mediphixDb->getCollection("patient");
+    string emaiHead = getEmailHead(data.email);
     model:Patient patient = {
         mobile_number: data.mobile,
         first_name: data.fname,
@@ -187,7 +188,8 @@ public function patientRegistration(model:PatientSignupData data) returns error?
         medical_centers: [],
         appointments: [],
         medical_records: [],
-        lab_reports: []
+        lab_reports: [],
+        profileImage: "https://" + S3_BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/patient-resources/" + emaiHead + "/profileImage"
     };
     mongodb:Error? insertOne = patientCollection->insertOne(patient);
     if insertOne is mongodb:DatabaseError {
