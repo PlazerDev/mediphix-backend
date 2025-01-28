@@ -462,9 +462,12 @@ service /doctor on httpListener {
     }
     resource function get sessionVacancies(http:Request req) returns http:Response|error? {
         do {
+            io:println("REQ recived");
             string userEmail = check getUserEmailByJWT(req);
+            io:println("Got the email");
             string userType = "doctor";
             string userId = check getCachedUserId(userEmail, userType);
+            io:println("Got userID, now directing to clinic mng service");
             http:Response|error? response = check clinicServiceEP->/getDoctorSessionVacancies/[userId];
             return response;
         } on fail {
