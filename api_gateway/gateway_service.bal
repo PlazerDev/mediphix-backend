@@ -296,8 +296,8 @@ service /patient on httpListener {
                 }
             },
 
-            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments", "submit_patient_records"]
-
+            scopes: ["update_own_doctor_sessions", "retrive_appoinments", "submit_patient_records", "basic_doctor"]
+  
         }
     ]
 }
@@ -305,7 +305,37 @@ service /doctor on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["check_patient"]
+            scopes: ["basic_doctor"]
+        }
+    }
+    resource function get medicalrecords(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response response = check clinicServiceEP->/getMedicalRecordsByDoctorId/[userId];
+
+            
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving doctor details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["basic_doctor"]
         }
     }
     resource function get patientdata(http:Request req) returns http:Response|error? {
@@ -335,7 +365,7 @@ service /doctor on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["insert_appointment", "retrieve_own_patient_data"]
+            scopes: ["basic_doctor"]
         }
     }
     resource function get categorys/reserve(http:Request request) returns string|error? {
@@ -462,9 +492,12 @@ service /doctor on httpListener {
     }
     resource function get sessionVacancies(http:Request req) returns http:Response|error? {
         do {
+            io:println("REQ recived");
             string userEmail = check getUserEmailByJWT(req);
+            io:println("Got the email");
             string userType = "doctor";
             string userId = check getCachedUserId(userEmail, userType);
+            io:println("Got userID, now directing to clinic mng service");
             http:Response|error? response = check clinicServiceEP->/getDoctorSessionVacancies/[userId];
             return response;
         } on fail {
@@ -1366,6 +1399,54 @@ service /registration on httpListener {
 }
 service /mca on httpListener {
 
+
+    @http:ResourceConfig
+    resource function get joinRequests(http:Request request) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            http:Response response = check clinicServiceEP->/mcaJoinReq/[userId];
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+    @http:ResourceConfig
+    resource function put acceptRequest(http:Request request, string reqId) returns http:Response {
+        do {
+            // TODO :: get the {userEmail} from JWT
+            string userEmail = check getUserEmailByJWT(request);
+            string userId = check getCachedUserId(userEmail, "mca");
+
+            string url = string `/mcaAcceptRequest?reqId=${reqId}&userId=${userId}`;
+
+            http:Response response = check clinicServiceEP->put(url, {});
+            return response;
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
     @http:ResourceConfig
     resource function get getOngoingSessionQueue(http:Request req) returns http:Response|error? {
         string userEmail = check getUserEmailByJWT(req);
@@ -1575,6 +1656,7 @@ service /mca on httpListener {
 }
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
+    io:println("Inside getUserEmailByJWT");
     string authHeader = check req.getHeader("Authorization");
     string token = authHeader.substring(7);
     [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);

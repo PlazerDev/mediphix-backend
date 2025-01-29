@@ -71,12 +71,36 @@ public function createSessionVacancy(model:SessionVacancy sessionVacancy) return
     return http:CREATED;
 }
 
+public function convertUtcToString(time:Date utcTime) returns string {
+    // format 2024-10-03T10:15:30.00+05:30
+    // format 2024-10-03T10:15:30.00+Z
+    string month = string `${utcTime.month}`;
+    string day = string `${utcTime.day}`;
+    string hour = string `${utcTime.hour ?: 0}`;
+    string minute = string `${utcTime.minute ?: 0}`;
+    string second = "00";
+    if (utcTime.month < 10) {
+        month = string `0${utcTime.month}`;
+    }
+    if (utcTime.day < 10) {
+        day = string `0${utcTime.day}`;
+    }
+    if (utcTime.hour < 10) {
+        hour = string `0${utcTime.hour ?: 0}`;
+    }
+    if (utcTime.minute < 10) {
+        minute = string `0${utcTime.minute ?: 0}`;
+    }
+
+    string time = string `${utcTime.year}-${month}-${day}T${hour}:${minute}:${second}.00Z`;
+    io:println("Converted time", time);
+    return time;
+}
+
 public function createSessions(model:SessionVacancy sessionVacancy, int appliedOpenSessionId, model:SessionCreationDetails sessionCreationDetails, model:DoctorResponse doctorResponse) returns http:Created|error? {
 
     mongodb:Collection sessionCollection = check initDatabaseConnection("session");
     mongodb:Collection timeslotCollection = check initDatabaseConnection("session_timeslot");
-
-    model:MedicalCenter|model:NotFoundError|error? medicalCenter = getMedicalCenterInfoByID(sessionVacancy.medicalCenterId, "");
 
     foreach model:OpenSession openSession in sessionVacancy.openSessions {
         if (openSession.sessionId === appliedOpenSessionId) {
@@ -111,55 +135,108 @@ public function createSessions(model:SessionVacancy sessionVacancy, int appliedO
 
                 }
             } else {
-                time:Date sessionStartTimeStamp = openSession.startTime;
+                time:Civil sessionStartTimeStamp = {
+                    day: 0,
+                    hour: <int>openSession.startTime.hour,
+                    minute: <int>openSession.startTime.minute,
+                    month: 0,
+                    second: 0,
+                    year: 0,
+                    dayOfWeek: 0,
+                    timeAbbrev: "Z"
+                };
                 sessionStartTimeStamp.year = openSession.repetition.noRepeatDateTimestamp.year;
                 sessionStartTimeStamp.month = openSession.repetition.noRepeatDateTimestamp.month;
                 sessionStartTimeStamp.day = openSession.repetition.noRepeatDateTimestamp.day;
+                sessionStartTimeStamp.dayOfWeek = time:dayOfWeek(sessionStartTimeStamp);
 
-                time:Date sessionEndTimeStamp = openSession.endTime;
+                // "timeAbbrev":"Z","dayOfWeek":2,
+
+                time:Civil sessionEndTimeStamp =  {
+                    day: 0,
+                    hour: <int>openSession.endTime.hour,
+                    minute: <int>openSession.endTime.minute,
+                    month: 0,
+                    second: 0,
+                    year: 0,
+                    dayOfWeek: 0,
+                    timeAbbrev: "Z"
+                };
                 sessionEndTimeStamp.year = openSession.repetition.noRepeatDateTimestamp.year;
                 sessionEndTimeStamp.month = openSession.repetition.noRepeatDateTimestamp.month;
                 sessionEndTimeStamp.day = openSession.repetition.noRepeatDateTimestamp.day;
+                sessionEndTimeStamp.dayOfWeek = time:dayOfWeek(sessionEndTimeStamp);
 
                 model:TimeSlot[] sessionTimeSlots = [];
                 int noOfTimeSlots = openSession.numberOfTimeslots ?: 0;
-                int timeSlotIndex = 1;
+                int timeSlotIndex = 0;
                 foreach model:DoctorResponseApplication responseApplication in doctorResponse.responseApplications {
                     if (responseApplication.appliedOpenSessionId === appliedOpenSessionId) {
 
                         foreach model:PatientCountPerTimeSlot patientCountPerTimeSlot in responseApplication.numberOfPatientsPerTimeSlot {
 
-                            if (timeSlotIndex <= noOfTimeSlots) {
-                                int|model:InternalError nextTimeSlotId = check getNextTimeSlotId();
+                            if (timeSlotIndex < noOfTimeSlots) {
+                                int|model:InternalError nextTimeSlotId = patientCountPerTimeSlot.slotNumber;
 
                                 if !(nextTimeSlotId is int) {
                                     return error("Failed to get next time slot id");
                                 }
+                                io:println("Session start timestamp", sessionStartTimeStamp);
+                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(sessionStartTimeStamp)), (timeSlotIndex * 3600)));
+                                io:println("Time slot start time", timeSlotStartTimeStamp);
+                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromString(convertUtcToString(timeSlotStartTimeStamp)), 3600));
+                                io:println("Time slot end time", timeSlotEndTimeStamp);
+                                string slotStartTimeHour = "";
+                                string slotStartTimeMinute = "";
+                                string slotEndTimeHour = "";
+                                string slotEndTimeMinute = "";
 
-                                time:Date timeSlotStartTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromCivil(<time:Civil>sessionStartTimeStamp), timeSlotIndex * 3600));
-                                time:Date timeSlotEndTimeStamp = time:utcToCivil(time:utcAddSeconds(check time:utcFromCivil(<time:Civil>timeSlotStartTimeStamp), 3600));
+                                if (timeSlotStartTimeStamp.hour < 10) {
+                                    slotStartTimeHour = string `0${timeSlotStartTimeStamp.hour ?: 0}`;
+                                } else {
+                                    slotStartTimeHour = string `${timeSlotStartTimeStamp.hour ?: 0}`;
+                                }
+
+                                if (timeSlotStartTimeStamp.minute < 10) {
+                                    slotStartTimeMinute = string `0${timeSlotStartTimeStamp.minute ?: 0}`;
+                                } else {
+                                    slotStartTimeMinute = string `${timeSlotStartTimeStamp.minute ?: 0}`;
+                                }
+
+                                if (timeSlotEndTimeStamp.hour < 10) {
+                                    slotEndTimeHour = string `0${timeSlotEndTimeStamp.hour ?: 0}`;
+                                } else {
+                                    slotEndTimeHour = string `${timeSlotEndTimeStamp.hour ?: 0}`;
+                                }
+
+                                if (timeSlotEndTimeStamp.minute < 10) {
+                                    slotEndTimeMinute = string `0${timeSlotEndTimeStamp.minute ?: 0}`;
+                                } else {
+                                    slotEndTimeMinute = string `${timeSlotEndTimeStamp.minute ?: 0}`;
+                                }
 
                                 model:TimeSlot timeSlot = {
                                     slotId: nextTimeSlotId,
-                                    startTime: timeSlotStartTimeStamp.hour.toString(),
-                                    endTime: sessionEndTimeStamp.hour.toString(),
+                                    startTime: slotStartTimeHour + "." + slotStartTimeMinute,
+                                    endTime: slotEndTimeHour + "." + slotEndTimeMinute,
                                     maxNoOfPatients: patientCountPerTimeSlot.maxNumOfPatients,
                                     status: "NOT_STARTED",
                                     queue: {
                                         appointments: [],
                                         queueOperations: {
                                             defaultIncrementQueueNumber: 0,
-                                            ongoing: 0,
-                                            nextPatient1: 0,
-                                            nextPatient2: 0,
+                                            ongoing: -1,
+                                            nextPatient1: 1,
+                                            nextPatient2: 2,
                                             finished: [],
                                             absent: []
                                         }
                                     }
                                 };
-
+                                io:println("Time slot created in backend", timeSlot);
                                 check timeslotCollection->insertOne(timeSlot);
                                 sessionTimeSlots.push(timeSlot);
+                                timeSlotIndex = timeSlotIndex + 1;
                             }
 
                         }
@@ -521,7 +598,7 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
     }
     mongodb:Collection sessionVacancyCollection = check initDatabaseConnection("session_vacancy");
     map<json> filter = {
-        _id: sessionVacancyId
+        "_id": {"$oid": sessionVacancyId}
     };
     map<json> sessionVacancyProjection = {
         "_id": {"$toString": "$_id"},
@@ -565,4 +642,193 @@ public function mcaAcceptDoctorResponseApplicationToOpenSession(string userId, s
     io:println("Doctor response application accepted successfully");
 
     return http:OK;
+}
+
+
+  # Fetch join reqs by center ID
+    # 
+    # 
+    # + centerId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getAllJoinReq(string centerId) returns model:JoinReq[]|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor_join_request_to_mc");
+
+    map<json> filter = {
+        "medicalCenterId": centerId,
+        "verified": false
+    };
+
+   map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "doctorId": 1
+    };
+
+    stream<model:JoinReq, error?> result = check collection->find(filter, {}, projection, model:JoinReq);
+    
+    model:JoinReq[]|error finalResult = from model:JoinReq userData in result select userData;
+    if finalResult is model:JoinReq[] {
+        return finalResult;
+    } else {
+        return null;
+    }
+}
+
+
+
+  # Fetch breif doctor data for the joinReq by doctorId
+    # 
+    # 
+    # + doctorId - doctor ID
+    # + return -  on success centerlist, name, profile image
+
+public function getBriefDoctorDataForJoinReq(string doctorId) returns model:DoctorReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor");
+
+    map<json> filter = {
+         "_id": {"$oid": doctorId}
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "name": 1,
+        "profileImage": 1,
+        "medical_centers": 1
+    };
+
+    model:DoctorReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Fetch join reqs by req ID
+    # 
+    # 
+    # + reqId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getJoinReqById(string reqId) returns model:JoinReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("doctor_join_request_to_mc");
+
+    map<json> filter = {
+         "_id": {"$oid": reqId}
+    };
+
+   map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "doctorId": 1,
+        "medicalCenterId": 1
+    };
+
+    model:JoinReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Fetch Center Doctor list by center ID
+    # 
+    # 
+    # + reqId - center ID
+    # + return -  on success doctorId, reqId
+
+public function getCenterDoctorList(string centerId) returns model:CenterReq|mongodb:Error ? {
+    mongodb:Collection collection = check initDatabaseConnection("medical_center");
+
+    map<json> filter = {
+         "_id": {"$oid": centerId}
+    };
+
+   map<json> projection = {
+        "_id": 0,
+        "doctors": 1
+    };
+
+    model:CenterReq ? result = check collection->findOne(filter, {}, projection);
+    
+    return result;
+}
+
+
+  # Update the verify status in join req
+    # 
+    # 
+    # + reqId - Request Id
+    # + return - on sucess return null
+public function mcaUpdateVerified(string reqId) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("doctor_join_request_to_mc");
+  
+    map<json> filter = {
+         "_id": {"$oid": reqId}
+    };
+
+    mongodb:Update update = {
+        "set": { "verified": true}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("verify status update failed");
+}
+
+
+  # Update the center list of the doctor
+    # 
+    # 
+    # + doctorId - doctor Id
+    # + centerlist - center list
+    # + return - on sucess return null
+public function mcaUpdateDoctorsCenterlist(string doctorId, string[] centerlist) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("doctor");
+  
+    map<json> filter = {
+         "_id": {"$oid": doctorId}
+    };
+
+    mongodb:Update update = {
+        "set": { "medical_centers": centerlist}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("medical center list update failed");
+}
+
+
+  # Update the doctor list of the center
+    # 
+    # 
+    # + centerId - center Id
+    # + doctors - doctor list
+    # + return - on sucess return null
+public function mcaUpdateCentersDoctorlist(string centerId, string[] doctors) returns mongodb:Error|error ? {
+    mongodb:Collection sessionCollection = check initDatabaseConnection("medical_center");
+  
+    map<json> filter = {
+         "_id": {"$oid": centerId}
+    };
+
+    mongodb:Update update = {
+        "set": { "doctors": doctors}
+    };
+
+    mongodb:UpdateOptions options = {};    
+    mongodb:UpdateResult result = check sessionCollection->updateOne(filter, update, options);
+
+    if result.modifiedCount > 0 {
+        return null;
+    } 
+    
+    return error("doctor list update failed");
 }

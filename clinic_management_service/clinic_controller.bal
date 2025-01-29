@@ -4,6 +4,7 @@ import clinic_management_service.model;
 import ballerina/http;
 import ballerina/io;
 import ballerina/log;
+import ballerina/time;
 
 @http:ServiceConfig {
     cors: {
@@ -12,6 +13,12 @@ import ballerina/log;
     }
 }
 service / on new http:Listener(9090) {
+
+    resource function get getMedicalRecordsByDoctorId/[string userId]() returns http:Response|error? {
+        model:MedicalRecord[]|model:InternalError medicalRecords = check 'service:getMedicalRecordsByDoctorId(userId.trim());
+
+        return;
+    }
 
     // patient
 
@@ -255,7 +262,7 @@ service / on new http:Listener(9090) {
     }
 
     resource function get getOngoingSessionQueue/[string doctorId]() returns http:Response|error? {
-       model:Session[]|model:InternalError|model:NotFoundError|error? session = check 'service:getOngoingSessionQueue(doctorId);
+        model:Session[]|model:InternalError|model:NotFoundError|error? session = check 'service:getOngoingSessionQueue(doctorId);
 
         http:Response response = new;
         if session is model:Session[] {
@@ -271,36 +278,42 @@ service / on new http:Listener(9090) {
     }
 
     resource function get getPatientDetailsForOngoingSessions/[int refNumber]() returns http:Response|error? {
-       model:Patient|model:InternalError|model:NotFoundError|error? patient = check 'service:getPatientDetailsForOngoingSessions(refNumber);
+        model:Patient|model:InternalError|model:NotFoundError|error? patient = check 'service:getPatientDetailsForOngoingSessions(refNumber);
 
         http:Response response = new;
         if patient is model:Patient {
             response.statusCode = 200;
             response.setJsonPayload(patient.toJson());
-            
+
         } else if (patient is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(patient.body.toJson());
         }
         return response;
-        
 
     }
 
     resource function get getAptDetailsForOngoingSessions/[int refNumber]() returns http:Response|error? {
-       model:AppointmentRecord|model:InternalError|model:NotFoundError|error? patient = check 'service:getAptDetailsForOngoingSessions(refNumber);
+        model:AppointmentRecord|model:InternalError|model:NotFoundError|error? patient = check 'service:getAptDetailsForOngoingSessions(refNumber);
 
         http:Response response = new;
         if patient is model:AppointmentRecord {
             response.statusCode = 200;
             response.setJsonPayload(patient.toJson());
-            
+
         } else if (patient is model:InternalError) {
             response.statusCode = 500;
             response.setJsonPayload(patient.body.toJson());
+        } else {
+            response.statusCode = 500;
+            model:ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving medical record details",
+                timeStamp: time:utcNow()
+            };
+            response.setJsonPayload(errorDetails.toJson());
         }
         return response;
-
     }
 
     // Get doctor details by id
@@ -698,6 +711,22 @@ service / on new http:Listener(9090) {
         return response;
     }
 
+    resource function get mcaJoinReq/[string userId]() returns http:Response|error {
+
+        model:NotFoundError|model:McaJoinReq[] result = check 'service:mcaJoinReq(userId);
+        http:Response response = new;
+
+        if (result is model:McaJoinReq[]) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
     resource function get mcsGetActiveSessions/[string userId]() returns http:Response|error {
 
         model:NotFoundError|model:McsSessionWithDoctorDetails[] result = check 'service:mcsGetActiveSessions(userId);
@@ -733,6 +762,23 @@ service / on new http:Listener(9090) {
     resource function put mcaAssignSession(string sessionId, string mcsId, string userId) returns http:Response|error {
 
         model:NotFoundError? result = check 'service:mcaAssignSession(sessionId, mcsId, userId);
+
+        http:Response response = new;
+
+        if (result is null) {
+            response.statusCode = 200;
+            response.setJsonPayload(result.toJson());
+        } else if (result is model:NotFoundError) {
+            response.statusCode = 404;
+            response.setJsonPayload(result.body.toJson());
+        }
+
+        return response;
+    }
+
+    resource function put mcaAcceptRequest(string reqId, string userId) returns http:Response|error {
+
+        model:NotFoundError? result = check 'service:mcaAcceptRequest(reqId, userId);
 
         http:Response response = new;
 

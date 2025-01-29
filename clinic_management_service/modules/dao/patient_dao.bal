@@ -30,7 +30,8 @@ public function getPatientById(string userId) returns model:Patient|model:NotFou
         "address": 1,
         "nationality": 1,
         "allergies": 1,
-        "special_notes": 1
+        "special_notes": 1,
+        "profileImage": 1
     };
 
 
@@ -67,7 +68,8 @@ public function getPatientByEmail(string email) returns model:Patient|model:NotF
         "address": 1,
         "nationality": 1,
         "allergies": 1,
-        "special_notes": 1
+        "special_notes": 1,
+        "profileImage": 1
     };
     model:Patient|error? findResults = check patientCollection->findOne(filter, {}, projection, model:Patient);
     if findResults !is model:Patient {

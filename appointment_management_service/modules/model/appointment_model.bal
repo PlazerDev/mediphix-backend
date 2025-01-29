@@ -146,6 +146,7 @@ public type NewAppointmentRecord record {
     string medicalCenterId;
     string medicalCenterName;
     decimal paymentAmount;
+    AppointmentStatus aptStatus?;
 };
 
 public type AppointmentRecord record {

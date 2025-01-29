@@ -86,6 +86,7 @@ public type NewAppointmentRecord record {
     string medicalCenterId;
     string medicalCenterName;
     decimal paymentAmount;
+    AppointmentStatus aptStatus?;
 };
 
 public type AppointmentRecord record {
@@ -205,7 +206,7 @@ public type Session record {
     string noteFromCenter?;
     string noteFromDoctor?;
     SessionStatus overallSessionStatus?;
-    TimeSlot timeSlots;
+    TimeSlot[] timeSlots?;
 };
 
 public enum SessionStatus {

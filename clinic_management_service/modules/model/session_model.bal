@@ -13,7 +13,15 @@ public type Session record {
     string noteFromDoctor?;
     SessionStatus overallSessionStatus?;
     TimeSlot[] timeSlots?;
+};
 
+public enum SessionStatus {
+    UNACCEPTED,
+    ACCEPTED,
+    ACTIVE,
+    ONGOING,
+    CANCELLED,
+    OVER
 };
 
 public type SessionCreationDetails record{

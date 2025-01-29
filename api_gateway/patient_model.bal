@@ -17,6 +17,7 @@ public type Patient record {|
     string[] appointments?;
     string[] medical_records?;
     string[] lab_reports?;
+    string profileImage?;
 |};
 
 public type JWTPayload record {
