@@ -89,6 +89,11 @@ public function getDoctorSessionVacancies(string doctorId) returns error|model:S
     return result;
 }
 
+public function getMedicalRecordsByDoctorId(string userId) returns error|model:MedicalRecord[]|model:InternalError {
+    model:MedicalRecord[]|model:InternalError|error result = check dao:getMedicalRecordsByDoctorId(userId);
+    return result;
+}
+
 public function respondDoctorToSessionVacancy(model:NewDoctorResponse newDoctorResponse) returns http:Created|model:InternalError|error? {
     model:DoctorResponse doctorResponse = {
         responseId: newDoctorResponse.responseId ?: 0,

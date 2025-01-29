@@ -296,8 +296,8 @@ service /patient on httpListener {
                 }
             },
 
-            scopes: ["insert_appointment", "retrieve_own_patient_data", "retrive_appoinments", "submit_patient_records"]
-
+            scopes: ["update_own_doctor_sessions", "retrive_appoinments", "submit_patient_records", "basic_doctor"]
+  
         }
     ]
 }
@@ -305,7 +305,37 @@ service /doctor on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["check_patient"]
+            scopes: ["basic_doctor"]
+        }
+    }
+    resource function get medicalrecords(http:Request req) returns http:Response|error? {
+        do {
+            string userEmail = check getUserEmailByJWT(req);
+            string userType = "doctor";
+            string userId = check getCachedUserId(userEmail, userType);
+            http:Response response = check clinicServiceEP->/getMedicalRecordsByDoctorId/[userId];
+
+            
+            response.statusCode = 200;
+            return response;
+
+        } on fail {
+            ErrorDetails errorDetails = {
+                message: "Internal server error",
+                details: "Error occurred while retrieving doctor details",
+                timeStamp: time:utcNow()
+            };
+            http:Response errorResponse = new;
+            errorResponse.statusCode = 500;
+            errorResponse.setJsonPayload(errorDetails.toJson());
+            return errorResponse;
+        }
+    }
+
+
+    @http:ResourceConfig {
+        auth: {
+            scopes: ["basic_doctor"]
         }
     }
     resource function get patientdata(http:Request req) returns http:Response|error? {
@@ -335,7 +365,7 @@ service /doctor on httpListener {
 
     @http:ResourceConfig {
         auth: {
-            scopes: ["insert_appointment", "retrieve_own_patient_data"]
+            scopes: ["basic_doctor"]
         }
     }
     resource function get categorys/reserve(http:Request request) returns string|error? {
@@ -1626,6 +1656,7 @@ service /mca on httpListener {
 }
 
 public function getUserEmailByJWT(http:Request req) returns string|error {
+    io:println("Inside getUserEmailByJWT");
     string authHeader = check req.getHeader("Authorization");
     string token = authHeader.substring(7);
     [jwt:Header, jwt:Payload] jwtInformation = check jwt:decode(token);

@@ -30,32 +30,6 @@ public type SessionSlot record {
     int patientCount;
 };
 
-public type Sessions record {
-    string sessionId;
-    string doctorName;
-    string doctorMobile;
-    string category;
-    string medicalCenterId;
-    string medicalCenterName;
-    string medicalCenterMobile;
-    string doctorNote;
-    string medicalCenterNote;
-    string sessionDate;
-    SessionSlot timeSlots;
-    SessionStatus sessionStatus;
-    string location;
-    decimal payment;
-};
-
-public enum SessionStatus {
-    UNACCEPTED,
-    ACCEPTED,
-    ACTIVE,
-    ONGOING,
-    CANCELLED,
-    OVER
-};
-
 public type DoctorMedicalCenterRequest record {|
     string doctorId;
     string medicalCenterId;
