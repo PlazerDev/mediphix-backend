@@ -1,10 +1,10 @@
 import clinic_management_service.model;
 
 import ballerina/http;
+import ballerina/io;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/mongodb;
-import ballerina/io;
 
 //get doctorId by email
 public function doctorIdByEmail(string email) returns string|error|model:InternalError {
@@ -49,7 +49,6 @@ public function doctorIdByEmail(string email) returns string|error|model:Interna
     }
 }
 
-
 public function getSessionDetailsByDoctorId(string doctorId) returns model:Session[]|model:InternalError|model:NotFoundError|error? {
 
     mongodb:Client mongoDb = check new (connection = string `mongodb+srv://${username}:${password}@${cluster}.ahaoy.mongodb.net/?retryWrites=true&w=majority&appName=${cluster}`);
@@ -62,10 +61,10 @@ public function getSessionDetailsByDoctorId(string doctorId) returns model:Sessi
     map<json> projection = {
         "_id": {"$toString": "$_id"}
     };
-        
+
     stream<model:Session, error?>|mongodb:Error? findResults = check sessionCollection->find(filter, {}, projection, model:Session);
     if findResults is stream<model:Session, error?> {
-        
+
         model:Session[]|error? sessions = from model:Session se in findResults
             select se;
         io:println(sessions);
@@ -80,7 +79,7 @@ public function getSessionDetailsByDoctorId(string doctorId) returns model:Sessi
         model:NotFoundError userNotFound = {body: errorDetails};
         return userNotFound;
     }
-   
+
 }
 
 //get my medical centers.in this method we find medical centers doctor array and find the medical centers which has the doctor
@@ -439,16 +438,14 @@ public function getPatientIdByRefNumber(int refNumber)
         "queueNumber": 1
     };
 
-   
-
     model:AppointmentRecord|mongodb:Error? appointment = check appointmentCollection->findOne(filter, {}, projection, model:AppointmentRecord);
-  
+
     if appointment is model:AppointmentRecord {
         return appointment.patientId;
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",
-            details: "refNumber/" ,
+            details: "refNumber/",
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
@@ -484,14 +481,13 @@ public function getAptDetailsForOngoingSessions(int refNumber) returns model:App
     } else {
         model:ErrorDetails errorDetails = {
             message: "Failed to find the appointment for the given reference number.",
-            details: "refNumber/" ,
+            details: "refNumber/",
             timeStamp: time:utcNow()
         };
         model:InternalError internalError = {body: errorDetails};
         return internalError;
     }
 }
-
 
 // public function getPatientIdByRefNumber(string refNumber)
 //     returns string|model:InternalError|error {
@@ -552,7 +548,7 @@ public function getOngoingSessionQueue(string doctorId) returns error|model:Inte
         "overallSessionStatus": 1
     };
 
-     map<json> filter = {
+    map<json> filter = {
         "doctorId": doctorId,
         "overallSessionStatus": "ONGOING",
         "timeSlots": {
@@ -582,3 +578,60 @@ public function getOngoingSessionQueue(string doctorId) returns error|model:Inte
 
 }
 
+public function getMedicalRecordsByDoctorId(string userId) returns model:MedicalRecord[]|model:InternalError|error {
+    mongodb:Collection appointmentCollection = check initDatabaseConnection("appointment");
+
+    map<json> filter = {"doctorId": userId};
+
+    // Optional: You can specify which fields to retrieve in the projection
+    map<json> projection = {
+        "_id": {"$toString": "$_id"},
+        "aptNumber": 1,
+        "sessionId": 1,
+        "timeSlot": 1,
+        "aptCategories": 1,
+        "doctorId": 1,
+        "doctorName": 1,
+        "medicalCenterId": 1,
+        "medicalCenterName": 1,
+        "payment": 1,
+        "aptCreatedTimestamp": 1,
+        "aptStatus": 1,
+        "patientId": 1,
+        "patientName": 1,
+        "queueNumber": 1,
+        "medicalRecord": 1
+    };
+
+    stream<model:AppointmentRecord, error?>|error? findResults = appointmentCollection->find(filter, {}, projection, model:AppointmentRecord);
+    if findResults is stream<model:AppointmentRecord, error?> {
+        if findResults is stream<model:AppointmentRecord> {
+        model:MedicalRecord[] medicalRecords = [];
+            foreach model:AppointmentRecord ap in findResults {
+                if ap.aptStatus == "OVER"{
+                    if ap.medicalRecord is model:MedicalRecord {
+                        medicalRecords.push(<model:MedicalRecord>ap.medicalRecord);
+                    }
+                }
+            }
+            io:println("Medical records: ", medicalRecords);
+            return medicalRecords;
+        } else {
+            model:ErrorDetails errorDetails = {
+                message: "Database error occurred",
+                details: "Error occurred while retrieving medical records",
+                timeStamp: time:utcNow()
+            };
+            model:InternalError internalError = {body: errorDetails};
+            return internalError;
+        }
+    } else {
+        model:ErrorDetails errorDetails = {
+            message: "Database error occurred",
+            details: "Error occurred while retrieving medical records",
+            timeStamp: time:utcNow()
+        };
+        model:InternalError internalError = {body: errorDetails};
+        return internalError;
+    }
+}
